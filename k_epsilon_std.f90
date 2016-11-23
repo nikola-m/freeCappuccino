@@ -73,20 +73,6 @@ end subroutine allocate_k_epsilon_std
 
 
 
-subroutine deallocate_k_epsilon_std
-  implicit none
-      deallocate( te )
-      deallocate( ed ) 
-      deallocate( teo )
-      deallocate( edo ) 
-      if (allocated(teoo)) deallocate( teoo )
-      if (allocated(edoo)) deallocate( edoo ) 
-      deallocate( dTEdxi )
-      deallocate( dEDdxi ) 
-end subroutine deallocate_k_epsilon_std
-
-
-
 subroutine correct_turbulence_k_epsilon_std()
 !
 ! Main module routine to solve turbulence model equations and subsequently update effective viscosity

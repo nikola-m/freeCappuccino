@@ -1,5 +1,5 @@
 #
-# Makefile for Cappuccino program
+# Makefile for caffa3d program
 #
 
 # Compiler flags:
@@ -84,11 +84,11 @@ OBJS = ${RK4FILES:.f90=.o}
 # Targets for make.
 ##################################################################
 
-all: cappuccino #rk4ProjectionChannel
+all: caffa3d #rk4Projection
 
-cappuccino: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${F90OBJS}
+caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${F90OBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${F90OBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o cappuccino 
+	${F90} ${F90OBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o caffa3d 
 
 rk4ProjectionChannel: ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 	@echo  "Linking" $@ "... "

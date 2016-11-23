@@ -1,13 +1,13 @@
 !
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 !
-program channel
+program caffa3d
 !
 !***********************************************************************
 !
 !  FINITE VOLUME SOLVER FOR NAVIER-STOKES EQUATIONS
 !  
-! /channel <input_file> <inlet_file> <grid_file> <monitor_file> <restart_file> <out_folder_path>      
+! /caffa3d <input_file> <inlet_file> <grid_file> <monitor_file> <restart_file> <out_folder_path>      
 !
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 !
@@ -259,18 +259,7 @@ program channel
 !===============================================
       call writefiles
       call write_restart_files
-
-!===============================================
-!.....Free memory - deallocate arrays 
-!===============================================
-      ! call deallocate_arrays
-      ! call deallocate_gradients
-      ! select case (TurbModel)
-      !   case (1)
-      !     call deallocate_k_epsilon_std
-      !   case default
-      ! end select
       
 
-end program channel
+end program caffa
 
