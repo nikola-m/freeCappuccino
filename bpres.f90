@@ -9,7 +9,7 @@ subroutine bpres(p,istage)
 !
 ! Discussion:
 !   istage = 1 : At boundary faces, we set the values of owner cell,
-!                we need those boundary values to be able to calclulate
+!                we need those boundary values to be able to calculate
 !                pressure or pressure correction gradients.
 !   istage = 2 : We perform linear extrapolation from owner cell using 
 !                previosuly calculated cell centered gradients.
