@@ -21,7 +21,6 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 !
   use types
   use parameters
-  use indexes
   use geometry
 
   implicit none
@@ -132,7 +131,6 @@ subroutine gradco(ijp,ijn, &
 !=======================================================================
   use types
   use parameters
-  use indexes
   use geometry
 
   implicit none
@@ -192,9 +190,6 @@ subroutine gradbc(ijp,ijb,sx,sy,sz,fi,dfx,dfy,dfz)
 !     boundary cell face to the gradient at CV-center.
 !=======================================================================
   use types
-  use parameters
-  use indexes
-  use geometry
 
   implicit none
 

@@ -3,8 +3,7 @@ subroutine find_strain_rate
 !***********************************************************************
 !
   use types
-  use parameters
-  use indexes    
+  use parameters   
   use variables
   use gradients
 

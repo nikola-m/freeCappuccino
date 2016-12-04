@@ -7,7 +7,7 @@ subroutine init
 !
 ! 0)  Print code logo and timestamp in monitor file
 ! 1)  Open & Read Input File
-! 2)  Open & Read Grid File & Allocating Arrays
+! 2)  Open & Read Grid File & Allocate Arrays
 ! 3)  Index arrays of matrix elements stored in CSR format
 ! 4)  Set Index Arrays For Cell Looping, Set Monitoring Point And Pressure Reference Point
 ! 5)  Set Initial timestepping control values
@@ -20,7 +20,6 @@ subroutine init
 !***********************************************************************
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use title_mod
@@ -28,7 +27,7 @@ subroutine init
   use sparse_matrix, only: create_CSR_matrix_from_mesh_data
   use k_epsilon_std, only: te,ed,dTEdxi,dEDdxi,allocate_k_epsilon_std
   use temperature, only: t,utt,vtt,wtt,pranl
-  use utils
+  use utils, only: timestamp, show_logo, i4vec_print2
 
   implicit none
 !
@@ -39,7 +38,7 @@ subroutine init
 ! Local variables 
 !
   integer :: i, inp
-  real(dp) :: perturb
+  ! real(dp) ::
 
 !
 !***********************************************************************
@@ -49,8 +48,6 @@ subroutine init
 ! 0)  Print code logo and timestamp in monitor file
 !
       call show_logo
-      call timestamp ()
-
 
 !
 ! 1)  Open & Read Input File
@@ -65,11 +62,11 @@ subroutine init
       READ(5,*) (LCAL(I),I=1,NPHI)
       READ(5,*) monCell,pRefCell,MPoints
       READ(5,*) SLARGE,SORMAX
-      READ(5,*) DENSIT,VISCOS,RAY
+      READ(5,*) DENSIT,VISCOS
       READ(5,*) PRANL,TREF,BETA
       READ(5,*) LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
       READ(5,*) roughWall,EROUGH,ZZERO
-      READ(5,*) PHIT,SKSI,ETA,RCOST,FACNAP,FACFLX
+      READ(5,*) PHIT,SKSI,ETA,FACNAP,FACFLX
       READ(5,*) LTRANSIENT,BTIME
       READ(5,*) LEVM,LASM,LLES
       READ(5,*) LSGDH,LGGDH,LAFM
@@ -91,39 +88,38 @@ subroutine init
       CLOSE (5)
 
 !.....Create an input file reading log:
-      WRITE(66,'(a)') ' Input file log: '
-      WRITE(66,'(a)') '--------------------------------------------------------------------------------'
-      WRITE(66,'(a70)') TITLE
-      WRITE(66,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
-      WRITE(66,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(ICAL(I),I=1,NPHI),IEN=7!!!,IVIS=8,IVART=9;ICON=10!'
-      WRITE(66,'(3(i3,1x),5x,a)') monCell,pRefCell,MPoints,'monCell,pRefCell,MPoints'
-      WRITE(66,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
-      WRITE(66,'(3(es11.4,1x),a)') DENSIT,VISCOS,RAY,'DENSIT,VISCOS,RAY'
-      WRITE(66,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
-      WRITE(66,'(L1,1x,3f5.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
-      WRITE(66,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
-      WRITE(66,'(6(f4.2,1x),a)') PHIT,SKSI,ETA,RCOST,FACNAP,FACFLX,'PHIT,SKSI,ETA,RCOST,FACNAP,FACFLX'
-      WRITE(66,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
-      WRITE(66,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
-      WRITE(66,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
-      WRITE(66,'(i2,1x,a)') TurbModel, 'TurbModel'
-      WRITE(66,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
-      WRITE(66,'(7(i2,1x),a)') LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA,'LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA'
-      WRITE(66,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI), MUSCL velocity, CDS other'
-      WRITE(66,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
-      WRITE(66,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
-      WRITE(66,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
-      WRITE(66,'(i5,1x,es9.2,1x,i5,1x,i4,1x,a)') NUMSTEP,TIMESTEP,NZAPIS,MAXIT,'NUMSTEP,TIMESTEP,NZAPIS,MAXIT'
-      WRITE(66,'(4(L1,1x),a)') lstsq, lstsq_qr, lstsq_dm, gauss,'lstsq, lstsq_qr, lstsq_dm, gauss'
-      WRITE(66,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
-      WRITE(66,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
-      WRITE(66,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
-      WRITE(66,'(1(L1,1x),es11.4,5x,a)') const_mflux,gradPcmf,'periodic_boundary, const_mflux, gradPcmf'
-      WRITE(66,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
-      WRITE(66,'(a)') '--------------------------------------------------------------------------------'
-      WRITE(66,'(a)') ' '
-
-
+      WRITE(6,'(a)') ' Input file log: '
+      WRITE(6,'(a)') '--------------------------------------------------------------------------------'
+      WRITE(6,'(a70)') TITLE
+      WRITE(6,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
+      WRITE(6,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10'
+      WRITE(6,'(3(i3,1x),5x,a)') monCell,pRefCell,MPoints,'monCell,pRefCell,MPoints'
+      WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
+      WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
+      WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
+      WRITE(6,'(L1,1x,3f5.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
+      WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
+      WRITE(6,'(5(f4.2,1x),a)') PHIT,SKSI,ETA,FACNAP,FACFLX,'PHIT,SKSI,ETA,FACNAP,FACFLX'
+      WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
+      WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
+      WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
+      WRITE(6,'(i2,1x,a)') TurbModel, 'TurbModel'
+      WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
+      WRITE(6,'(7(L1,1x),a)') LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA,'LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA'
+      WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI), MUSCL velocity, CDS other'
+      WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
+      WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
+      WRITE(6,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
+      WRITE(6,'(i5,1x,es9.2,1x,i5,1x,i4,1x,a)') NUMSTEP,TIMESTEP,NZAPIS,MAXIT,'NUMSTEP,TIMESTEP,NZAPIS,MAXIT'
+      WRITE(6,'(4(L1,1x),a)') lstsq, lstsq_qr, lstsq_dm, gauss,'lstsq, lstsq_qr, lstsq_dm, gauss'
+      WRITE(6,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
+      WRITE(6,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
+      WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
+      WRITE(6,'(1(L1,1x),es11.4,5x,a)') const_mflux,gradPcmf,'const_mflux, gradPcmf'
+      WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
+      WRITE(6,'(a)') '--------------------------------------------------------------------------------'
+      WRITE(6,'(a)') ' '
+stop
 !
 ! 2)  Open & Read Grid File & Allocating Arrays
 !
@@ -141,11 +137,9 @@ subroutine init
       rewind 4
 
       read(4) &
-            numNodes,numCells,numInnerFaces, &
-            ninl,nout,nsym,npru,nwal,noc, &
+            numNodes,numCells,numInnerFaces,numFacesTotal, &
+            ninl,nout,nsym,nwal,npru,noc, &
             nwali,nwala,nwalf
-
-
 !-----------------------------------------------------------------------
 ! STOP READING FILE FOR A SECOND AND DO SOME USEFUL WORK
 !-----------------------------------------------------------------------
@@ -158,7 +152,7 @@ subroutine init
         case default
       end select                                           
 !-----------------------------------------------------------------------
- 
+
       if(ninl.gt.0) then     
       read(4) &
               (xni(i),i=1,ninl),(yni(i),i=1,ninl),(zni(i),i=1,ninl), &
@@ -171,18 +165,18 @@ subroutine init
               (xfo(i),i=1,nout),(yfo(i),i=1,nout),(zfo(i),i=1,nout)
       endif
 
-      if(nwal.gt.0) then 
-      read(4) &
-            (srdw(i),i=1,nwal),(dnw(i),i=1,nwal), &
-            (xnw(i),i=1,nwal),(ynw(i),i=1,nwal),(znw(i),i=1,nwal), &
-            (xfw(i),i=1,nwal),(yfw(i),i=1,nwal),(zfw(i),i=1,nwal)
-      endif
-
       if(nsym.gt.0) then 
       read(4) &
             (srds(i),i=1,nsym),(dns(i),i=1,nsym), &
             (xns(i),i=1,nsym),(yns(i),i=1,nsym),(zns(i),i=1,nsym), &
             (xfs(i),i=1,nsym),(yfs(i),i=1,nsym),(zfs(i),i=1,nsym)
+      endif
+
+      if(nwal.gt.0) then 
+      read(4) &
+            (srdw(i),i=1,nwal),(dnw(i),i=1,nwal), &
+            (xnw(i),i=1,nwal),(ynw(i),i=1,nwal),(znw(i),i=1,nwal), &
+            (xfw(i),i=1,nwal),(yfw(i),i=1,nwal),(zfw(i),i=1,nwal)
       endif
 
       if(npru.gt.0) then 
@@ -226,21 +220,22 @@ subroutine init
 !.....Close mesh file
       close (4)
 
+!-----------------------------------------------
+! Resume of simulation case
+!-----------------------------------------------
+!  call print_header
 
 !
 ! 3)  Index arrays of matrix elements stored in CSR format
 !
   call create_CSR_matrix_from_mesh_data
 
-
-
-
 !
 ! 4)  Set Coefficient values for Turbulence models
 !
 
-      ! Turbulent flow computation
-      LTURB=LEVM.OR.LLES
+  ! Turbulent flow computation
+  LTURB=LEVM.OR.LLES
 
 ! !=====Coefficients for Sasa's algebraic flux model
 !       C1asm = 1.8_dp
@@ -404,7 +399,7 @@ subroutine init
 ! !      IF(LTURB) PRTINV(IEN)=1./PRANT
 ! !@      PRRAT=PRANL/PRANT
 ! !@      PFUN=9.24*(PRRAT**0.75-1.0)*(1.0+0.28*EXP(-0.007*PRRAT))
-! !@      WRITE(66,*)'pfun: ',pfun
+! !@      WRITE(6,*)'pfun: ',pfun
 
   ! Reciprocal values of underrrelaxation factors
   do i=1,nphi
@@ -414,162 +409,111 @@ subroutine init
 
 
 
+! 5)  Set Initial times
 
-
-
-
-! 5)  Set Initial timestepping control values
-      itime=0
-      time=-timestep
-      !Set to zero cumulative error in continuity
-      cumulativeContErr = 0.0_dp
 
 
 
 ! 6)  Various initialisations
 
-!     6.0)  Field parameter Initialisation
+! 6.0)  Parameter Initialisation
 
-!     # Bulk velocity - estimated from Reynolds number, and written in 'input' file
-      magUbar = UIN !!!<----veoma bitno za const_mflux flow!
+  ! Initial time
+  if(.not.lread) time=0.0d0
 
-! !     6.1)  Field Initialisation - Turbulence kinetic energy and dissipation at inlet
+  !Set to zero cumulative error in continuity
+  cumulativeContErr = 0.0_dp
 
-!       inbc = li(1)+1
-!       intc = lk(nk)+li(1)+1
-!       IF(Wilcox.or.SST.or.SAS.or.EARSM_WJ.or.EARSM_M) THEN
-!         TEIN=1e-6*UIN*UIN
-!         ! 0.056894 = 0.08948-0.028 -> visina kanala!
-!         EDIN=5.*UIN/(zc(intc)-zc(inbc))
-!       ELSEIF(stdkeps.or.Durbin.or.RNG.or.Realizable.or.LowRe_LB) THEN 
-!         TEIN=1.5*(0.05*UIN)**2 ! for Ti=0.05  
-!         EDIN=cmu75*tein**1.5/(zc(intc)-zc(inbc)) 
-!       ENDIF
+! Bulk velocity - important const_mflux flow!
+  magUbar = UIN
 
-!     6.2)  Field Initialisation - reading inlet file
+! 6.1)  Field Initialisation - Turbulence kinetic energy and dissipation at inlet
 
+  ! IF(Wilcox.or.SST.or.SAS.or.EARSM_WJ.or.EARSM_M) THEN
+  !   TEIN=1e-6*UIN*UIN
+  !   EDIN=5.*UIN/(zc(intc)-zc(inbc))
+  ! ELSEIF(stdkeps.or.Durbin.or.RNG.or.Realizable.or.LowRe_LB) THEN 
+  !   TEIN=1.5*(0.05*UIN)**2 ! for Ti=0.05  
+  !   EDIN=cmu75*tein**1.5/(zc(intc)-zc(inbc)) 
+  ! ENDIF
 
-!     6.3)  Field Initialisation
-
-!-----Field initialisation loop over inner cells--------------------------------
-      do inp=1,numCells
-
-!.....Initialization of field variables from input file:
-      u(inp)=uin
-      v(inp)=vin
-      w(inp)=win
-      te(inp)=tein
-      ed(inp)=edin
-
-!.....Channel flow:
-!.....Random number based fluctuation of mean profile            
-      call init_random_seed()
-      call random_number(perturb)    
-      perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
-      u(inp) = perturb*u(inp)
-      !V(INP) = perturb/100.
-      !W(INP) = perturb/100.
+! 6.2)  Field Initialisation - reading inlet file
 
 
+! 6.3)  Field Initialisation
 
-!.....USER INITIALIZATION:
+! Field initialisation loop over inner cells--------------------------------
+  do inp=1,numCells
 
-!.....Power law profile:
-      !U(INP) = Umag*(zc(inp)/blthick)**expp
-      !V(INP) = small
-      !W(INP) = small
-      !TE(INP)=-3.71354692995576e-5*ZC(INP)**7+0.0008508042*ZC(INP)**6-0.0074501233*ZC(INP)**5 &
-      !        +0.0287202493*ZC(INP)**4-0.0279210481*ZC(INP)**3-0.1060775951*ZC(INP)**2 &
-      !        +0.1756108394*ZC(INP)+0.2104104465
-      !ED(INP)=CMU75*TE(INP)**1.5/(0.07*blthick) !/(CMU*TE(INP))
+! Initialization of field variables from input file:
+  u(inp)=uin
+  v(inp)=vin
+  w(inp)=win
+  te(inp)=tein
+  ed(inp)=edin
 
-!.....Bolund hill prescribed inlet:
-!      U(IJK)=LOG((ZC(IJK)*120-ZC(INBC)*120)/0.0003) ! log profil case 270
-!      V(IJK)=0.
-!      W(IJK)=0.
-!      TE(IJK)=0.928 ! vrednost data za blind comparison
-!      ED(IJK)=(0.4)**3/(CAPPA*(ZC(IJK)-ZC(INBC))*120)  !CMU75*TE(IJK)**1.5/(0.4*0.1) 
+! Channel flow:
+! Random number based fluctuation of mean profile            
+      ! call init_random_seed()
+      ! call random_number(perturb)    
+      ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
+      ! u(inp) = perturb*u(inp)
+      ! v(inp) = perturb/100.
+      ! w(inp) = perturb/100.
 
-!      UO(INP) = small
-!      VO(INP) = small
-!      WO(INP) = small
-
-!.....log profile for Dobric case;
-!      inbc = LI(I)+J 
-!      if ( (zc(inp)-zc(inbc)) .lt. 500. ) then
-!      !if(k.eq.2) print*, i, j, (zc(inp)-zc(inbc))
-!        ust=0.345843
-!        U(INP) = min(-(ust/cappa)*log((zc(inp)-zc(inbc))/zzero),-small)
-!        TE(INP) = (ust)**2/sqrt(cappa)*(1.-((zc(inp)-zc(inbc))/500.))**2
-!      else
-!        U(INP) = U(INP)
-!        TE(INP) = SMALL
-!      endif
-!      ed(inp) = max(TE(INP)**1.5/10.,small) !<-- epsilon eq.
-!      !ed(inp) = ed(inp)/0.02973/TE(INP) !<-- omega eq.
-!      !ed(inp)=ed(inp)/(cmu*te(inp)+small)! k-eps --> k-omega
-
-      ! ! Effective viscosity
-      ! IF(LTURB) THEN
-      !   IF(STDKEPS.or.DURBIN.or.RNG.or.REALIZABLE.or.LowRE_LB) VIS(INP)=VIS(INP)+DENSIT*TE(INP)**2*CMU/(ED(INP)+SMALL)   
-      !   IF(Wilcox.or.SST.or.SAS.or.EARSM_WJ.or.EARSM_M) VIS(INP)=VIS(INP)+DENSIT*TE(INP)/(ED(INP)+SMALL)
-      ! ENDIF
-
-
-      enddo
+  enddo
 
   !-------------------------------------------------------    
   ! Field initialisation over inner cells + boundary faces
   !-------------------------------------------------------
 
   ! Density
-  den(:) = densit
+  den = densit
   ! Effective viscosity
-  vis(:)=viscos
-  ! ! Temperature
-   t(:)=tin
+  vis = viscos
+  ! Temperature
+  ! t = tin
   ! ! Temperature variance
-  ! vart(:)=vartin
+  ! vart=vartin
   ! ! Concentration
-  ! con(:)=conin
+  ! con=conin
 
   ! Reynolds stress tensor components
-  uu(:) = 0.0_dp
-  vv(:) = 0.0_dp
-  ww(:) = 0.0_dp
-  uv(:) = 0.0_dp
-  uw(:) = 0.0_dp
-  vw(:) = 0.0_dp
+  uu = 0.0_dp
+  vv = 0.0_dp
+  ww = 0.0_dp
+  uv = 0.0_dp
+  uw = 0.0_dp
+  vw = 0.0_dp
 
-  ! Turbulent heat fluxes
-   utt(:) = 0.0_dp
-   vtt(:) = 0.0_dp
-   wtt(:) = 0.0_dp
+  ! ! Turbulent heat fluxes
+  ! utt = 0.0_dp
+  ! vtt = 0.0_dp
+  ! wtt = 0.0_dp
 
   ! Reynolds stress anisotropy
   ! if(earsm_wj.or.earsm_m) bij(:,:)=0.0_dp
 
   ! Pressure and pressure correction
-  p(:) = small
-  pp(:) = p(:)
-
+  p = small
+  pp = p
 
 
 ! 7)  Read Restart File And Set Field Values
   if(lread) then
     call readfiles
-    pp(:) = p(:)
+    pp = p
   end if
 
 
 
 ! 8)  Initial Gradient Calculation
-  dUdxi=0.0_dp
-  dVdxi=0.0_dp
-  dWdxi=0.0_dp
-  dPdxi=0.0_dp
-  dTEdxi=0.0_dp
-  dEDdxi=0.0_dp
+  dUdxi = 0.0_dp
+  dVdxi = 0.0_dp
+  dWdxi = 0.0_dp
+  dPdxi = 0.0_dp
+  ! dTEdxi = 0.0_dp
+  ! dEDdxi = 0.0_dp
 
 
   if (lstsq .or. lstsq_qr .or. lstsq_dm) then
@@ -579,7 +523,6 @@ subroutine init
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
-
 
 ! 9) Calculate distance to the nearest wall.
 

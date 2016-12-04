@@ -8,7 +8,7 @@ subroutine bicgstab(fi,ifi)
 !
   use types
   use parameters
-  use indexes
+  use geometry, only: owner, neighbour, ijl, ijr
   use sparse_matrix
   use title_mod
 

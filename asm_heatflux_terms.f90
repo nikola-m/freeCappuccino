@@ -8,9 +8,7 @@ subroutine Additional_algebraic_heatflux_terms
 !
 !***********************************************************************
   use types, only: dp
-  use parameters, only: numInnerFaces,viscos
-  use indexes, only: owner,neighbour
-  use geometry, only: facint,arx,ary,arz
+  use geometry, only: numInnerFaces,facint,arx,ary,arz,owner,neighbour
   use sparse_matrix, only: su
   use variables, only: vis,den
   use temperature, only: dTdxi, utt,vtt,wtt

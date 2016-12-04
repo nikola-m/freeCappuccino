@@ -6,7 +6,6 @@ subroutine write_restart_files
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use title_mod
@@ -27,38 +26,38 @@ subroutine write_restart_files
 
   write(3) itime,time
   if(const_mflux) write(3) gradpcmf
-  write(3) flmass(:)
-  write(3) u(:)
-  write(3) v(:)
-  write(3) w(:)
-  write(3) p(:)
-  write(3) te(:)
-  write(3) ed(:)
-  write(3) t(:)
-  write(3) vis(:)
-  !      write(3) vart(:)
-  !      write(3) edd(:)
-  !      write(3) ret(:)
-  !      write(3) den(:)
-  !      write(3) utt(:)
-  !      write(3) vtt(:)
-  !      write(3) wtt(:)
-  write(3) uu(:)
-  write(3) vv(:)
-  write(3) ww(:)
-  write(3) uv(:)
-  write(3) uw(:)
-  write(3) vw(:)
-  write(3) uo(:)
-  write(3) vo(:)
-  write(3) wo(:)
-  !      write(3) to(:)
-  write(3) teo(:)
-  write(3) edo(:)
-  !      write(3) varto(:)
-  !      write(3) con(:)
-  !      write(3) cono(:)
-  !      write(3) alph(:)
+  write(3) flmass
+  write(3) u
+  write(3) v
+  write(3) w
+  write(3) p
+  write(3) te
+  write(3) ed
+  write(3) t
+  write(3) vis
+  !      write(3) vart
+  !      write(3) edd
+  !      write(3) ret
+  !      write(3) den
+  !      write(3) utt
+  !      write(3) vtt
+  !      write(3) wtt
+  write(3) uu
+  write(3) vv
+  write(3) ww
+  write(3) uv
+  write(3) uw
+  write(3) vw
+  write(3) uo
+  write(3) vo
+  write(3) wo
+  !      write(3) to
+  write(3) teo
+  write(3) edo
+  !      write(3) varto
+  !      write(3) con
+  !      write(3) cono
+  !      write(3) alph
 
   rewind 3
   close (3)
@@ -82,6 +81,6 @@ subroutine write_restart_files
 
   endif
 
-  write(66,*)'=*=*= Simulation restart files have been written! =*=*='
+  write(6,*)'=*=*= Simulation restart files have been written! =*=*='
 
 end subroutine

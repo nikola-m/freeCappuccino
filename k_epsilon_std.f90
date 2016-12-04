@@ -4,7 +4,7 @@ module k_epsilon_std
 !
   use types
   use parameters
-  use indexes
+  use geometry
   use variables
 
   implicit none
@@ -44,7 +44,7 @@ module k_epsilon_std
   public :: te, ed,  teo, edo,  teoo, edoo
   public :: dTEdxi, dEDdxi
 
-  public :: allocate_k_epsilon_std, deallocate_k_epsilon_std
+  public :: allocate_k_epsilon_std
   public :: correct_turbulence_k_epsilon_std
   public :: correct_turbulence_inlet_k_epsilon_std
 
@@ -79,7 +79,6 @@ subroutine correct_turbulence_k_epsilon_std()
 !
   use types
   use parameters
-  use indexes
   use variables
   use gradients
   implicit none
@@ -110,7 +109,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use sparse_matrix
@@ -542,7 +540,6 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc
   use variables, only: vis
 
@@ -745,7 +742,6 @@ subroutine modify_mu_eff()
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   implicit none
@@ -871,7 +867,7 @@ subroutine modify_mu_eff_inlet()
 !
   use types
   use parameters
-  use indexes
+  use geometry,only:ninl,iInletStart
   use variables
 
   implicit none

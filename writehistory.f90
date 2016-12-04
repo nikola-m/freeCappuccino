@@ -8,11 +8,9 @@
 !
 !***********************************************************************
 !
-  use types
-  use parameters
-  use variables
-  use title_mod
-  use k_epsilon_std
+  use parameters, only: ltransient,time,mpoints
+  use variables, only: u,v,w
+  use k_epsilon_std, only:te,ed
 
   implicit none
 !

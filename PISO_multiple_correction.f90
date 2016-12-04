@@ -7,7 +7,6 @@ subroutine PISO_multiple_correction
   use types
   use parameters
   use indexes
-  use geometry
   use sparse_matrix
   use variables
   use title_mod

@@ -6,7 +6,6 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc,vol
   use sparse_matrix, only: apu
   use variables, only: den,U,V,W,dUdxi,dVdxi,dWdxi

@@ -1,8 +1,7 @@
 module sparse_matrix
 !%%%%%%%%%%%
   use types
-  use parameters, only: nnz,numCells,numInnerFaces,noc
-  use indexes, only: owner, neighbour
+  use geometry, only:  nnz,numCells,numInnerFaces,noc,owner, neighbour
   use utils, only: csr_to_k, find_index_position, find_main_diag_element_positions, i4vec2_sort_a, i4vec_print, i4vec_print2
 
     ! Matrix in sparse format CSR(ioffset,ja,a) and COO(ia,ja,a)
@@ -30,7 +29,7 @@ contains
 ! > Create new CSR matrix object for given mesh data
 !
 
-subroutine create_CSR_matrix_from_mesh_data(  )
+subroutine create_CSR_matrix_from_mesh_data
 !
 ! Define sparsity pattern according to given mesh connectivity data,
 ! and allocate arays representing system matrix in CSR format
@@ -159,23 +158,6 @@ subroutine create_CSR_matrix_from_mesh_data(  )
 !+-----------------------------------------------------------------------------+
 
 end subroutine create_CSR_matrix_from_mesh_data
-
-
-! subroutine free_fvm_data( )
-! !
-! ! Call at the end of a run to free memory of 
-! ! allocatable arrays defined by this module, if they are allocated.
-! !
-
-!   if (allocated( ioffset )) deallocate( ioffset )
-!   if (allocated( ja )) deallocate( ja )
-!   if (allocated( a )) deallocate( a )
-!   if (allocated( diag )) deallocate( diag )
-!   if (allocated( icell_jcell_csr_value_index )) deallocate( icell_jcell_csr_value_index )
-!   if (allocated( icell_jcell_csr_value_index )) deallocate( jcell_icell_csr_value_index )
-
-
-! end subroutine free_fvm_data
 
 
 end module sparse_matrix

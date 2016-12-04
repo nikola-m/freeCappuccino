@@ -21,9 +21,8 @@ subroutine bpres(p,istage)
 ! 
   use types
   use parameters
-  use indexes
   use variables, only: dPdxi
-  use geometry
+  use geometry, only: owner, neighbour, ijl, ijr
 
   implicit none
 !

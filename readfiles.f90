@@ -6,7 +6,6 @@ subroutine readfiles
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use title_mod
@@ -24,38 +23,38 @@ subroutine readfiles
 
   read(3) itime,time
   if(const_mflux) read(3) gradpcmf
-  read(3) flmass(:)
-  read(3) u(:)
-  read(3) v(:)
-  read(3) w(:)
-  read(3) p(:)
-  read(3) te(:)
-  read(3) ed(:)
-  read(3) t(:)
-  read(3) vis(:)
-  !read(3) vart(:)
-  !read(3) edd(:)
-  !read(3) ret(:)
-  !read(3) den(:)
-  !read(3) utt(:)
-  !read(3) vtt(:)
-  !read(3) wtt(:)
-  read(3) uu(:)
-  read(3) vv(:)
-  read(3) ww(:)
-  read(3) uv(:)
-  read(3) uw(:)
-  read(3) vw(:)
-  read(3) uo(:)
-  read(3) vo(:)
-  read(3) wo(:)
-  !read(3) to(:)
-  read(3) teo(:)
-  read(3) edo(:)
-  !read(3) varto(:)
-  !read(3) con(:)
-  !read(3) cono(:)
-  !read(3) alph(:)
+  read(3) flmass
+  read(3) u
+  read(3) v
+  read(3) w
+  read(3) p
+  read(3) te
+  read(3) ed
+  read(3) t
+  read(3) vis
+  !read(3) vart
+  !read(3) edd
+  !read(3) ret
+  !read(3) den
+  !read(3) utt
+  !read(3) vtt
+  !read(3) wtt
+  read(3) uu
+  read(3) vv
+  read(3) ww
+  read(3) uv
+  read(3) uw
+  read(3) vw
+  read(3) uo
+  read(3) vo
+  read(3) wo
+  !read(3) to
+  read(3) teo
+  read(3) edo
+  !read(3) varto
+  !read(3) con
+  !read(3) cono
+  !read(3) alph
 
   rewind 3
   

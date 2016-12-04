@@ -5,15 +5,16 @@ program caffa3d
 !
 !***********************************************************************
 !
-!  FINITE VOLUME SOLVER FOR NAVIER-STOKES EQUATIONS
+! Description:
+!  An unstructured finite volume solver.
 !  
-! /caffa3d <input_file> <inlet_file> <grid_file> <monitor_file> <restart_file> <out_folder_path>      
+! Usage:
+! ./caffa3d <input_file> <inlet_file> <grid_file> <monitor_file> <restart_file> <out_folder_path>      
 !
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 !
   use types
   use parameters
-  use indexes
   use geometry, only: vol
   use variables
   use title_mod
@@ -26,8 +27,8 @@ program caffa3d
 
   integer :: itimes, itimee, iter, i, ijp, ijn, inp, imon
   real(dp):: source
-  integer :: narg ! number of arguments when program is called
-  real(dp):: magUbarStar, rUAw, gragPplus, flowDirection ! za periodic channel
+  integer :: narg
+  real(dp):: magUbarStar, rUAw, gragPplus, flowDirection
   real(dp):: suma,dt
   real :: start, finish
   character(len=2) :: trpn
@@ -59,33 +60,24 @@ program caffa3d
 !-----------------------------------------------
 !  Open files for data at monitoring points 
 !-----------------------------------------------
-  if(ltransient) then
-  open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
-  open(unit=91,file=trim(out_folder_path)//'/transient_monitoring_points_names')
-  rewind 89
-  rewind 91
-   do imon=1,mpoints
-      read(91, *) trpn
-      open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//trpn,access='append')
-      if(.not.lread) rewind(91+imon)
-   end do
-  end if
-
-!-----------------------------------------------
-! Initial output
-!-----------------------------------------------
-  call print_header
+  ! if(ltransient) then
+  ! open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
+  ! open(unit=91,file=trim(out_folder_path)//'/transient_monitoring_points_names')
+  ! rewind 89
+  ! rewind 91
+  !  do imon=1,mpoints
+  !     read(91, *) trpn
+  !     open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//trpn,access='append')
+  !     if(.not.lread) rewind(91+imon)
+  !  end do
+  ! end if
 
 !
 !===============================================
 !     T i m e   l o o p : 
 !===============================================
 !
-      if(.not.lread) time=0.0d0
-      itimes=itime+1 
-      itimee=itime+numstep
-
-      time_loop: do itime=itimes,itimee ! time_loop 
+      time_loop: do itime=1,numstep ! time_loop 
 !
 !===============================================
 !     Update variables : 
@@ -93,25 +85,23 @@ program caffa3d
 !
 
    if(bdf) then
-      uoo(:)=uo(:)
-      voo(:)=vo(:)
-      woo(:)=wo(:)
-      too(:)=to(:)
-      teoo(:)=teo(:)
-      edoo(:)=edo(:)
-      ! vartoo(:)=varto(:)
-      ! conoo(:)=cono(:)
+      uoo = uo 
+      voo = vo 
+      woo = wo 
+      too = to 
+      teoo = teo 
+      edoo = edo 
+      ! vartoo = varto 
+      ! conoo = cono 
    endif
-      uo(:)=u(:)
-      vo(:)=v(:)
-      wo(:)=w(:)
-      to(:)=t(:)
-      teo(:)=te(:)
-      edo(:)=ed(:)        
-      ! varto(:)=vart(:)
-      ! cono(:)=con(:)
-
-
+      uo = u 
+      vo = v 
+      wo = w 
+      to = t 
+      teo = te 
+      edo = ed         
+      ! varto = vart 
+      ! cono = con 
 !
 !===============================================
 !.....Set inlet boundary conditions at every timestep
@@ -129,28 +119,29 @@ program caffa3d
       ! Header written to monitor at start of SIMPLE iterations 
       !include 'simpleMonitorHeader.h'
       !time = time + timestep
-      !write(66,*)
-      !write(66,'(a,i0,a,f12.6)') ' Time step no. : ',ITIME,' Time = ',TIME
-      !write(66,*)
+      !write(6,*)
+      !write(6,'(a,i0,a,f12.6)') ' Time step no. : ',ITIME,' Time = ',TIME
+      !write(6,*)
 
 ! 
 !===============================================
-!.....ITERATION LOOP
+!.....ITERATION loop
 !===============================================
 !
-      ITERATION_LOOP: DO ITER=1,MAXIT 
+      iteration_loop: do iter=1,maxit 
 
       call cpu_time(start)
 
-!.....Calculate velocities. Momentum predictor for PISO.
-      IF(LCAL(IU))    CALL CALCUVW
-!      CALL CORVEL
+!.....Calculate velocities.
+      call calcuvw
+
 !.....Update OUTLET BC.
-      ! // IF(LCAL(IU).and..not.const_mflux)    CALL OUTBC  
+      ! // IF(.not.const_mflux)    CALL OUTBC  
+
 !.....Pressure-velocity coupling. Two options: SIMPLE and PISO
-      IF(LCAL(IP).AND.SIMPLE)   CALL CALCP
-      IF(LCAL(IP).AND.PISO)     CALL PISO_multiple_correction
-      IF(LCAL(IP).AND.PIMPLE)   CALL PIMPLE_multiple_correction
+      IF(SIMPLE)   CALL CALCP
+      IF(PISO)     CALL PISO_multiple_correction
+      IF(PIMPLE)   CALL PIMPLE_multiple_correction
 
 !.....Turbulence
       call correct_turbulence()
@@ -170,18 +161,15 @@ program caffa3d
 
 
       call cpu_time(finish)
-      write(66,'(a,g0.3,a)') 'ExecutionTime = ',finish-start,' s'
-      write(66,*)
+      write(6,'(a,g0.3,a)') 'ExecutionTime = ',finish-start,' s'
+      write(6,*)
 
 
 
 !.....Residual normalization, convergence check  
       do i=1,nphi
         resor(i)=resor(i)*rnor(i)
-      end do 
-      ! resor(ied)=resor(ied)*small
-      ! resor(icon)=resor(icon)*small
-
+      end do
 
       ! Write to monitor file - Old style
       !include 'simpleMonitorResiduals.h'
@@ -190,7 +178,7 @@ program caffa3d
 !.....Proveri kako stojimo sa rezidualom
       source=max(resor(iu),resor(iv),resor(iw),resor(ip),resor(ien),resor(icon)) 
       if(source.gt.slarge) then
-          write(66,"(//,10x,a)") "*** Program terminated -  iterations diverge ***" 
+          write(6,"(//,10x,a)") "*** Program terminated -  iterations diverge ***" 
           stop ! zavrsi program
       endif
 !
@@ -223,12 +211,12 @@ program caffa3d
 
 
             ! # Add fluctations by random perturbations to maintain turbulence in channel
-            if(mod(itime,nzapis).eq.0) then
-              call add_random_noise_to_field(u,5)
-              call add_random_noise_to_field(v,5)
-              call add_random_noise_to_field(w,5)
-              write(66,'(a)') "Added random noise to velocity field!"
-            endif
+            ! if(mod(itime,nzapis).eq.0) then
+            !   call add_random_noise_to_field(u,5)
+            !   call add_random_noise_to_field(v,5)
+            !   call add_random_noise_to_field(w,5)
+            !   write(6,'(a)') "Added random noise to velocity field!"
+            ! endif
 
             cycle time_loop ! idi na pocetak 'time_loop'-a sa sledecom vrednosti indeksa
          
@@ -250,7 +238,7 @@ program caffa3d
       endif
 
  
-      if(ltransient) call flush(66)
+      if(ltransient) call flush(6)
  
       end do time_loop
 
@@ -261,5 +249,5 @@ program caffa3d
       call write_restart_files
       
 
-end program caffa
+end program caffa3d
 

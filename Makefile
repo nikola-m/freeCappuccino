@@ -13,6 +13,7 @@ MOD_FILES=\
     modules_allocatable.f90 \
     utils.f90 \
     matrix.f90 \
+    mesh_geometry_and_topology.f90 \
     sparse_matrix.f90 \
     gradients.f90 \
     output.f90 \

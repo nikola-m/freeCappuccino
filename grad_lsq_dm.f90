@@ -30,7 +30,6 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
 !
   use types
   use parameters
-  use indexes
   use geometry
 
   implicit none

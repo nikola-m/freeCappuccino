@@ -6,7 +6,6 @@ subroutine PIMPLE_multiple_correction
 !
   use types
   use parameters
-  use indexes
   use geometry
   use sparse_matrix
   use variables
@@ -63,13 +62,11 @@ subroutine PIMPLE_multiple_correction
       ! > Off-diagonal elements:
 
       ! (icell,jcell) matrix element:
-      k = csr_to_k(ijp,ijn,ioffset,ja)
-      !k = index(2*(i-1)+1)
+      k = icell_jcell_csr_value_index(i)
       a(k) = can
 
       ! (jcell,icell) matrix element:
-      k = csr_to_k(ijn,ijp,ioffset,ja)
-      !k = index(2*(i-1)+2)
+      k = jcell_icell_csr_value_index(i)
       a(k) = cap
 
       ! > Elements on main diagonal:
@@ -126,11 +123,7 @@ subroutine PIMPLE_multiple_correction
 
   
 
-  ! Test continutity: sum=0
-  ! sum=0.0d0
-  ! do inp=1,numCells
-  !   sum=sum+su(inp)
-  ! enddo
+  ! Test continutity:
   write(66,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
@@ -243,7 +236,7 @@ subroutine PIMPLE_multiple_correction
         end do
       
         ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-        write(66,'(20x,i1,a,/,a,1pe10.3,/,20x,a,1pe10.3)')  &
+        write(66,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
                             ipcorr,'. nonorthogonal pass:', &
                                    ' sum  =',sum(su(:)),    &
                                    '|sum| =',abs(sum(su(:)))
@@ -253,7 +246,7 @@ subroutine PIMPLE_multiple_correction
       ! We have hit the last iteration of nonorthogonality correction,
       ! correct mass fluxes at inner cv-faces with second correction.
       !
-      elseif(icorr.eq.npcor.and.npcor.gt.1) then !-------------------------------------------------
+      elseif(ipcorr.eq.npcor.and.npcor.gt.1) then !-------------------------------------------------
 
         do i=1,numInnerFaces                                                      
           ijp = owner(i)

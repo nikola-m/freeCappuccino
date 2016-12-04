@@ -31,7 +31,6 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 !
   use types
   use parameters
-  use indexes
   use geometry
   use matrix_module
 

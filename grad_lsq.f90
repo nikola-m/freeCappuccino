@@ -26,7 +26,6 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 !
   use types
   use parameters
-  use indexes
   use geometry
 
   implicit none

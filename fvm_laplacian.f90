@@ -12,7 +12,6 @@ subroutine fvm_laplacian(mu,phi)
 !
   use types
   use parameters
-  use indexes
   use geometry
   use sparse_matrix
 
@@ -161,7 +160,6 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc
 
   implicit none

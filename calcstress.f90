@@ -9,7 +9,7 @@ subroutine calcstress
 !
   use types
   use parameters
-  use geometry, only: vol
+  use geometry, only: numCells, vol
   use variables
   use k_epsilon_std, only: te
   use OMEGA_Turb_Models, only: bij

@@ -12,7 +12,6 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc,vol
   use variables
   use sparse_matrix, only: apu

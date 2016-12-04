@@ -11,7 +11,6 @@ subroutine calcp
 !
   use types
   use parameters
-  use indexes
   use geometry
   use sparse_matrix
   use variables
@@ -102,11 +101,7 @@ subroutine calcp
 
 
 
-  ! Test continutity: sum=0
-  ! sum=0.0d0
-  ! do inp=1,numCells
-  !   sum=sum+su(inp)
-  ! enddo
+  ! Test continutity:
   write(66,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
@@ -202,7 +197,7 @@ subroutine calcp
       end do
     
       ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      write(66,'(20x,i1,a,/,a,1pe10.3,/,20x,a,1pe10.3)')  &
+      write(66,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
                           ipcorr,'. nonorthogonal pass:', &
                                         ' sum  =',sum(su(:)),    &
                                         '|sum| =',abs(sum(su(:)))
@@ -234,9 +229,6 @@ subroutine calcp
 
 !=END: Multiple pressure corrections loop==============================
   enddo
-
-! Update pressure at boundaries
-  ! call bpres(p) --> moved to calcuvw, when we actually need it.
 
 !.....Write continuity error report:
   include 'continuityErrors.h'

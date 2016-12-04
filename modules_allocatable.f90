@@ -34,56 +34,29 @@ module parameters
   real(dp), parameter :: ctrans = 11.63
 
 
-
-  integer :: ninl,nout,nsym,npru,nwal,noc, &
-             nwali,nwala,nwalf
-
-  integer :: numNodes
-  integer :: numCells
-  integer :: numInnerFaces
-  integer :: numTotal
-  integer :: numFacesTotal
-  integer :: nnz
-
-  integer :: iInletStart
-  integer :: iOutletStart
-  integer :: iSymmetryStart
-  integer :: iWallStart
-  integer :: iPressOutletStart
-  integer :: iOCStart
-
-  integer :: iInletFacesStart
-  integer :: iOutletFacesStart
-  integer :: iSymmetryFacesStart
-  integer :: iWallFacesStart
-  integer :: iPressOutletFacesStart
-  integer :: iOCFacesStart
-
   integer :: monCell  ! Monitoring point for values, usually for log file
   integer :: pRefCell ! Pressure reference cell
   integer :: mpoints  ! No. of monitoring points
 
-  real(dp) :: flomas
-  real(dp) :: flomom 
+  real(dp) :: flomas  ! mass flow at inlet
+  real(dp) :: flomom  ! momentum of flow at inlet
   real(dp) :: prm1   
-  real(dp) :: prt1
-  real(dp) :: phit
-  real(dp) :: sksi
-  real(dp) :: eta   
-  real(dp) :: rcost   
-  real(dp) :: ray
-  real(dp) :: densit  
-  real(dp) :: viscos   
-  real(dp) :: sormax   
-  real(dp) :: slarge
-  real(dp) :: facnap   
-  real(dp) :: facflx
-  real(dp) :: uin,vin,win,tein,edin,tin,vartin,conin 
+  real(dp) :: prt1  
+  real(dp) :: densit   ! Fluid density
+  real(dp) :: viscos   ! Molecular dynamic viscosity
+  real(dp) :: sormax   ! Residual toleance for SIMPLE
+  real(dp) :: slarge   ! Upper limit for residuals before simulation blowup
+  real(dp) :: facnap   ! Underelaxation factor for Reynolds stresses
+  real(dp) :: facflx   ! Underelaxation factor for turbulent heat fluxes
+  real(dp) :: uin,vin,win,tein,edin,tin,vartin,conin ! Inlet values (assumed constant accross inlet)
 
   logical :: lbuoy
   integer :: boussinesq
   real(dp) :: tref
   real(dp) :: beta
+  real(dp) :: phit
+  real(dp) :: sksi
+  real(dp) :: eta 
   real(dp) :: gravx,gravy,gravz
   real(dp) :: facvis
 
@@ -160,69 +133,6 @@ module parameters
 
 end module parameters
 
-module indexes
-  !
-  ! Mesh conectivity
-  !
-
-    integer, dimension(:), allocatable :: owner     ! Index of the face owner cell
-    integer, dimension(:), allocatable :: neighbour ! Index of the neighbour cell  - it shares the face with owner
-    integer, dimension(:), allocatable :: ijl, ijr  ! left and right cell at the block boundary, it is still an inner face in the domain
-end module indexes
-
-module geometry
-!%%%%%%%%%%%%%%
-   use types
-
-    ! Geometry parameters defined cellwise
-
-    real(dp), dimension(:), allocatable :: x ,y ,z  ! Coordinates of mesh nodes
-    real(dp), dimension(:), allocatable :: xc,yc,zc ! Coordinates of cell centers
-    real(dp), dimension(:), allocatable :: vol      ! Cell volume
-    real(dp), dimension(:), allocatable :: wallDistance ! Distance to the nearest wall - needed in some turb. models
-
-    ! Geometry parameters defined for inner faces
-    real(dp), dimension(:), allocatable :: arx,ary,arz ! Components of the face normal vector
-
-    real(dp), dimension(:), allocatable :: facint ! Face interpolation factor
-
-    real(dp), dimension(:), allocatable :: xf,yf,zf ! Face center components
-
-    ! Geometry parameters defined for boundary faces
-    real(dp), dimension(:), allocatable :: xni,yni,zni ! Boundary face normal componets, inlet faces
-    real(dp), dimension(:), allocatable :: xfi,yfi,zfi ! Boundary face center components, inlet faces
-
-    real(dp), dimension(:), allocatable :: xno,yno,zno ! Boundary face normal componets, outlet faces
-    real(dp), dimension(:), allocatable :: xfo,yfo,zfo ! Boundary face center components, outlet faces
-
-    real(dp), dimension(:), allocatable :: srds,dns    ! srds = |are|/|dns|, dns = normal distance to cell center from face |dpn*face_normal_unit_vec|
-    real(dp), dimension(:), allocatable :: xns,yns,zns ! Boundary face normal componets, symmetry faces
-    real(dp), dimension(:), allocatable :: xfs,yfs,zfs ! Boundary face center components, symmetry faces
-
-    real(dp), dimension(:), allocatable :: srdw,dnw    ! srdw = |are|/|dnw|, dnw = normal distance to cell center from face |dpn*face_normal_unit_vec|
-    real(dp), dimension(:), allocatable :: xnw,ynw,znw ! Boundary face normal componets, wall faces
-    real(dp), dimension(:), allocatable :: xfw,yfw,zfw ! Boundary face center components, wall faces
-
-    real(dp), dimension(:), allocatable :: xnpr,ynpr,znpr ! Boundary face normal componets, press outlet faces
-    real(dp), dimension(:), allocatable :: xfpr,yfpr,zfpr ! Boundary face center components, press. outlet faces
-
-    real(dp), dimension(:), allocatable :: srdoc          ! srdoc = |are|/|dpn*face_normal_unit_vec| 
-    real(dp), dimension(:), allocatable :: xnoc,ynoc,znoc ! Boundary face normal componets, o-c- faces
-    real(dp), dimension(:), allocatable :: xfoc,yfoc,zfoc ! Boundary face center components, o-c- faces
-    real(dp), dimension(:), allocatable :: foc            ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
-
-    real(dp), dimension(:), allocatable :: xpp   ! Coordinates of auxilliary points - owner cell [1:numInnerFaces]
-    real(dp), dimension(:), allocatable :: ypp   ! -
-    real(dp), dimension(:), allocatable :: zpp   ! -
-
-    real(dp), dimension(:), allocatable :: xnp   ! Coordinates of auxilliary points - neighbour cell [1:numInnerFaces]
-    real(dp), dimension(:), allocatable :: ynp   ! -
-    real(dp), dimension(:), allocatable :: znp   ! -
-
-end module geometry
-
-
-
 
 module hcoef
 !%%%%%%%%%%%%%
@@ -237,12 +147,12 @@ module OMEGA_Turb_Models
 !%%%%%%%%%%%%%%
   use types  
     real(dp) :: sigmk1,sigmk2,sigmom1,sigmom2, & ! constants prescribed in MODINP routine
-                  betai1,betai2,a1,alpha1,alpha2
+                betai1,betai2,a1,alpha1,alpha2
     real(dp) :: alpha,betta,bettast
     real(dp), dimension(:), allocatable :: domega,alphasst,bettasst, &     ! Cross diffusion coed and SST coefs
-                                             qsas, &                         ! SAS model additional production term
-                                             prtinv_te,prtinv_ed, &          ! 1/sigma_k; 1/sigma_epsilon
-                                             cmueff                          ! size(NXYZ) ! CMUEFF the effective Cmu for EARSM
+                                             qsas, &                       ! SAS model additional production term
+                                             prtinv_te,prtinv_ed, &        ! 1/sigma_k; 1/sigma_epsilon
+                                             cmueff                        ! size(NXYZ) ! CMUEFF the effective Cmu for EARSM
     real(dp), dimension(:,:), allocatable :: bij                           ! size(5,NXYZ) Reynolds stress anisotropy, used in EARSM
     real(dp), dimension(:), allocatable :: lvk                             ! the on Karman length scale for SAS model.
 end module OMEGA_Turb_Models

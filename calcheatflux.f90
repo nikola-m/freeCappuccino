@@ -9,7 +9,6 @@ subroutine calcheatflux
 !
   use types
   use parameters
-  use indexes
   use geometry
   use sparse_matrix
   use variables

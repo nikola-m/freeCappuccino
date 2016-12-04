@@ -6,7 +6,7 @@ subroutine calc_statistics
 !
   use types
   use parameters
-  use indexes
+  use geometry, only: numCells
   use variables
   use statistics
 

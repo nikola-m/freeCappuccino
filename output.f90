@@ -1,9 +1,7 @@
 module output
 use types, only: dp
-use parameters, only: numCells, numNodes
-use geometry
-!use mesh_geometry_and_topology
-!use field_operation
+use parameters
+use geometry,only: numCells, numNodes
 use utils, only: get_unit, i4_to_s_left
 
 ! ! 

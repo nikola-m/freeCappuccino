@@ -2,6 +2,7 @@ module gradients
 
 use types
 use parameters
+use geometry, only:numTotal,numCells
 
 implicit none
 
@@ -20,7 +21,7 @@ end interface
 private
 
 public :: lstsq, lstsq_qr, lstsq_dm, gauss
-public :: grad,allocate_gradients, deallocate_gradients, &
+public :: grad,allocate_gradients, &
           create_lsq_gradients_matrix
 
 
@@ -41,15 +42,6 @@ subroutine allocate_gradients
           if(ierr /= 0)write(*,*)"allocation error: dmatqr"
       endif
 
-end subroutine
-
-subroutine deallocate_gradients
-  implicit none
-      if( lstsq .or. lstsq_dm ) then
-        deallocate(dmat) 
-      elseif( lstsq_qr ) then
-        deallocate(dmatqr)
-      endif
 end subroutine
 
 

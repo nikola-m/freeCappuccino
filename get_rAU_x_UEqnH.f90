@@ -12,7 +12,6 @@ subroutine get_rAU_x_UEqnH()
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use sparse_matrix

@@ -6,7 +6,6 @@ subroutine writefiles
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use statistics

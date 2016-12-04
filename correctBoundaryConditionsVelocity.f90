@@ -8,7 +8,6 @@ subroutine correctBoundaryConditionsVelocity
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
 

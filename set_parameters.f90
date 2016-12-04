@@ -21,7 +21,9 @@ subroutine set_parameters
 !***********************************************************************
 !
   use parameters
-  use indexes
+  use geometry,only:numTotal,numCells,numInnerFaces,Ninl,Nout,Nsym,Nwal,Npru,Noc,&
+                    iInletStart,iOutletStart,iSymmetryStart,iWallStart,iPressOutletStart,iOCStart, &
+                    iInletFacesStart,iOutletFacesStart, iSymmetryFacesStart,iWallFacesStart,iPressOutletFacesStart,iOCFacesStart
 
   implicit none
 !
@@ -29,9 +31,9 @@ subroutine set_parameters
 !
   numTotal = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc
 
-  numFacesTotal = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru
+  ! numFacesTotal = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru ! maybe good for checking only..?
 
-  nnz = numCells + 2*numInnerFaces
+  ! nnz = numCells + 2*numInnerFaces
 
   ! Where in variable arrays, the boundary face values are stored, 
   ! e.g. for inlet faces it is: (iInletStart+1, iInletStart+Ninl),
@@ -56,6 +58,5 @@ subroutine set_parameters
   iWallFacesStart = numInnerFaces+Ninl+Nout+Nsym
   iPressOutletFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal
   iOCFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru
-
 
 end subroutine

@@ -13,7 +13,7 @@ subroutine dpcg(fi,ifi)
 !
   use types 
   use parameters
-  use indexes
+  use geometry, only: numCells, numNodes, noc, ijl, ijr
   use sparse_matrix
   use title_mod
 

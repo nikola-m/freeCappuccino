@@ -10,7 +10,6 @@
     pure function volumeWeightedAverage(U) result(wAvgU)
     use types
     use parameters
-    use indexes
     use geometry
 
     implicit none
@@ -54,7 +53,7 @@
 !
       use types
       use parameters
-      use indexes
+      use geometry, only: numCells
 
       implicit none
 !
@@ -101,7 +100,6 @@
 !
       use types
       use parameters
-      use indexes
       use geometry, only: xc,yc,zc
 
       implicit none
@@ -233,7 +231,6 @@
 !=======================================================================
       use types
       use parameters
-      use indexes
       use sparse_matrix
       use geometry, only: xc,yc,zc
 

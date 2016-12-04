@@ -6,7 +6,6 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc
   use variables
 

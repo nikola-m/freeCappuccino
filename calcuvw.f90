@@ -6,7 +6,6 @@ subroutine calcuvw
 !
   use types, only: dp
   use parameters
-  use indexes
   use geometry
   use sparse_matrix
   use variables

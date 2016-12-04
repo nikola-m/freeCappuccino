@@ -4,7 +4,7 @@ module temperature
 !
   use types
   use parameters
-  use indexes
+  use geometry
   use variables
 
   implicit none
@@ -40,7 +40,7 @@ module temperature
   public :: t, to, too, vart, varto, vartoo, utt, vtt, wtt, pranl, &
             dTdxi, dVartdxi, &
             calcsc, &
-            allocate_temperature, deallocate_temperature
+            allocate_temperature
 
 contains
 
@@ -68,26 +68,12 @@ end subroutine allocate_temperature
 
 
 
-subroutine deallocate_temperature
-  implicit none
-    deallocate( t ) 
-    deallocate( to )
-    if (allocated(too)) deallocate( too )
-    deallocate( dTdxi )
-    deallocate( utt )
-    deallocate( vtt )
-    deallocate( wtt )
-end subroutine deallocate_temperature
-
-
-
 subroutine calcsc(Fi,dFidxi,ifi)
 !
 ! Ansamble and solve transport eq. for temerature scalar.
 !
   use types
   use parameters
-  use indexes
   use geometry
   use variables
   use sparse_matrix
@@ -101,7 +87,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 !
 ! Local variables
 !
-  integer ::    i, k, inp, ijp, ijn, ijb
+  integer ::  i, k, inp, ijp, ijn, ijb
   real(dp) :: gam, prtr, apotime, urfrs, urfms
   real(dp) :: cap, can, suadd
   real(dp) :: off_diagonal_terms
@@ -333,7 +319,6 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc
   use variables, only: vis
 

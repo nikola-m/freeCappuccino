@@ -6,7 +6,6 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 !
   use types
   use parameters
-  use indexes
   use geometry, only: xc,yc,zc,vol
   use variables, only: den,U,V,W,dUdxi,dVdxi,dWdxi,p,dpdxi
   use sparse_matrix, only: apu,apv,apw
