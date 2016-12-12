@@ -3,7 +3,8 @@ subroutine find_strain_rate
 !***********************************************************************
 !
   use types
-  use parameters   
+  use parameters  
+  use geometry, only:numCells 
   use variables
   use gradients
 

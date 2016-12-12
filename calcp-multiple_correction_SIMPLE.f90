@@ -23,7 +23,7 @@ subroutine calcp
 !
 
   integer :: i, k, inp, iface, ijp, ijn, istage
-  real(dp) :: sum, are, ppref, cap, can, fmcor
+  real(dp) :: sum, ppref, cap, can, fmcor
 
 
   a(:) = 0.0d0

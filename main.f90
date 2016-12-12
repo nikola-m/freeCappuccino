@@ -15,7 +15,7 @@ program caffa3d
 !
   use types
   use parameters
-  use geometry, only: vol
+  use geometry
   use variables
   use title_mod
   use fieldManipulation
@@ -25,7 +25,7 @@ program caffa3d
 
   implicit none
 
-  integer :: itimes, itimee, iter, i, ijp, ijn, inp, imon
+  integer :: iter, i, ijp, ijn, inp, imon
   real(dp):: source
   integer :: narg
   real(dp):: magUbarStar, rUAw, gragPplus, flowDirection
@@ -106,7 +106,7 @@ program caffa3d
 !===============================================
 !.....Set inlet boundary conditions at every timestep
 !===============================================
-      if(itime.eq.itimes) call bcin
+      if(itime.eq.1) call bcin ! here called only once at the beginning
 !
 !===============================================
 !.....ITERATION CONTROL MONITOR

@@ -23,7 +23,7 @@ subroutine PIMPLE_multiple_correction
   integer :: ijp, ijn
   real(dp) :: cap, can
   real(dp) :: fmcor
-  real(dp) :: sum,are
+  real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
   h(:) = a(:) 

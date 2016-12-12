@@ -66,7 +66,7 @@ subroutine init
       READ(5,*) PRANL,TREF,BETA
       READ(5,*) LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
       READ(5,*) roughWall,EROUGH,ZZERO
-      READ(5,*) PHIT,SKSI,ETA,FACNAP,FACFLX
+      READ(5,*) FACNAP,FACFLX
       READ(5,*) LTRANSIENT,BTIME
       READ(5,*) LEVM,LASM,LLES
       READ(5,*) LSGDH,LGGDH,LAFM
@@ -82,7 +82,7 @@ subroutine init
       READ(5,*) NPCOR, NIGRAD
       READ(5,*) BDF,CN
       READ(5,*) SIMPLE,PISO,PIMPLE,ncorr
-      READ(5,*) const_mflux,gradPcmf
+      READ(5,*) const_mflux
       READ(5,*) CoNumFix, CoNumFixValue
 !.....END: READ INPUT FILE.............................................!
       CLOSE (5)
@@ -99,7 +99,7 @@ subroutine init
       WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
       WRITE(6,'(L1,1x,3f5.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
       WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
-      WRITE(6,'(5(f4.2,1x),a)') PHIT,SKSI,ETA,FACNAP,FACFLX,'PHIT,SKSI,ETA,FACNAP,FACFLX'
+      WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
       WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
       WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
       WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
@@ -115,11 +115,11 @@ subroutine init
       WRITE(6,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
       WRITE(6,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
       WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
-      WRITE(6,'(1(L1,1x),es11.4,5x,a)') const_mflux,gradPcmf,'const_mflux, gradPcmf'
+      WRITE(6,'(1(L1,1x),5x,a)') const_mflux,'const_mflux'
       WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
       WRITE(6,'(a)') '--------------------------------------------------------------------------------'
       WRITE(6,'(a)') ' '
-stop
+
 !
 ! 2)  Open & Read Grid File & Allocating Arrays
 !
@@ -133,97 +133,111 @@ stop
       noc = 0
 
       
-      open(unit=4,file=grid_file,form='unformatted')
-      rewind 4
+!       open(unit=4,file=grid_file,form='unformatted')
+!       rewind 4
 
-      read(4) &
-            numNodes,numCells,numInnerFaces,numFacesTotal, &
-            ninl,nout,nsym,nwal,npru,noc, &
-            nwali,nwala,nwalf
-!-----------------------------------------------------------------------
-! STOP READING FILE FOR A SECOND AND DO SOME USEFUL WORK
-!-----------------------------------------------------------------------
-      call set_parameters                                              
-      call allocate_arrays
-      call allocate_gradients
-      select case (TurbModel)
-        case (1)
-          call allocate_k_epsilon_std
-        case default
-      end select                                           
-!-----------------------------------------------------------------------
+!       read(4) &
+!             numNodes,numCells,numInnerFaces,numFacesTotal, &
+!             ninl,nout,nsym,nwal,npru,noc, &
+!             nwali,nwala,nwalf
+! !-----------------------------------------------------------------------
+! ! STOP READING FILE FOR A SECOND AND DO SOME USEFUL WORK
+! !-----------------------------------------------------------------------
+!       call set_parameters                                              
+!       call allocate_arrays
+!       call allocate_gradients
+!       select case (TurbModel)
+!         case (1)
+!           call allocate_k_epsilon_std
+!         case default
+!       end select                                           
+! !-----------------------------------------------------------------------
 
-      if(ninl.gt.0) then     
-      read(4) &
-              (xni(i),i=1,ninl),(yni(i),i=1,ninl),(zni(i),i=1,ninl), &
-              (xfi(i),i=1,ninl),(yfi(i),i=1,ninl),(zfi(i),i=1,ninl)
-      endif
+!       if(ninl.gt.0) then     
+!       read(4) &
+!               (xni(i),i=1,ninl),(yni(i),i=1,ninl),(zni(i),i=1,ninl), &
+!               (xfi(i),i=1,ninl),(yfi(i),i=1,ninl),(zfi(i),i=1,ninl)
+!       endif
 
-      if(nout.gt.0) then 
-      read(4) &
-              (xno(i),i=1,nout),(yno(i),i=1,nout),(zno(i),i=1,nout), &
-              (xfo(i),i=1,nout),(yfo(i),i=1,nout),(zfo(i),i=1,nout)
-      endif
+!       if(nout.gt.0) then 
+!       read(4) &
+!               (xno(i),i=1,nout),(yno(i),i=1,nout),(zno(i),i=1,nout), &
+!               (xfo(i),i=1,nout),(yfo(i),i=1,nout),(zfo(i),i=1,nout)
+!       endif
 
-      if(nsym.gt.0) then 
-      read(4) &
-            (srds(i),i=1,nsym),(dns(i),i=1,nsym), &
-            (xns(i),i=1,nsym),(yns(i),i=1,nsym),(zns(i),i=1,nsym), &
-            (xfs(i),i=1,nsym),(yfs(i),i=1,nsym),(zfs(i),i=1,nsym)
-      endif
+!       if(nsym.gt.0) then 
+!       read(4) &
+!             (srds(i),i=1,nsym),(dns(i),i=1,nsym), &
+!             (xns(i),i=1,nsym),(yns(i),i=1,nsym),(zns(i),i=1,nsym), &
+!             (xfs(i),i=1,nsym),(yfs(i),i=1,nsym),(zfs(i),i=1,nsym)
+!       endif
 
-      if(nwal.gt.0) then 
-      read(4) &
-            (srdw(i),i=1,nwal),(dnw(i),i=1,nwal), &
-            (xnw(i),i=1,nwal),(ynw(i),i=1,nwal),(znw(i),i=1,nwal), &
-            (xfw(i),i=1,nwal),(yfw(i),i=1,nwal),(zfw(i),i=1,nwal)
-      endif
+!       if(nwal.gt.0) then 
+!       read(4) &
+!             (srdw(i),i=1,nwal),(dnw(i),i=1,nwal), &
+!             (xnw(i),i=1,nwal),(ynw(i),i=1,nwal),(znw(i),i=1,nwal), &
+!             (xfw(i),i=1,nwal),(yfw(i),i=1,nwal),(zfw(i),i=1,nwal)
+!       endif
 
-      if(npru.gt.0) then 
-      read(4) &
-            (xnpr(i),i=1,npru),(ynpr(i),i=1,npru),(znpr(i),i=1,npru), &
-            (xfpr(i),i=1,npru),(yfpr(i),i=1,npru),(zfpr(i),i=1,npru)
-      endif
+!       if(npru.gt.0) then 
+!       read(4) &
+!             (xnpr(i),i=1,npru),(ynpr(i),i=1,npru),(znpr(i),i=1,npru), &
+!             (xfpr(i),i=1,npru),(yfpr(i),i=1,npru),(zfpr(i),i=1,npru)
+!       endif
 
-      if(noc.gt.0) then 
-      read(4) &
-            (ijl(i) ,i=1,noc),(ijr(i)  ,i=1,noc), &
-            (srdoc(i), i=1,noc),(foc(i), i=1,noc), &
-            (xnoc(i),i=1,noc),(ynoc(i),i=1,noc),(znoc(i),i=1,noc), &
-            (xfoc(i),i=1,noc),(yfoc(i),i=1,noc),(zfoc(i),i=1,noc)
-      endif
+!       if(noc.gt.0) then 
+!       read(4) &
+!             (ijl(i) ,i=1,noc),(ijr(i)  ,i=1,noc), &
+!             (srdoc(i), i=1,noc),(foc(i), i=1,noc), &
+!             (xnoc(i),i=1,noc),(ynoc(i),i=1,noc),(znoc(i),i=1,noc), &
+!             (xfoc(i),i=1,noc),(yfoc(i),i=1,noc),(zfoc(i),i=1,noc)
+!       endif
 
-      read(4) &
-!
-!           Node data: coordinates of vertices
-!
-            (x(i) ,i=1,numNodes),(y(i) ,i=1,numNodes),(z(i) ,i=1,numNodes), &
-!
-!           Cell data: cell centers and volumes
-!
-            (xc(i) ,i=1,numCells),(yc(i) ,i=1,numCells),(zc(i) ,i=1,numCells), &
-            (vol(i),i=1,numCells), &
-!
-!           The owner and neighbour index arrays, interpolation factors for inner faces
-!
-            (owner(i),i=1,numFacesTotal),(neighbour(i),i=1,numInnerFaces), &
-            (facint(i),i=1,numInnerFaces), &
-!
-!           Face normal vector - its components are face area projections
-!
-            (arx(i),i=1,numInnerFaces),(ary(i),i=1,numInnerFaces),(arz(i),i=1,numInnerFaces), &
-!
-!           Face centers for inner faces
-!
-            (xf(i),i=1,numInnerFaces),(yf(i),i=1,numInnerFaces),(zf(i),i=1,numInnerFaces)
+!       read(4) &
+! !
+! !           Node data: coordinates of vertices
+! !
+!             (x(i) ,i=1,numNodes),(y(i) ,i=1,numNodes),(z(i) ,i=1,numNodes), &
+! !
+! !           Cell data: cell centers and volumes
+! !
+!             (xc(i) ,i=1,numCells),(yc(i) ,i=1,numCells),(zc(i) ,i=1,numCells), &
+!             (vol(i),i=1,numCells), &
+! !
+! !           The owner and neighbour index arrays, interpolation factors for inner faces
+! !
+!             (owner(i),i=1,numFacesTotal),(neighbour(i),i=1,numInnerFaces), &
+!             (facint(i),i=1,numInnerFaces), &
+! !
+! !           Face normal vector - its components are face area projections
+! !
+!             (arx(i),i=1,numInnerFaces),(ary(i),i=1,numInnerFaces),(arz(i),i=1,numInnerFaces), &
+! !
+! !           Face centers for inner faces
+! !
+!             (xf(i),i=1,numInnerFaces),(yf(i),i=1,numInnerFaces),(zf(i),i=1,numInnerFaces)
 
-!.....Close mesh file
-      close (4)
+! !.....Close mesh file
+!       close (4)
 
 !-----------------------------------------------
 ! Resume of simulation case
 !-----------------------------------------------
 !  call print_header
+
+
+  ! 2) Read mesh files and calculate mesh geometrical quantities, allocate arrays
+  
+  call mesh_geometry
+stop
+  call set_parameters                                              
+  call allocate_arrays
+  call allocate_gradients
+  select case (TurbModel)
+    case (1)
+      call allocate_k_epsilon_std
+    case default
+  end select  
 
 !
 ! 3)  Index arrays of matrix elements stored in CSR format

@@ -9,7 +9,7 @@ subroutine Additional_algebraic_stress_terms
 !***********************************************************************
   use types, only: dp
   use parameters, only: viscos
-  use geometry, only: numCells,numInnerFaces,facint,arx,ary,arz,owner,neighbour,
+  use geometry, only: numCells,numInnerFaces,facint,arx,ary,arz,owner,neighbour
   use sparse_matrix, only: su,sv,sw
   use variables, only: den,vis,uu,uv,uw,vv,vw,ww,dudxi,dvdxi,dwdxi
   use k_epsilon_std, only: dtedxi

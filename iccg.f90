@@ -13,7 +13,7 @@ subroutine iccg(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: owner, neighbour,ill,ijr
+  use geometry, only: numTotal,owner,neighbour,ijl,ijr
   use sparse_matrix
   use title_mod
 

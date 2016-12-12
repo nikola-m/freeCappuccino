@@ -22,7 +22,7 @@ subroutine bpres(p,istage)
   use types
   use parameters
   use variables, only: dPdxi
-  use geometry, only: owner, neighbour, ijl, ijr
+  use geometry, only: numTotal,numInnerFaces,numFaces,numCells,owner,neighbour,xf,yf,zf,xc,yc,zc
 
   implicit none
 !
@@ -39,159 +39,183 @@ subroutine bpres(p,istage)
 
     ! Loop Boundary faces:
 
-    ! Inlet faces
-    do i=1,ninl
+    do i = numInnerFaces+1, numFaces
 
-      ijp = owner(iInletFacesStart+i)
-      ijb = iInletStart+i
-
-      ! Takes owner cell value
-      p(ijb) = p(ijp)
-    end do
-
-    ! Outlet faces
-    do i=1,nout
-
-      ijp = owner(iOutletFacesStart+i)
-      ijb = iOutletStart+i
+      ijp = owner(i)
+      ijb = numCells+i
 
       ! Takes owner cell value
       p(ijb) = p(ijp)
     end do
 
-    ! Symmetry faces
-    do i=1,nsym
+    ! ! Inlet faces
+    ! do i=1,ninl
 
-      ijp = owner(iSymmetryFacesStart+i)
-      ijb = iSymmetryStart+i
+    !   ijp = owner(iInletFacesStart+i)
+    !   ijb = iInletStart+i
 
-      ! Takes owner cell value
-      p(ijb) = p(ijp)
-    end do
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp)
+    ! end do
 
-    ! Wall faces
-    do i=1,nwal
-      ijp = owner(iWallFacesStart+i)
-      ijb = iWallStart+i
+    ! ! Outlet faces
+    ! do i=1,nout
 
-      ! Takes owner cell value
-      p(ijb) = p(ijp)   
-    end do
+    !   ijp = owner(iOutletFacesStart+i)
+    !   ijb = iOutletStart+i
 
-    ! Pressure outlet faces
-    do i=1,npru
-      ijp = owner(iPressOutletFacesStart+i)
-      ijb = iPressOutletStart+i
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp)
+    ! end do
 
-      ! Takes owner cell value
-      p(ijb) = p(ijp)
-    end do
+    ! ! Symmetry faces
+    ! do i=1,nsym
 
-    ! Pressure outlet faces
-    do i=1,noc
-      ijp = owner(iOCFacesStart+i)
-      ijb = iOCStart+i
+    !   ijp = owner(iSymmetryFacesStart+i)
+    !   ijb = iSymmetryStart+i
 
-      ! Takes owner cell value
-      p(ijb) = p(ijp) 
-    end do
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp)
+    ! end do
+
+    ! ! Wall faces
+    ! do i=1,nwal
+    !   ijp = owner(iWallFacesStart+i)
+    !   ijb = iWallStart+i
+
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp)   
+    ! end do
+
+    ! ! Pressure outlet faces
+    ! do i=1,npru
+    !   ijp = owner(iPressOutletFacesStart+i)
+    !   ijb = iPressOutletStart+i
+
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp)
+    ! end do
+
+    ! ! Pressure outlet faces
+    ! do i=1,noc
+    !   ijp = owner(iOCFacesStart+i)
+    !   ijb = iOCStart+i
+
+    !   ! Takes owner cell value
+    !   p(ijb) = p(ijp) 
+    ! end do
 
   else ! istage==2 and higher
 
     ! Loop Boundary faces:
 
-    ! Inlet faces
-    do i=1,ninl
+    do i = numInnerFaces+1, numFaces
 
-      ijp = owner(iInletFacesStart+i)
-      ijb = iInletStart+i
+      ijp = owner(i)
+      ijb = numCells+i
 
       ! Distance vector
-      xpb = xfi(i)-xc(ijp) 
-      ypb = yfi(i)-yc(ijp)
-      zpb = zfi(i)-zc(ijp)
+      xpb = xf(i)-xc(ijp) 
+      ypb = yf(i)-yc(ijp)
+      zpb = zf(i)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
 
     end do
 
-    ! Outlet faces
-    do i=1,nout
+    ! ! Inlet faces
+    ! do i=1,ninl
 
-      ijp = owner(iOutletFacesStart+i)
-      ijb = iOutletStart+i
+    !   ijp = owner(iInletFacesStart+i)
+    !   ijb = iInletStart+i
 
-      ! Distance vector
-      xpb = xfo(i)-xc(ijp) 
-      ypb = yfo(i)-yc(ijp)
-      zpb = zfo(i)-zc(ijp)
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
 
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb 
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
 
-    end do
+    ! end do
 
-    ! Symmetry faces
-    do i=1,nsym
+    ! ! Outlet faces
+    ! do i=1,nout
 
-      ijp = owner(iSymmetryFacesStart+i)
-      ijb = iSymmetryStart+i
+    !   ijp = owner(iOutletFacesStart+i)
+    !   ijb = iOutletStart+i
 
-      ! Distance vector
-      xpb = xfs(i)-xc(ijp) 
-      ypb = yfs(i)-yc(ijp)
-      zpb = zfs(i)-zc(ijp)
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
 
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb 
+
+    ! end do
+
+    ! ! Symmetry faces
+    ! do i=1,nsym
+
+    !   ijp = owner(iSymmetryFacesStart+i)
+    !   ijb = iSymmetryStart+i
+
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
+
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
       
-    end do
+    ! end do
 
-    ! Wall faces
-    do i=1,nwal
-      ijp = owner(iWallFacesStart+i)
-      ijb = iWallStart+i
+    ! ! Wall faces
+    ! do i=1,nwal
+    !   ijp = owner(iWallFacesStart+i)
+    !   ijb = iWallStart+i
 
-      ! Distance vector
-      xpb = xfw(i)-xc(ijp) 
-      ypb = yfw(i)-yc(ijp)
-      zpb = zfw(i)-zc(ijp)
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
 
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
       
-    end do
+    ! end do
 
-    ! Pressure outlet faces
-    do i=1,npru
-      ijp = owner(iPressOutletFacesStart+i)
-      ijb = iPressOutletStart+i
+    ! ! Pressure outlet faces
+    ! do i=1,npru
+    !   ijp = owner(iPressOutletFacesStart+i)
+    !   ijb = iPressOutletStart+i
 
-      ! Distance vector
-      xpb = xfpr(i)-xc(ijp) 
-      ypb = yfpr(i)-yc(ijp)
-      zpb = zfpr(i)-zc(ijp)
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
 
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
       
-    end do
+    ! end do
 
-    ! Pressure outlet faces
-    do i=1,noc
-      ijp = owner(iOCFacesStart+i)
-      ijb = iOCStart+i
+    ! ! Pressure outlet faces
+    ! do i=1,noc
+    !   ijp = owner(iOCFacesStart+i)
+    !   ijb = iOCStart+i
 
-      ! Distance vector
-      xpb = xfoc(i)-xc(ijp) 
-      ypb = yfoc(i)-yc(ijp)
-      zpb = zfoc(i)-zc(ijp)
+    !   ! Distance vector
+    !   xpb = xf(i)-xc(ijp) 
+    !   ypb = yf(i)-yc(ijp)
+    !   zpb = zf(i)-zc(ijp)
 
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
+    !   ! Linear extrapolation
+    !   p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
       
-    end do
+    ! end do
 
   endif ! istage
 
