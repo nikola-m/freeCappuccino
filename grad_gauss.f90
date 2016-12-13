@@ -190,6 +190,7 @@ subroutine gradbc(ijp,ijb,sx,sy,sz,fi,dfx,dfy,dfz)
 !     boundary cell face to the gradient at CV-center.
 !=======================================================================
   use types
+  use geometry, only: numTotal,numCells
 
   implicit none
 

@@ -87,7 +87,7 @@ subroutine create_CSR_matrix_from_mesh_data
  do icell = 1,numCells
    call find_index_position(icell, istart, iend, ia,  nnz, ioffset(icell))
    istart = ioffset(icell)+1
-   iend = istart + 6 
+   iend = istart + 24 ! assumed max no of faces 
  enddo
 
  ioffset(numCells+1) = nnz+1 ! poslednji element

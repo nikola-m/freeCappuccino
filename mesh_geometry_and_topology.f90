@@ -561,6 +561,8 @@ subroutine mesh_geometry
   integer, dimension(nomax) :: node  ! It will store global node numbers of cell vertexes
   integer :: nnodes                ! no. of nodes in face
 
+  integer :: numBoundaries,bctype,nfaces,startFace
+
   real(dp), parameter :: half = 0.5_dp
   real(dp), parameter :: one_third = 1._dp/3._dp
 
@@ -601,6 +603,50 @@ subroutine mesh_geometry
   read(points_file,'(a)') ch
   backspace(points_file)
   if(ch == '/')  native_mesh_files = .false.
+
+!
+! > Find out number of faces belonging to a specific boundary condition.
+! 
+  ! Initialize number of boundary faces for each boundary type 
+  ninl = 0 
+  nout = 0
+  nsym = 0
+  nwal = 0
+  npru = 0
+  noc = 0
+
+  read(boundary_file,'(a)') line_string
+  read(boundary_file,'(i1)') numBoundaries
+
+  do i=1,numBoundaries
+  read(boundary_file,*) bctype,nfaces,startFace
+
+    select case (bctype)
+      case (1)
+        ninl = nfaces
+        iInletFacesStart = startFace
+      case (2)
+        nout = nfaces
+        iOutletFacesStart = startFace
+      case (3)
+        nsym = nfaces
+        iSymmetryFacesStart = startFace
+      case (4)
+        nwal = nfaces
+        iWallFacesStart = startFace
+      case (5)
+        npru = nfaces
+        iPressOutletFacesStart = startFace
+      case (6)
+        noc = nfaces
+        iOCFacesStart = startFace
+      case default
+        write(*,*) "Non-existing boundary type in polymesh/boundary file!"
+        stop
+    end select 
+
+  enddo  
+
 
 !
 ! > Find out numNodes, numFaces, numInnerFaces, etc.
@@ -698,6 +744,14 @@ if (native_mesh_files)  then
 
   write ( *, '(a)' ) ' '
   write ( *, '(a,i8)' ) '  Number of nonzero coefficients, nnz (= 2*numInnerFaces + numCells)  = ', nnz
+
+  write ( *, '(a)' ) ' '
+  if(ninl .gt.0 ) write ( *, '(a,i8)' ) '  Number of inlet faces  = ', ninl
+  if(nout .gt.0 ) write ( *, '(a,i8)' ) '  Number of outlet faces  = ', nout
+  if(nsym .gt.0 ) write ( *, '(a,i8)' ) '  Number of symmetry faces  = ', nsym
+  if(nwal .gt.0 ) write ( *, '(a,i8)' ) '  Number of wall faces  = ', nwal
+  if(npru .gt.0 ) write ( *, '(a,i8)' ) '  Number of pressure-outlet faces  = ', npru
+  if(noc .gt.0 ) write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
 
 !
 ! > Allocate arrays for Mesh description

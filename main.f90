@@ -9,7 +9,7 @@ program caffa3d
 !  An unstructured finite volume solver.
 !  
 ! Usage:
-! ./caffa3d <input_file> <inlet_file> <grid_file> <monitor_file> <restart_file> <out_folder_path>      
+! ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>      
 !
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 !
@@ -42,10 +42,9 @@ program caffa3d
   if (narg==0.or.narg<5) write(*,*) 'Check out README file to see how to call program properly!'
   call get_command_argument(1,input_file)
   call get_command_argument(2,inlet_file)
-  call get_command_argument(3,grid_file)
-  call get_command_argument(4,monitor_file)
-  call get_command_argument(5,restart_file)
-  call get_command_argument(6,out_folder_path)
+  call get_command_argument(3,monitor_file)
+  call get_command_argument(4,restart_file)
+  call get_command_argument(5,out_folder_path)
 
 !-----------------------------------------------
 ! Files opening

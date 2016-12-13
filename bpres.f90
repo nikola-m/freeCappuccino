@@ -22,7 +22,7 @@ subroutine bpres(p,istage)
   use types
   use parameters
   use variables, only: dPdxi
-  use geometry, only: numTotal,numInnerFaces,numFaces,numCells,owner,neighbour,xf,yf,zf,xc,yc,zc
+  use geometry, only: numTotal,numInnerFaces,numFaces,numCells,owner,xf,yf,zf,xc,yc,zc
 
   implicit none
 !

@@ -124,14 +124,6 @@ subroutine init
 ! 2)  Open & Read Grid File & Allocating Arrays
 !
 
-      ! Initialize number of boudnary faces for each boundary type 
-      ninl = 0 
-      nout = 0
-      nsym = 0
-      nwal = 0
-      npru = 0
-      noc = 0
-
       
 !       open(unit=4,file=grid_file,form='unformatted')
 !       rewind 4
@@ -229,7 +221,7 @@ subroutine init
   ! 2) Read mesh files and calculate mesh geometrical quantities, allocate arrays
   
   call mesh_geometry
-stop
+
   call set_parameters                                              
   call allocate_arrays
   call allocate_gradients
@@ -249,7 +241,7 @@ stop
 !
 
   ! Turbulent flow computation
-  LTURB=LEVM.OR.LLES
+  lturb = levm.or.lles
 
 ! !=====Coefficients for Sasa's algebraic flux model
 !       C1asm = 1.8_dp
@@ -460,7 +452,7 @@ stop
   do inp=1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp)=uin
+  u(inp)=xc(inp)+yc(inp)+zc(inp) !uin
   v(inp)=vin
   w(inp)=win
   te(inp)=tein
@@ -533,7 +525,7 @@ stop
   if (lstsq .or. lstsq_qr .or. lstsq_dm) then
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
-
+stop
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)

@@ -21,9 +21,8 @@ subroutine set_parameters
 !***********************************************************************
 !
   use parameters
-  use geometry,only:numTotal,numCells,numInnerFaces,Ninl,Nout,Nsym,Nwal,Npru,Noc,&
-                    iInletStart,iOutletStart,iSymmetryStart,iWallStart,iPressOutletStart,iOCStart, &
-                    iInletFacesStart,iOutletFacesStart, iSymmetryFacesStart,iWallFacesStart,iPressOutletFacesStart,iOCFacesStart
+  use geometry,only:numTotal,numCells,Ninl,Nout,Nsym,Nwal,Npru,Noc,&
+                    iInletStart,iOutletStart,iSymmetryStart,iWallStart,iPressOutletStart,iOCStart
 
   implicit none
 !
@@ -52,11 +51,11 @@ subroutine set_parameters
   ! Therefore, we can find owner cells of inlet faces in positions owner( iInletFacesStart+1 : iInletFacesStart+Ninl ),
   ! wall face owners in positions owner( iWallFacesStart+1 : iWallFacesStart+Ninl ), 
   ! etc.
-  iInletFacesStart = numInnerFaces
-  iOutletFacesStart = numInnerFaces+Ninl
-  iSymmetryFacesStart = numInnerFaces+Ninl+Nout
-  iWallFacesStart = numInnerFaces+Ninl+Nout+Nsym
-  iPressOutletFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal
-  iOCFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru
+  ! iInletFacesStart = numInnerFaces
+  ! iOutletFacesStart = numInnerFaces+Ninl
+  ! iSymmetryFacesStart = numInnerFaces+Ninl+Nout
+  ! iWallFacesStart = numInnerFaces+Ninl+Nout+Nsym
+  ! iPressOutletFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal
+  ! iOCFacesStart = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru
 
 end subroutine
