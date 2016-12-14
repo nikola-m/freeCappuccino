@@ -210,7 +210,7 @@ subroutine allocate_arrays
   ! Density
 
   ! Density
-  allocate(den(numCells),stat=ierr) 
+  allocate(den(numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: den" 
 
   ! Mass flows trough east, north and top faces

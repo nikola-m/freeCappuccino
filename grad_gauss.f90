@@ -65,40 +65,47 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz)
     end do
 
-    ! Contribution from inlet boundaries
-    do i=1,ninl
-      ijp = owner(iInletFacesStart+i)
-      ijb = iInletStart+i
-      call gradbc(ijp,ijb,xni(i),yni(i),zni(i),u,dudx,dudy,dudz)
+    ! Contribution from boundaries
+    do i=numInnerFaces+1,numFaces
+      ijp = owner(i)
+      ijb = numCells+i
+      call gradbc(ijp,ijb,arx(i), ary(i), arz(i),u,dudx,dudy,dudz)
     end do
 
-    ! Contribution from outlet boundaries
-    do i=1,nout
-      ijp = owner(iOutletFacesStart+i)
-      ijb = iOutletStart+i
-      call gradbc(ijp,ijb,xno(i),yno(i),zno(i),u,dudx,dudy,dudz)
-    end do
+    ! ! Contribution from inlet boundaries
+    ! do i=1,ninl
+    !   ijp = owner(iInletFacesStart+i)
+    !   ijb = iInletStart+i
+    !   call gradbc(ijp,ijb,xni(i),yni(i),zni(i),u,dudx,dudy,dudz)
+    ! end do
 
-    ! Contribution from symmetry boundaries
-    do i=1,nsym
-      ijp = owner(iSymmetryFacesStart+i)
-      ijb = iSymmetryStart+i
-      call gradbc(ijp,ijb,xns(i),yns(i),zns(i),u,dudx,dudy,dudz)
-    end do
+    ! ! Contribution from outlet boundaries
+    ! do i=1,nout
+    !   ijp = owner(iOutletFacesStart+i)
+    !   ijb = iOutletStart+i
+    !   call gradbc(ijp,ijb,xno(i),yno(i),zno(i),u,dudx,dudy,dudz)
+    ! end do
 
-    ! Contribution from wall boundaries
-    do i=1,nwal
-      ijp = owner(iWallFacesStart+i)
-      ijb = iWallStart+i
-      call gradbc(ijp,ijb,xnw(i),ynw(i),znw(i),u,dudx,dudy,dudz)
-    end do
+    ! ! Contribution from symmetry boundaries
+    ! do i=1,nsym
+    !   ijp = owner(iSymmetryFacesStart+i)
+    !   ijb = iSymmetryStart+i
+    !   call gradbc(ijp,ijb,xns(i),yns(i),zns(i),u,dudx,dudy,dudz)
+    ! end do
 
-    ! Contribution from pressure outlet boundaries
-    do i=1,npru
-      ijp = owner(iPressOutletFacesStart+i)
-      ijb = iPressOutletStart+i
-      call gradbc(ijp,ijb,xnpr(i),ynpr(i),znpr(i),u,dudx,dudy,dudz)
-    end do
+    ! ! Contribution from wall boundaries
+    ! do i=1,nwal
+    !   ijp = owner(iWallFacesStart+i)
+    !   ijb = iWallStart+i
+    !   call gradbc(ijp,ijb,xnw(i),ynw(i),znw(i),u,dudx,dudy,dudz)
+    ! end do
+
+    ! ! Contribution from pressure outlet boundaries
+    ! do i=1,npru
+    !   ijp = owner(iPressOutletFacesStart+i)
+    !   ijb = iPressOutletStart+i
+    !   call gradbc(ijp,ijb,xnpr(i),ynpr(i),znpr(i),u,dudx,dudy,dudz)
+    ! end do
 
     ! Calculate gradient components at cv-centers
     do ijp=1,numCells

@@ -37,8 +37,9 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, inp
-  ! real(dp) ::
+  integer :: i, ijp, inp
+  real(dp) :: nxf, nyf, nzf
+  real(dp) :: are
 
 !
 !***********************************************************************
@@ -525,12 +526,37 @@ subroutine init
   if (lstsq .or. lstsq_qr .or. lstsq_dm) then
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
-stop
+
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
 
-! 9) Calculate distance to the nearest wall.
+  print*,sum(abs(u))
+  print*,sum(abs(dudxi(1,:)))
+
+
+
+! 9) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
+
+  ! Loop over wall boundaries to calculate normal distance from cell center dnw.
+  do i = iWallFacesStart+1,iWallFacesStart+nwal
+    ijp = owner(i)
+
+    ! Face area 
+    are = sqrt(arx(i)**2+ary(i)**2+arz(i)**2)
+
+    ! Face normals
+    nxf = arx(i)/are
+    nyf = ary(i)/are
+    nzf = arz(i)/are
+
+    ! We need the minus sign because of the direction of normal vector to boundary face which is positive if it faces out.
+    dnw(i) = -( (xc(ijp)-xf(i))*nxf + (yc(ijp)-yf(i))*nyf + (zc(ijp)-zf(i))*nzf)
+  enddo
+
+
+  ! Distance to the nearest wall needed for some turbulence models
+
 
       ! Source term
 !      do k=2,nkm; do i=2,nim; do j=2,njm

@@ -117,96 +117,112 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 
   ! Boundary faces:
 
-  ! Inlet faces
-  do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
-    ijn = iInletStart+i
-
+  do i=numInnerFaces+1,numFaces
+    ijp = owner(i)
+    ijn = numCells+i
         l = neighbour_index(ijp)
         neighbour_index(ijp) = neighbour_index(ijp) + 1
-        D(1,l,ijp) = xfi(i)-xc(ijp)
-        D(2,l,ijp) = yfi(i)-yc(ijp)
-        D(3,l,ijp) = zfi(i)-zc(ijp)
+        D(1,l,ijp) = xf(i)-xc(ijp)
+        D(2,l,ijp) = yf(i)-yc(ijp)
+        D(3,l,ijp) = zf(i)-zc(ijp)
 
         l = neighbour_index(ijn) 
         neighbour_index(ijn) = neighbour_index(ijn) + 1 
-        D(1,l,ijn) = xc(ijp)-xfi(i)
-        D(2,l,ijn) = yc(ijp)-yfi(i)
-        D(3,l,ijn) = zc(ijp)-zfi(i)
+        D(1,l,ijn) = xc(ijp)-xf(i)
+        D(2,l,ijn) = yc(ijp)-yf(i)
+        D(3,l,ijn) = zc(ijp)-zf(i)
   end do
 
-  ! Outlet faces
-  do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
-    ijn = iOutletStart+i
+  ! ! Inlet faces
+  ! do i=1,ninl
+  !   ijp = owner(iInletFacesStart+i)
+  !   ijn = iInletStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        D(1,l,ijp) = xfo(i)-xc(ijp)
-        D(2,l,ijp) = yfo(i)-yc(ijp)
-        D(3,l,ijp) = zfo(i)-zc(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       D(1,l,ijp) = xfi(i)-xc(ijp)
+  !       D(2,l,ijp) = yfi(i)-yc(ijp)
+  !       D(3,l,ijp) = zfi(i)-zc(ijp)
 
-        l = neighbour_index(ijn) 
-        neighbour_index(ijn) = neighbour_index(ijn) + 1 
-        D(1,l,ijn) = xc(ijp)-xfo(i)
-        D(2,l,ijn) = yc(ijp)-yfo(i)
-        D(3,l,ijn) = zc(ijp)-zfo(i)
-  end do
+  !       l = neighbour_index(ijn) 
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1 
+  !       D(1,l,ijn) = xc(ijp)-xfi(i)
+  !       D(2,l,ijn) = yc(ijp)-yfi(i)
+  !       D(3,l,ijn) = zc(ijp)-zfi(i)
+  ! end do
 
-  ! Symmetry faces
-  do i=1,nsym
-    ijp = owner(iSymmetryFacesStart+i)
-    ijn = iSymmetryStart+i
+  ! ! Outlet faces
+  ! do i=1,nout
+  !   ijp = owner(iOutletFacesStart+i)
+  !   ijn = iOutletStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        D(1,l,ijp) = xfs(i)-xc(ijp)
-        D(2,l,ijp) = yfs(i)-yc(ijp)
-        D(3,l,ijp) = zfs(i)-zc(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       D(1,l,ijp) = xfo(i)-xc(ijp)
+  !       D(2,l,ijp) = yfo(i)-yc(ijp)
+  !       D(3,l,ijp) = zfo(i)-zc(ijp)
 
-        l = neighbour_index(ijn) 
-        neighbour_index(ijn) = neighbour_index(ijn) + 1 
-        D(1,l,ijn) = xc(ijp)-xfs(i)
-        D(2,l,ijn) = yc(ijp)-yfs(i)
-        D(3,l,ijn) = zc(ijp)-zfs(i)
-  end do
+  !       l = neighbour_index(ijn) 
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1 
+  !       D(1,l,ijn) = xc(ijp)-xfo(i)
+  !       D(2,l,ijn) = yc(ijp)-yfo(i)
+  !       D(3,l,ijn) = zc(ijp)-zfo(i)
+  ! end do
 
-  ! Wall faces
-  do i=1,nwal
-    ijp = owner(iWallFacesStart+i)
-    ijn = iWallStart+i
+  ! ! Symmetry faces
+  ! do i=1,nsym
+  !   ijp = owner(iSymmetryFacesStart+i)
+  !   ijn = iSymmetryStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        D(1,l,ijp) = xfw(i)-xc(ijp)
-        D(2,l,ijp) = yfw(i)-yc(ijp)
-        D(3,l,ijp) = zfw(i)-zc(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       D(1,l,ijp) = xfs(i)-xc(ijp)
+  !       D(2,l,ijp) = yfs(i)-yc(ijp)
+  !       D(3,l,ijp) = zfs(i)-zc(ijp)
 
-        l = neighbour_index(ijn) 
-        neighbour_index(ijn) = neighbour_index(ijn) + 1 
-        D(1,l,ijn) = xc(ijp)-xfw(i)
-        D(2,l,ijn) = yc(ijp)-yfw(i)
-        D(3,l,ijn) = zc(ijp)-zfw(i)
-  end do
+  !       l = neighbour_index(ijn) 
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1 
+  !       D(1,l,ijn) = xc(ijp)-xfs(i)
+  !       D(2,l,ijn) = yc(ijp)-yfs(i)
+  !       D(3,l,ijn) = zc(ijp)-zfs(i)
+  ! end do
 
-  ! Pressure outlet faces
-  do i=1,npru
+  ! ! Wall faces
+  ! do i=1,nwal
+  !   ijp = owner(iWallFacesStart+i)
+  !   ijn = iWallStart+i
 
-    ijp = owner(iPressOutletFacesStart+i)
-    ijn = iPressOutletStart+i
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       D(1,l,ijp) = xfw(i)-xc(ijp)
+  !       D(2,l,ijp) = yfw(i)-yc(ijp)
+  !       D(3,l,ijp) = zfw(i)-zc(ijp)
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        D(1,l,ijp) = xfpr(i)-xc(ijp)
-        D(2,l,ijp) = yfpr(i)-yc(ijp)
-        D(3,l,ijp) = zfpr(i)-zc(ijp)
+  !       l = neighbour_index(ijn) 
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1 
+  !       D(1,l,ijn) = xc(ijp)-xfw(i)
+  !       D(2,l,ijn) = yc(ijp)-yfw(i)
+  !       D(3,l,ijn) = zc(ijp)-zfw(i)
+  ! end do
 
-        l = neighbour_index(ijn) 
-        neighbour_index(ijn) = neighbour_index(ijn) + 1 
-        D(1,l,ijn) = xc(ijp)-xfpr(i)
-        D(2,l,ijn) = yc(ijp)-yfpr(i)
-        D(3,l,ijn) = zc(ijp)-zfpr(i)   
-  end do
+  ! ! Pressure outlet faces
+  ! do i=1,npru
+
+  !   ijp = owner(iPressOutletFacesStart+i)
+  !   ijn = iPressOutletStart+i
+
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       D(1,l,ijp) = xfpr(i)-xc(ijp)
+  !       D(2,l,ijp) = yfpr(i)-yc(ijp)
+  !       D(3,l,ijp) = zfpr(i)-zc(ijp)
+
+  !       l = neighbour_index(ijn) 
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1 
+  !       D(1,l,ijn) = xc(ijp)-xfpr(i)
+  !       D(2,l,ijn) = yc(ijp)-yfpr(i)
+  !       D(3,l,ijn) = zc(ijp)-zfpr(i)   
+  ! end do
 
 !--------------------------------------------------------------------------------------------------
   ! Form system matrix using QR decomposition:
@@ -319,12 +335,9 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
   end do
 
   ! Boundary faces:
-
-  ! Inlet faces
-  do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
-    ijn = iInletStart+i
-
+  do i=numInnerFaces+1,numFaces
+    ijp = owner(i)
+    ijn = numCells+i
         l = neighbour_index(ijp)
         neighbour_index(ijp) = neighbour_index(ijp) + 1
         b(l,ijp) = fi(ijn)-fi(ijp)
@@ -332,68 +345,82 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
         l = neighbour_index(ijn)   
         neighbour_index(ijn) = neighbour_index(ijn) + 1
         b(l,ijn) = fi(ijp)-fi(ijn)
- 
   end do
 
-  ! Outlet faces
-  do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
-    ijn = iOutletStart+i
+  ! ! Inlet faces
+  ! do i=1,ninl
+  !   ijp = owner(iInletFacesStart+i)
+  !   ijn = iInletStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        b(l,ijp) = fi(ijn)-fi(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       b(l,ijp) = fi(ijn)-fi(ijp)
         
-        l = neighbour_index(ijn)   
-        neighbour_index(ijn) = neighbour_index(ijn) + 1
-        b(l,ijn) = fi(ijp)-fi(ijn)
+  !       l = neighbour_index(ijn)   
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1
+  !       b(l,ijn) = fi(ijp)-fi(ijn)
  
-  end do
+  ! end do
 
-  ! Symmetry faces
-  do i=1,nsym
-    ijp = owner(iSymmetryFacesStart+i)
-    ijn = iSymmetryStart+i
+  ! ! Outlet faces
+  ! do i=1,nout
+  !   ijp = owner(iOutletFacesStart+i)
+  !   ijn = iOutletStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        b(l,ijp) = fi(ijn)-fi(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       b(l,ijp) = fi(ijn)-fi(ijp)
         
-        l = neighbour_index(ijn)   
-        neighbour_index(ijn) = neighbour_index(ijn) + 1
-        b(l,ijn) = fi(ijp)-fi(ijn)
+  !       l = neighbour_index(ijn)   
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1
+  !       b(l,ijn) = fi(ijp)-fi(ijn)
  
-  end do
+  ! end do
 
-  ! Wall faces
-  do i=1,nwal
-    ijp = owner(iWallFacesStart+i)
-    ijn = iWallStart+i
+  ! ! Symmetry faces
+  ! do i=1,nsym
+  !   ijp = owner(iSymmetryFacesStart+i)
+  !   ijn = iSymmetryStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        b(l,ijp) = fi(ijn)-fi(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       b(l,ijp) = fi(ijn)-fi(ijp)
         
-        l = neighbour_index(ijn)   
-        neighbour_index(ijn) = neighbour_index(ijn) + 1
-        b(l,ijn) = fi(ijp)-fi(ijn)
+  !       l = neighbour_index(ijn)   
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1
+  !       b(l,ijn) = fi(ijp)-fi(ijn)
  
-  end do
+  ! end do
 
-  ! Pressure outlet faces
-  do i=1,npru
-    ijp = owner(iPressOutletFacesStart+i)
-    ijn = iPressOutletStart+i
+  ! ! Wall faces
+  ! do i=1,nwal
+  !   ijp = owner(iWallFacesStart+i)
+  !   ijn = iWallStart+i
 
-        l = neighbour_index(ijp)
-        neighbour_index(ijp) = neighbour_index(ijp) + 1
-        b(l,ijp) = fi(ijn)-fi(ijp)
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       b(l,ijp) = fi(ijn)-fi(ijp)
         
-        l = neighbour_index(ijn)   
-        neighbour_index(ijn) = neighbour_index(ijn) + 1
-        b(l,ijn) = fi(ijp)-fi(ijn)
+  !       l = neighbour_index(ijn)   
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1
+  !       b(l,ijn) = fi(ijp)-fi(ijn)
+ 
+  ! end do
+
+  ! ! Pressure outlet faces
+  ! do i=1,npru
+  !   ijp = owner(iPressOutletFacesStart+i)
+  !   ijn = iPressOutletStart+i
+
+  !       l = neighbour_index(ijp)
+  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
+  !       b(l,ijp) = fi(ijn)-fi(ijp)
+        
+  !       l = neighbour_index(ijn)   
+  !       neighbour_index(ijn) = neighbour_index(ijn) + 1
+  !       b(l,ijn) = fi(ijp)-fi(ijn)
      
-  end do
+  ! end do
 
 
 !--------------------------------------------------------------------------------------------------

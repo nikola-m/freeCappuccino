@@ -25,21 +25,22 @@ program caffa3d
 
   implicit none
 
-  integer :: iter, i, ijp, ijn, inp, imon
+  integer :: iter, i, ijp, ijn, inp
   real(dp):: source
   integer :: narg
   real(dp):: magUbarStar, rUAw, gragPplus, flowDirection
   real(dp):: suma,dt
   real :: start, finish
-  character(len=2) :: trpn
   character(len=5) :: timechar
+  ! integer :: imon
+  ! character(len=2) :: trpn
 !                                                                       
 !***********************************************************************
 !
 
 !  Check if any command line arguments are found
   narg=command_argument_count()
-  if (narg==0.or.narg<5) write(*,*) 'Check out README file to see how to call program properly!'
+  if (narg==0.or.narg<5) write(*,*) 'Usage: ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>'
   call get_command_argument(1,input_file)
   call get_command_argument(2,inlet_file)
   call get_command_argument(3,monitor_file)
@@ -83,24 +84,24 @@ program caffa3d
 !===============================================
 !
 
-   if(bdf) then
-      uoo = uo 
-      voo = vo 
-      woo = wo 
-      too = to 
-      teoo = teo 
-      edoo = edo 
-      ! vartoo = varto 
-      ! conoo = cono 
-   endif
-      uo = u 
-      vo = v 
-      wo = w 
-      to = t 
-      teo = te 
-      edo = ed         
-      ! varto = vart 
-      ! cono = con 
+  if(bdf) then
+    uoo = uo 
+    voo = vo 
+    woo = wo 
+    ! too = to 
+    teoo = teo 
+    edoo = edo 
+    ! vartoo = varto 
+    ! conoo = cono 
+  endif
+    uo = u 
+    vo = v 
+    wo = w 
+    ! to = t 
+    teo = te 
+    edo = ed         
+    ! varto = vart 
+    ! cono = con 
 !
 !===============================================
 !.....Set inlet boundary conditions at every timestep

@@ -63,7 +63,7 @@ implicit none
 
   dPhidxi(:,:) = 0.0_dp
 
-  if (lstsq) then 
+  if (lstsq) then
     call grad_lsq(phi,dPhidxi,1,dmat)
   elseif (lstsq_qr) then 
     call grad_lsq_qr(phi,dPhidxi,1,dmatqr)

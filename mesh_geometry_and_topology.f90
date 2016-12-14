@@ -623,23 +623,23 @@ subroutine mesh_geometry
 
     select case (bctype)
       case (1)
-        ninl = nfaces
-        iInletFacesStart = startFace
+        if (ninl==0) iInletFacesStart = startFace
+        ninl = ninl + nfaces
       case (2)
-        nout = nfaces
-        iOutletFacesStart = startFace
+        if (nout==0) iOutletFacesStart = startFace
+        nout = nout + nfaces
       case (3)
-        nsym = nfaces
-        iSymmetryFacesStart = startFace
+        if (nsym==0) iSymmetryFacesStart = startFace
+        nsym = nsym + nfaces
       case (4)
-        nwal = nfaces
-        iWallFacesStart = startFace
+        if (nwal==0) iWallFacesStart = startFace
+        nwal = nwal + nfaces
       case (5)
-        npru = nfaces
-        iPressOutletFacesStart = startFace
+        if (npru==0) iPressOutletFacesStart = startFace
+        npru = npru + nfaces
       case (6)
-        noc = nfaces
-        iOCFacesStart = startFace
+        if (noc==0) iOCFacesStart = startFace
+        noc = noc + nfaces
       case default
         write(*,*) "Non-existing boundary type in polymesh/boundary file!"
         stop
@@ -726,6 +726,8 @@ if (native_mesh_files)  then
 !
 ! > Write report on mesh size into log file
 !
+  write ( *, '(a)' ) ' '
+  write ( *, '(a)' ) '  Mesh data: '
 
   write ( *, '(a)' ) ' '
   write ( *, '(a,i8)' ) '  Number of nodes, numNodes = ', numNodes
@@ -740,17 +742,23 @@ if (native_mesh_files)  then
   write ( *, '(a,i8)' ) '  Number of inner cell-faces, numInnerFaces = ', numInnerFaces
 
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of cell-faces on boundary, numBoundaryFaces = ', numBoundaryFaces
-
-  write ( *, '(a)' ) ' '
   write ( *, '(a,i8)' ) '  Number of nonzero coefficients, nnz (= 2*numInnerFaces + numCells)  = ', nnz
 
   write ( *, '(a)' ) ' '
+  write ( *, '(a)' ) '  Boundary information:'
+  write ( *, '(a)' ) ' '
+  write ( *, '(a,i8)' ) '  Number of cell-faces on boundary, numBoundaryFaces = ', numBoundaryFaces
+  write ( *, '(a)' ) ' '
   if(ninl .gt.0 ) write ( *, '(a,i8)' ) '  Number of inlet faces  = ', ninl
+  write ( *, '(a)' ) ' '
   if(nout .gt.0 ) write ( *, '(a,i8)' ) '  Number of outlet faces  = ', nout
+  write ( *, '(a)' ) ' '
   if(nsym .gt.0 ) write ( *, '(a,i8)' ) '  Number of symmetry faces  = ', nsym
+  write ( *, '(a)' ) ' '
   if(nwal .gt.0 ) write ( *, '(a,i8)' ) '  Number of wall faces  = ', nwal
+  write ( *, '(a)' ) ' '
   if(npru .gt.0 ) write ( *, '(a,i8)' ) '  Number of pressure-outlet faces  = ', npru
+  write ( *, '(a)' ) ' '
   if(noc .gt.0 ) write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
 
 !
@@ -779,7 +787,8 @@ if (native_mesh_files)  then
 
   allocate ( owner(numFaces) )
   allocate ( neighbour(numInnerFaces) )
-                                         
+
+  allocate ( dnw(nwal) )                                         
 
 
 !
