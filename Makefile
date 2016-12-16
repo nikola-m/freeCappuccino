@@ -22,10 +22,6 @@ MOD_FILES=\
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
     bicgstab.f90
-    # sipsol.f90 \
-    # cgstab_sip.f90 \
-    # pcg-jacobi.f90 \
-    # pcg-sip.f90
 
 TURBULENCE_FILES=\
     temperature.f90 \

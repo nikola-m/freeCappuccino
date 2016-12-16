@@ -65,7 +65,7 @@ subroutine iccg(fi,ifi)
 !
 ! If ltest=true, print the norm 
 !
-  if(ltest) write(66,'(20x,a,1pe10.3)') 'res0 = ',res0
+  if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 !
 !.....calculate elements of diagonal preconditioning matrix
 !
@@ -154,7 +154,7 @@ subroutine iccg(fi,ifi)
 !
   if(l.eq.1) resor(ifi) = res0
   rsm = resl/(resor(ifi)+small)
-  if(ltest) write(66,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
+  if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
 !
 ! End of iteration loop
@@ -162,7 +162,7 @@ subroutine iccg(fi,ifi)
   end do
 
 ! Write linear solver report:
-  write(66,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
   'PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
   ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
 

@@ -4,7 +4,7 @@ subroutine calcuvw
 !
 !***********************************************************************
 !
-  use types, only: dp
+  use types
   use parameters
   use geometry
   use sparse_matrix
@@ -19,7 +19,7 @@ subroutine calcuvw
 !
 ! Local variables
 !
-  integer :: i, k, inp, ijp, ijn, istage
+  integer :: i, k, inp, ijp, ijn, iface, istage
   real(dp) :: urfrs, urfms, apotime, heat
   real(dp) :: sut, svt, swt 
   real(dp) :: sup, svp, swp
@@ -117,7 +117,7 @@ subroutine calcuvw
       svt = apotime*((1+btime)*vo(inp))
       swt = apotime*((1+btime)*wo(inp))
     
-      if (btime > 0.5) then
+      if (btime > 0.99) then ! bdf2 scheme btime=1.
         sut = sut - apotime*(0.5*btime*uoo(inp))
         svt = svt - apotime*(0.5*btime*voo(inp))
         swt = swt - apotime*(0.5*btime*woo(inp))
@@ -138,22 +138,21 @@ subroutine calcuvw
 
 
   !=======================================================================
-  ! ADDITIONAL TERMS:
+  ! Additional asm terms:
   !=======================================================================
-  IF(LTURB.AND.LASM) THEN
+  if(lturb.and.lasm) then
 
     ! Calculate Reynols stresses explicitly
     call calcstress
 
     call Additional_algebraic_stress_terms
     
-  END IF
+  end if
       
 
   ! Calculate terms integrated over surfaces
-  ! Only inner faces
 
-  ! East faces
+  ! Inner faces
   do i = 1,numInnerFaces
 
     ijp = owner(i)
@@ -197,12 +196,12 @@ subroutine calcuvw
 
 
   ! O- and C-grid cuts (these are not boundaries!)
-  ! Loop faces
   do i=1,noc
+    iface = iOCFacesStart + i
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxuvw(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), fmoc(i), foc(i), gds(iu), &
+    call facefluxuvw(ijp, ijn,  xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gds(iu), &
       al(i), ar(i), sup, svp, swp)  
 
     spu(ijp) = spu(ijp) - ar(i)
@@ -223,14 +222,15 @@ subroutine calcuvw
 
   ! Loop Inlet faces
   do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
     ijb = iInletStart+i
 
     dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
     dVdxi(:,ijb) = dVdxi(:,ijp)
     dWdxi(:,ijb) = dWdxi(:,ijp)
 
-    CALL faceFluxUVW(ijp, ijb, xfi(i), yfi(i), zfi(i), xni(i), yni(i), zni(i), fmi(i), one, zero, &
+    CALL faceFluxUVW(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), one, zero, &
      cp, cb, sup, svp, swp)
 
     spu(ijp) = spu(ijp) - cb
@@ -247,14 +247,15 @@ subroutine calcuvw
 
   ! Loop Outlet faces
   do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
     dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
     dVdxi(:,ijb) = dVdxi(:,ijp)
     dWdxi(:,ijb) = dWdxi(:,ijp)
 
-    CALL faceFluxUVW(ijp, ijb, xfo(i), yfo(i), zfo(i), xno(i), yno(i), zno(i), fmo(i), one, zero, &
+    CALL faceFluxUVW(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), one, zero, &
      cp, cb, sup, svp, swp)  
 
     spu(ijp) = spu(ijp) - cb
@@ -269,7 +270,8 @@ subroutine calcuvw
 
   ! Symmetry
   do i=1,nsym
-    ijp = owner(iSymmetryFacesStart+i)
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
     ijb = iSymmetryStart+i
 
     ! Diffusion coef.
@@ -277,65 +279,67 @@ subroutine calcuvw
     cf = Vsi*Srds(i) ! cf v.s. vsol -> cf is calculated using normal distance in srds!
 
     ! Face area 
-    Are = sqrt(xns(i)**2+yns(i)**2+zns(i)**2)
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
     ! Face normals
-    nxf = xns(i)/(Are+Small)
-    nyf = yns(i)/(Are+Small)
-    nzf = zns(i)/(Are+Small)
+    nxf = arx(iface)/are
+    nyf = ary(iface)/are
+    nzf = arz(iface)/are
 
-    Dpb = sqrt( (Xc(ijp)-Xfs(i))**2 + (Yc(ijp)-Yfs(i))**2 + (Zc(ijp)-Zfs(i))**2 )
-    Vsol = Vsi*Are/(Dpb+Small)
+    dpb = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+    vsol = vsi*are/(dpb+small)
 
-    Upb = U(ijp)-U(ijb)
-    Vpb = V(ijp)-V(ijb)
-    Wpb = W(ijp)-W(ijb)
+    upb = u(ijp)-u(ijb)
+    vpb = v(ijp)-v(ijb)
+    wpb = w(ijp)-w(ijb)
 
-    FdNe = 2.*cf*( Upb*nxf + Vpb*nyf + Wpb*nzf )
+    fdne = 2._dp*cf*( upb*nxf + vpb*nyf + wpb*nzf )
 
-    Spu(ijp) = Spu(ijp) + Vsol
-    Spv(ijp) = Spv(ijp) + Vsol
-    Sp(ijp)  = Sp(ijp)  + Vsol
+    spu(ijp) = spu(ijp) + vsol
+    spv(ijp) = spv(ijp) + vsol
+    sp(ijp)  = sp(ijp)  + vsol
 
-    Su(ijp) = Su(ijp)+Vsol*U(ijp)-FdNe*nxf
-    Sv(ijp) = Sv(ijp)+Vsol*V(ijp)-FdNe*nyf
-    Sw(ijp) = Sw(ijp)+Vsol*W(ijp)-FdNe*nzf
+    su(ijp) = su(ijp)+vsol*u(ijp)-fdne*nxf
+    sv(ijp) = sv(ijp)+vsol*v(ijp)-fdne*nyf
+    sw(ijp) = sw(ijp)+vsol*w(ijp)-fdne*nzf
 
   end do
 
   do i=1,nwal
-    ijp = owner(iWallFacesStart+i)
+    iface = iWallFacesStart+i
+    ijp = owner(iface)
     ijb = iWallStart+i
 
     viss = viscos ! viskoznost interolirana na boundary face
     if(lturb.and.ypl(i).gt.ctrans) viss=visw(i)
-    cf=viss*Srdw(i) ! cf v.s. vsol -> cf is callculated using normal distance in srdw!
+    cf=viss*srdw(i) ! cf v.s. vsol -> cf is callculated using normal distance in srdw!
 
     ! Face area 
-    Are=sqrt(xnw(i)**2+ynw(i)**2+znw(i)**2)
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
     ! Face normals
-    nxf = xnw(i)/(Are+Small)
-    nyf = ynw(i)/(Are+Small)
-    nzf = znw(i)/(Are+Small)
+    nxf = arx(iface)/are
+    nyf = ary(iface)/are
+    nzf = arz(iface)/are
 
-    ! distanca od ijp do ijb
-    Dpb = sqrt( (Xc(ijp)-Xfw(i))**2 + (Yc(ijp)-Yfw(i))**2 + (Zc(ijp)-Zfw(i))**2 ) 
+    ! Dist from cc of owner cell to cf @boundary, cannto expect dpb to be normal to boundary face in general
+    dpb = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+
     ! Diffusion coef. 
-    Vsol = Viss*Are/(Dpb+Small)
+    vsol = viss*are/(dpb+small)
 
     ! Razlika brzina u dve tacke po komponentama
-    Upb = U(ijp)-U(ijb)
-    Vpb = V(ijp)-V(ijb)
-    Wpb = W(ijp)-W(ijb)
+    upb = u(ijp)-u(ijb)
+    vpb = v(ijp)-v(ijb)
+    wpb = w(ijp)-w(ijb)
 
     ! Projektujes taj vektor razlike brzina na normalu za brzinu duz normale
-    Vnp = Upb*nxf+Vpb*nyf+Wpb*nzf
+    vnp = upb*nxf+vpb*nyf+wpb*nzf
 
     ! Tangencijalna komponente brzina.
-    Utp = Upb-Vnp*nxf
-    Vtp = Vpb-Vnp*nyf
-    Wtp = Wpb-Vnp*nzf
+    utp = upb-vnp*nxf
+    vtp = vpb-vnp*nyf
+    wtp = wpb-vnp*nzf
 
     ! if (ScndOrderWallBC_Model) then
 
@@ -358,13 +362,13 @@ subroutine calcuvw
 
     ! else
 
-      Spu(ijp) = Spu(ijp) + Vsol
-      Spv(ijp) = Spv(ijp) + Vsol
-      Sp(ijp)  = Sp(ijp)  + Vsol
+      spu(ijp) = spu(ijp) + vsol
+      spv(ijp) = spv(ijp) + vsol
+      sp(ijp)  = sp(ijp)  + vsol
 
-      Su(ijp) = Su(ijp) + Vsol*U(ijp) - cf*Utp
-      Sv(ijp) = Sv(ijp) + Vsol*V(ijp) - cf*Vtp
-      Sw(ijp) = Sw(ijp) + Vsol*W(ijp) - cf*Wtp
+      su(ijp) = su(ijp) + vsol*u(ijp) - cf*utp
+      sv(ijp) = sv(ijp) + vsol*v(ijp) - cf*vtp
+      sw(ijp) = sw(ijp) + vsol*w(ijp) - cf*wtp
 
     ! endif
 

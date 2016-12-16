@@ -10,12 +10,12 @@ subroutine init
 ! 2)  Open & Read Grid File & Allocate Arrays
 ! 3)  Index arrays of matrix elements stored in CSR format
 ! 4)  Set Index Arrays For Cell Looping, Set Monitoring Point And Pressure Reference Point
-! 5)  Set Initial timestepping control values
-! 6)  Various initialisations
-!     6.1)  Field Initialisation
-! 7)  Read Restart File And Set Field Values
-! 8)  Initial Gradient Calculation
-! 9) Calculate distance to the nearest wall.
+! 5)  Various initialisations
+!     5.1)  Field Initialisation
+! 6)  Read Restart File And Set Field Values
+! 7)  Initial Gradient Calculation
+! 8)  Initialization of parameters for boundary adjecent cells
+! 9)  Calculate distance to the nearest wall.
 !
 !***********************************************************************
   use types
@@ -37,7 +37,7 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, ijp, inp
+  integer :: i, ijp, inp, iface
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
 
@@ -121,111 +121,18 @@ subroutine init
       WRITE(6,'(a)') '--------------------------------------------------------------------------------'
       WRITE(6,'(a)') ' '
 
+
 !
-! 2)  Open & Read Grid File & Allocating Arrays
+! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
 !
-
-      
-!       open(unit=4,file=grid_file,form='unformatted')
-!       rewind 4
-
-!       read(4) &
-!             numNodes,numCells,numInnerFaces,numFacesTotal, &
-!             ninl,nout,nsym,nwal,npru,noc, &
-!             nwali,nwala,nwalf
-! !-----------------------------------------------------------------------
-! ! STOP READING FILE FOR A SECOND AND DO SOME USEFUL WORK
-! !-----------------------------------------------------------------------
-!       call set_parameters                                              
-!       call allocate_arrays
-!       call allocate_gradients
-!       select case (TurbModel)
-!         case (1)
-!           call allocate_k_epsilon_std
-!         case default
-!       end select                                           
-! !-----------------------------------------------------------------------
-
-!       if(ninl.gt.0) then     
-!       read(4) &
-!               (xni(i),i=1,ninl),(yni(i),i=1,ninl),(zni(i),i=1,ninl), &
-!               (xfi(i),i=1,ninl),(yfi(i),i=1,ninl),(zfi(i),i=1,ninl)
-!       endif
-
-!       if(nout.gt.0) then 
-!       read(4) &
-!               (xno(i),i=1,nout),(yno(i),i=1,nout),(zno(i),i=1,nout), &
-!               (xfo(i),i=1,nout),(yfo(i),i=1,nout),(zfo(i),i=1,nout)
-!       endif
-
-!       if(nsym.gt.0) then 
-!       read(4) &
-!             (srds(i),i=1,nsym),(dns(i),i=1,nsym), &
-!             (xns(i),i=1,nsym),(yns(i),i=1,nsym),(zns(i),i=1,nsym), &
-!             (xfs(i),i=1,nsym),(yfs(i),i=1,nsym),(zfs(i),i=1,nsym)
-!       endif
-
-!       if(nwal.gt.0) then 
-!       read(4) &
-!             (srdw(i),i=1,nwal),(dnw(i),i=1,nwal), &
-!             (xnw(i),i=1,nwal),(ynw(i),i=1,nwal),(znw(i),i=1,nwal), &
-!             (xfw(i),i=1,nwal),(yfw(i),i=1,nwal),(zfw(i),i=1,nwal)
-!       endif
-
-!       if(npru.gt.0) then 
-!       read(4) &
-!             (xnpr(i),i=1,npru),(ynpr(i),i=1,npru),(znpr(i),i=1,npru), &
-!             (xfpr(i),i=1,npru),(yfpr(i),i=1,npru),(zfpr(i),i=1,npru)
-!       endif
-
-!       if(noc.gt.0) then 
-!       read(4) &
-!             (ijl(i) ,i=1,noc),(ijr(i)  ,i=1,noc), &
-!             (srdoc(i), i=1,noc),(foc(i), i=1,noc), &
-!             (xnoc(i),i=1,noc),(ynoc(i),i=1,noc),(znoc(i),i=1,noc), &
-!             (xfoc(i),i=1,noc),(yfoc(i),i=1,noc),(zfoc(i),i=1,noc)
-!       endif
-
-!       read(4) &
-! !
-! !           Node data: coordinates of vertices
-! !
-!             (x(i) ,i=1,numNodes),(y(i) ,i=1,numNodes),(z(i) ,i=1,numNodes), &
-! !
-! !           Cell data: cell centers and volumes
-! !
-!             (xc(i) ,i=1,numCells),(yc(i) ,i=1,numCells),(zc(i) ,i=1,numCells), &
-!             (vol(i),i=1,numCells), &
-! !
-! !           The owner and neighbour index arrays, interpolation factors for inner faces
-! !
-!             (owner(i),i=1,numFacesTotal),(neighbour(i),i=1,numInnerFaces), &
-!             (facint(i),i=1,numInnerFaces), &
-! !
-! !           Face normal vector - its components are face area projections
-! !
-!             (arx(i),i=1,numInnerFaces),(ary(i),i=1,numInnerFaces),(arz(i),i=1,numInnerFaces), &
-! !
-! !           Face centers for inner faces
-! !
-!             (xf(i),i=1,numInnerFaces),(yf(i),i=1,numInnerFaces),(zf(i),i=1,numInnerFaces)
-
-! !.....Close mesh file
-!       close (4)
-
-!-----------------------------------------------
-! Resume of simulation case
-!-----------------------------------------------
-!  call print_header
-
-
-  ! 2) Read mesh files and calculate mesh geometrical quantities, allocate arrays
-  
   call mesh_geometry
 
-  call set_parameters                                              
+  call set_parameters  
+
   call allocate_arrays
+
   call allocate_gradients
+
   select case (TurbModel)
     case (1)
       call allocate_k_epsilon_std
@@ -244,169 +151,6 @@ subroutine init
   ! Turbulent flow computation
   lturb = levm.or.lles
 
-! !=====Coefficients for Sasa's algebraic flux model
-!       C1asm = 1.8_dp
-!       C2asm = 0.6_dp 
-!       C3asm = 0.6_dp
-
-! !=====STANDARD k-epsilon=============================
-!       IF (STDKEPS) THEN
-!       CMU = 0.09_dp   
-!       C1 = 1.44_dp
-!       C2 = 1.92_dp
-!       C3 = 1.44_dp
-! !=====STANDARD k-epsilon=============================
-!       ENDIF
-
-! !=====RENORMALIZATION GROUP (RNG) k-epsilon=============================
-!       IF (RNG) THEN
-!       CMU = 0.0845   ! za RNG model!!!
-!       C1 = 1.42      ! za RNG model!!!
-!       C2 = 1.68      ! za RNG model!!!
-! !=====RENORMALIZATION GROUP (RNG) k-epsilon=============================
-!       ENDIF
-
-! !=====REALIZABLE k-epsilon==============================================
-!       IF (REALIZABLE) THEN
-!       C1 = 1.44      ! za Realizable k-eps model !!!
-!       C2 = 1.9       ! za Realizable k-eps model !!!
-! !=====END:REALIZABLE k-epsilon==========================================
-!       END IF
-
-! !====================================================
-! !    Define turbulence model constants here.
-! !    k-omega model: Sigma_k=2.0; Sigma_omega=2.0
-! !    REFERENCES:
-! !    Wilcox1998:
-! !    * Wilcox, D. C., "Reassessment of the Scale-Determining Equation for Advanced Turbulence Models," AIAA Journal, Vol. 26, No. 11, 1988, pp. 1299-1310.
-! !    * Wilcox, D. C., Turbulence Modeling for CFD, 1st edition, DCW Industries, Inc., La Canada CA, 1993. 
-! !    * Wilcox, D. C., Turbulence Modeling for CFD, 2nd edition, DCW Industries, Inc., La Canada CA, 1998. <- This is where Wilcox1998 formulation comes from.
-! !    Wilcox2006:
-! !    * Wilcox, D. C., "Formulation of the k-omega Turbulence Model Revisited," AIAA Journal, Vol. 46, No. 11, 2008, pp. 2823-2838.
-! !    * Wilcox, D. C., Turbulence Modeling for CFD, 3rd edition, DCW Industries, Inc., La Canada CA, 2006. 
-! !====================================================
-!       IF (Wilcox) THEN
-! !.....Wilcox1998 (These are in Fluent 13):
-!       ALPHA=13./25.
-!       BETTA=0.072
-!       BETTAST=0.09
-! !.....Wilcox2006:
-! !%      ALPHA=13./25.
-! !%      BETTA=0.0708
-! !%      BETTAST=0.09
-! !=====================================================
-!       ENDIF
-! !====================================================
-! !     Define SST, ad SAS-SST model constants.
-! !     REFERENCES:
-! !     * ANSYS FLUENT THheory Guide p.71
-! !     * Menter, F. R., "Two-Equation Eddy-Viscosity Turbulence Models for Engineering Applications," AIAA Journal, Vol. 32, No. 8, August 1994, pp. 1598-1605. 
-! !     * Menter, F. R., Kuntz, M., and Langtry, R., "Ten Years of Industrial Experience with the SST Turbulence Model," Turbulence, Heat and Mass Transfer 4, ed: K. Hanjalic, Y. Nagano, and M. Tummers, Begell House, Inc., 2003, pp. 625 - 632. 
-! !=====================================================
-!       IF (SST.OR.SAS) THEN
-!       SIGMK1=1./1.176_dp
-!       SIGMK2=1.0_dp
-!       SIGMOM1=1./2.0_dp
-!       SIGMOM2=1./1.168_dp
-!       BETAI1=0.075
-!       BETAI2=0.0828
-!       A1=0.31_dp
-! !.....SST-1994 coefficients
-! !%      ALPHA1=(BETAI1/BETTAST)-CAPPA**2/(SQRT(BETTAST)*SIGMAOM1)
-! !%      ALPHA2=(BETAI2/BETTAST)-CAPPA**2/(SQRT(BETTAST)*SIGMAOM2)
-! !.....SST-2003 coefficients. The first is higher than the original constant
-! !     definition by approximately 0.43%, and the second is lower by less than 0.08%. 
-!       ALPHA1=5./9.
-!       ALPHA2=0.44
-!       BETTAST=0.09
-!       END IF
-
-!       IF (EARSM_WJ) THEN
-!       SIGMK1=1.1_dp
-!       SIGMK2=1.1_dp
-!       SIGMOM1=0.53_dp
-!       SIGMOM2=1.0
-!       BETAI1=0.0747
-!       BETAI2=0.0828
-!       A1=0.31_dp
-!       ALPHA1=0.518_dp
-!       ALPHA2=0.44
-!       BETTAST=0.09
-!       END IF
-
-!       IF (EARSM_M) THEN
-!       SIGMK1=0.5_dp
-!       SIGMK2=1.1_dp
-!       SIGMOM1=0.5_dp
-!       SIGMOM2=0.856_dp
-!       BETAI1=0.075
-!       BETAI2=0.0828
-!       A1=0.31_dp
-!       BETTAST=0.09
-!       ALPHA1=(BETAI1/BETTAST)-CAPPA**2/(SQRT(BETTAST)*SIGMOM1)
-!       ALPHA2=(BETAI2/BETTAST)-CAPPA**2/(SQRT(BETTAST)*SIGMOM2)
-!       END IF
-
-!       CMU25=DSQRT(DSQRT(CMU))
-!       CMU75=CMU25**3
-
-
-
-! ! Prandtl numbers
-
-! !==========================
-! !.....PRANDTL NUMBER FOR FLUID
-! !.....PRANL FOR WATER, PRANL=7.0
-! !.....PRANL FOR AIR  , PRANL=0.7
-! !==========================
-!       PRM1=1./PRANL
-!       PRANT=0.86
-!       PRT1=1./PRANT
-! !
-! !.....RECIPROCAL VALUES OF PRANDTL NUMBERS
-!       DO I=1,NPHI
-!       PRTINV(I)=1.0_dp
-!       END DO
-
-! !=====TURBULENT MODEL SIGMA's===========================================
-!       IF(STDKEPS.OR.DURBIN) THEN
-! !.....[Standard k-epsilon Coefficient: ]
-!       PRTINV(IED)=1./1.3_dp
-! !     [Beljaars (Askervein hill paper), 1987 Coefficients: ]
-!       !PRTINV(IED)=1./1.85
-!       ENDIF
-
-! !=====RENORMALIZATION GROUP (RNG) k-epsilon=============================
-!       IF (RNG) THEN
-!       PRTINV(ITE)=1./0.7194_dp
-!       PRTINV(IED)=1./0.7194_dp
-! !=====END:RENORMALIZATION GROUP (RNG) k-epsilon=========================
-!       ENDIF
-
-! !=====REALIZABLE k-epsilon==============================================
-!       IF (REALIZABLE) THEN
-!       PRTINV(ITE) = 1.0_dp
-!       PRTINV(IED) = 1./1.20_dp
-! !=====END:REALIZABLE k-epsilon==========================================
-!       ENDIF
-
-! !=====Wilcox k-omega==============================================
-! !.....Wilcox1998:
-!       IF (Wilcox) THEN
-!       PRTINV(IED)=0.5
-!       PRTINV(ITE)=0.5
-! !.....Wilcox2006:
-! !%      PRTINV(IED)=0.5
-! !%     PRTINV(ITE)=0.6
-! !=====END:Wilcox k-omega==========================================
-!       ENDIF
-
-! !.....Prandtl-Schmidt number for energy equation:
-!       PRTINV(IEN)=1./PRANL
-! !      IF(LTURB) PRTINV(IEN)=1./PRANT
-! !@      PRRAT=PRANL/PRANT
-! !@      PFUN=9.24*(PRRAT**0.75-1.0)*(1.0+0.28*EXP(-0.007*PRRAT))
-! !@      WRITE(6,*)'pfun: ',pfun
 
   ! Reciprocal values of underrrelaxation factors
   do i=1,nphi
@@ -416,14 +160,12 @@ subroutine init
 
 
 
-! 5)  Set Initial times
 
+!
+! 5)  Various initialisations
+!
 
-
-
-! 6)  Various initialisations
-
-! 6.0)  Parameter Initialisation
+! 5.0)  Parameter Initialisation
 
   ! Initial time
   if(.not.lread) time=0.0d0
@@ -432,9 +174,9 @@ subroutine init
   cumulativeContErr = 0.0_dp
 
 ! Bulk velocity - important const_mflux flow!
-  magUbar = UIN
+  magUbar = uin
 
-! 6.1)  Field Initialisation - Turbulence kinetic energy and dissipation at inlet
+! 5.1)  Field Initialisation - Turbulence kinetic energy and dissipation at inlet
 
   ! IF(Wilcox.or.SST.or.SAS.or.EARSM_WJ.or.EARSM_M) THEN
   !   TEIN=1e-6*UIN*UIN
@@ -444,20 +186,20 @@ subroutine init
   !   EDIN=cmu75*tein**1.5/(zc(intc)-zc(inbc)) 
   ! ENDIF
 
-! 6.2)  Field Initialisation - reading inlet file
+! 5.2)  Field Initialisation - reading inlet file
 
 
-! 6.3)  Field Initialisation
+! 5.3)  Field Initialisation
 
 ! Field initialisation loop over inner cells--------------------------------
-  do inp=1,numCells
+  do inp = 1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp)=xc(inp)+yc(inp)+zc(inp) !uin
-  v(inp)=vin
-  w(inp)=win
-  te(inp)=tein
-  ed(inp)=edin
+  u(inp) = xc(inp)+yc(inp)+zc(inp)!uin
+  v(inp) = vin
+  w(inp) = win
+  te(inp) = tein
+  ed(inp) = edin
 
 ! Channel flow:
 ! Random number based fluctuation of mean profile            
@@ -468,6 +210,12 @@ subroutine init
       ! v(inp) = perturb/100.
       ! w(inp) = perturb/100.
 
+  enddo
+
+  do i=1,numBoundaryFaces
+  iface = numInnerFaces + i
+  ijp = numCells+i
+  u(ijp) = xf(iface)+yf(iface)+zf(iface)
   enddo
 
   !-------------------------------------------------------    
@@ -506,7 +254,10 @@ subroutine init
   pp = p
 
 
-! 7)  Read Restart File And Set Field Values
+
+!
+! 6)  Read Restart File And Set Field Values
+!
   if(lread) then
     call readfiles
     pp = p
@@ -514,7 +265,9 @@ subroutine init
 
 
 
-! 8)  Initial Gradient Calculation
+!
+! 7)  Initial Gradient Calculation
+!
   dUdxi = 0.0_dp
   dVdxi = 0.0_dp
   dWdxi = 0.0_dp
@@ -528,35 +281,68 @@ subroutine init
   endif
 
   call grad(U,dUdxi)
-  call grad(V,dVdxi)
-  call grad(W,dWdxi)
+  ! call grad(V,dVdxi)
+  ! call grad(W,dWdxi)
 
-  print*,sum(abs(u))
-  print*,sum(abs(dudxi(1,:)))
+! print*,'gradijenti:'
+! do i=1,numCells
+!   print*,i,':',u(i),dudxi(1,i)
+! enddo
 
 
 
-! 9) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
+
+! 8) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
 
   ! Loop over wall boundaries to calculate normal distance from cell center dnw.
-  do i = iWallFacesStart+1,iWallFacesStart+nwal
-    ijp = owner(i)
+  do i = 1,nwal
+    iface = iWallFacesStart+i
+    ijp = owner(iface)
 
     ! Face area 
-    are = sqrt(arx(i)**2+ary(i)**2+arz(i)**2)
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
     ! Face normals
-    nxf = arx(i)/are
-    nyf = ary(i)/are
-    nzf = arz(i)/are
+    nxf = arx(iface)/are
+    nyf = ary(iface)/are
+    nzf = arz(iface)/are
 
     ! We need the minus sign because of the direction of normal vector to boundary face which is positive if it faces out.
-    dnw(i) = -( (xc(ijp)-xf(i))*nxf + (yc(ijp)-yf(i))*nyf + (zc(ijp)-zf(i))*nzf)
+    dnw(i) = (xf(iface)-xc(ijp))*nxf + (yf(iface)-yc(ijp))*nyf + (zf(iface)-zc(ijp))*nzf
+
+    ! Cell face area divided by distance to the cell center
+    srdw(i) = are/dnw(i)
   enddo
 
+  ! Loop over symmetry boundaries to calculate normal distance from cell center dns.
+  do i = 1,nsym
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
 
-  ! Distance to the nearest wall needed for some turbulence models
+    ! Face area 
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
+    ! Face normals
+    nxf = arx(iface)/are
+    nyf = ary(iface)/are
+    nzf = arz(iface)/are
+
+    ! We need the minus sign because of the direction of normal vector to boundary face which is positive if it faces out.
+    dns(i) = (xf(iface)-xc(ijp))*nxf + (yf(iface)-yc(ijp))*nyf + (zf(iface)-zc(ijp))*nzf
+
+    ! Cell face area divided by distance to the cell center
+    srds(i) = are/dns(i)
+
+  enddo
+
+  ! srdoc
+
+  ! foc
+
+
+  !
+  ! 9) Distance to the nearest wall needed for some turbulence models
+  !
 
       ! Source term
 !      do k=2,nkm; do i=2,nim; do j=2,njm

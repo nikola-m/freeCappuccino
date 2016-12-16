@@ -16,22 +16,23 @@ subroutine correctBoundaryConditionsVelocity
 !
 !     Local variables
 !
-  integer :: i,ijp,ijb
+  integer :: i,ijp,ijb,iface
   real(dp) :: Unmag
 
 
   ! Update velocity components along symmetry boundaries
   do i=1,nsym
 
-    ijp = owner(iSymmetryFacesStart+i)
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
     ijb = iSymmetryStart+i
 
     ! Project velocity vector to face normal direction:
-    Unmag = u(ijp)*Xns(i)+v(ijp)*Yns(i)+w(ijp)*Zns(i)
+    Unmag = u(ijp)*arx(iface)+v(ijp)*ary(iface)+w(ijp)*arz(iface)
 
-    U(ijb) = U(ijp)-Unmag*xns(i)
-    V(ijb) = V(ijp)-Unmag*yns(i)
-    W(ijb) = W(ijp)-Unmag*zns(i)
+    U(ijb) = U(ijp)-Unmag*arx(iface)
+    V(ijb) = V(ijp)-Unmag*ary(iface)
+    W(ijb) = W(ijp)-Unmag*arz(iface)
 
   end do
 

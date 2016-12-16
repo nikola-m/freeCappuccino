@@ -61,8 +61,6 @@ implicit none
   real(dp), dimension(numTotal), intent(in) :: phi
   real(dp), dimension(3,numTotal), intent(inout) :: dPhidxi
 
-  dPhidxi(:,:) = 0.0_dp
-
   if (lstsq) then
     call grad_lsq(phi,dPhidxi,1,dmat)
   elseif (lstsq_qr) then 

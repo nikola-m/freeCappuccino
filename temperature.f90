@@ -87,7 +87,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 !
 ! Local variables
 !
-  integer ::  i, k, inp, ijp, ijn, ijb
+  integer ::  i, k, inp, ijp, ijn, ijb, iface
   real(dp) :: gam, prtr, apotime, urfrs, urfms
   real(dp) :: cap, can, suadd
   real(dp) :: off_diagonal_terms
@@ -175,10 +175,12 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
 
   ! Contribution from o- and c-grid cuts
-  do i=1,noc
+  do i=1,noc  
+        iface = iOCFacesStart+i
         ijp=ijl(i)
         ijn=ijr(i)
-        call facefluxsc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), fmoc(i), foc(i), gam, &
+
+        call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
          fi, dfidxi, prtr, al(i), ar(i), suadd)
 
         sp(ijp) = sp(ijp) - ar(i)
@@ -195,12 +197,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Inlet faces
   do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
     ijb = iInletStart+i
 
     dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xfi(i), yfi(i), zfi(i), xni(i), yni(i), zni(i), fmi(i), zero, one, &
+    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), zero, one, &
      Fi, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -210,12 +213,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Outlet faces
   do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
     dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xfo(i), yfo(i), zfo(i), xno(i), yno(i), zno(i), fmo(i), zero, one, &
+    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), zero, one, &
      FI, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -228,7 +232,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   ! Isothermal wall boundaries
 
   do i=1,nwali
-    ijp=owner(iWallFacesStart+i)
+    iface = iWallFacesStart+i
+    ijp=owner(iface)
     ijb=iWallStart+i
     dcoef = (viscos+(vis(ijp)-viscos)/sigt)/pranl ! Vrlo diskutabilno, proveriti!
     coef=dcoef*srdw(i)
@@ -239,7 +244,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   ! Adiabatic wall boundaries
 
   do i=1,nwala
-    ijp=owner(iWallFacesStart+nwali+i)
+    iface = iWallFacesStart+nwali+i
+    ijp=owner(iface)
     ijb=iWallStart+nwali+i
     t(ijb)=t(ijp)
   end do

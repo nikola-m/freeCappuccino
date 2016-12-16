@@ -30,7 +30,7 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
   real(dp), dimension(numCells), intent(inout) :: dudx,dudy,dudz
 
   !**Locals***************************************************************
-  integer :: i,ijp,ijn,ijb,lc
+  integer :: i,ijp,ijn,ijb,lc,iface
   real(dp) :: volr
   real(dp), dimension(numCells) :: dfxo,dfyo,dfzo
 
@@ -59,53 +59,20 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
     ! Contribution from O- and C-grid cuts
     do i=1,noc
+      iface = iOCFacesStart+i
       ijp = ijl(i)
       ijn = ijr(i)
-      call gradco(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), &
+      call gradco(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), &
                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz)
     end do
 
     ! Contribution from boundaries
-    do i=numInnerFaces+1,numFaces
-      ijp = owner(i)
+    do i=1,numBoundaryFaces
+      iface = numInnerFaces + i
+      ijp = owner(iface)
       ijb = numCells+i
-      call gradbc(ijp,ijb,arx(i), ary(i), arz(i),u,dudx,dudy,dudz)
-    end do
-
-    ! ! Contribution from inlet boundaries
-    ! do i=1,ninl
-    !   ijp = owner(iInletFacesStart+i)
-    !   ijb = iInletStart+i
-    !   call gradbc(ijp,ijb,xni(i),yni(i),zni(i),u,dudx,dudy,dudz)
-    ! end do
-
-    ! ! Contribution from outlet boundaries
-    ! do i=1,nout
-    !   ijp = owner(iOutletFacesStart+i)
-    !   ijb = iOutletStart+i
-    !   call gradbc(ijp,ijb,xno(i),yno(i),zno(i),u,dudx,dudy,dudz)
-    ! end do
-
-    ! ! Contribution from symmetry boundaries
-    ! do i=1,nsym
-    !   ijp = owner(iSymmetryFacesStart+i)
-    !   ijb = iSymmetryStart+i
-    !   call gradbc(ijp,ijb,xns(i),yns(i),zns(i),u,dudx,dudy,dudz)
-    ! end do
-
-    ! ! Contribution from wall boundaries
-    ! do i=1,nwal
-    !   ijp = owner(iWallFacesStart+i)
-    !   ijb = iWallStart+i
-    !   call gradbc(ijp,ijb,xnw(i),ynw(i),znw(i),u,dudx,dudy,dudz)
-    ! end do
-
-    ! ! Contribution from pressure outlet boundaries
-    ! do i=1,npru
-    !   ijp = owner(iPressOutletFacesStart+i)
-    !   ijb = iPressOutletStart+i
-    !   call gradbc(ijp,ijb,xnpr(i),ynpr(i),znpr(i),u,dudx,dudy,dudz)
-    ! end do
+      call gradbc(ijp, ijb, arx(iface), ary(iface), arz(iface), u, dudx, dudy, dudz)
+    end do 
 
     ! Calculate gradient components at cv-centers
     do ijp=1,numCells
@@ -113,6 +80,7 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
           dudx(ijp)=dudx(ijp)*volr
           dudy(ijp)=dudy(ijp)*volr
           dudz(ijp)=dudz(ijp)*volr
+          if(lc.eq.nigrad) print*,ijp,dudx(ijp)
     enddo
 
     ! Set old gradient = new gradient for the next iteration
@@ -121,6 +89,7 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
       dfyo=dudy
       dfzo=dudz
     endif
+
   enddo ! lc-loop
 
 end subroutine

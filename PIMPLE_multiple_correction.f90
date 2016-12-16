@@ -90,10 +90,11 @@ subroutine PIMPLE_multiple_correction
     ! O- and C-grid cuts
     do i=1,noc
 
+      iface = iOCFacesStart + i
       ijp=ijl(i)
       ijn=ijr(i)
 
-      call facefluxmass_piso(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), al(i), ar(i), fmoc(i))
+      call facefluxmass_piso(ijp,ijn,xf(iface),yf(iface),zf(iface),arx(iface),ary(iface),arz(iface),foc(i),al(i),ar(i),fmoc(i))
 
 
       ! > Elements on main diagonal:
@@ -124,7 +125,7 @@ subroutine PIMPLE_multiple_correction
   
 
   ! Test continutity:
-  write(66,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
 
@@ -227,16 +228,17 @@ subroutine PIMPLE_multiple_correction
 
         ! Faces along O-C grid cuts
         do i=1,noc
+          iface = iOCFacesStart + i
           ijp = ijl(i)
           ijn = ijr(i)
-          call fluxmc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), fmcor)
+          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
           fmoc(i)=fmoc(i)+fmcor
           su(ijp)=su(ijp)-fmcor
           su(ijn)=su(ijn)+fmcor
         end do
       
         ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-        write(66,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
+        write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
                             ipcorr,'. nonorthogonal pass:', &
                                    ' sum  =',sum(su(:)),    &
                                    '|sum| =',abs(sum(su(:)))
@@ -257,9 +259,10 @@ subroutine PIMPLE_multiple_correction
 
         ! Faces along O-C grid cuts
         do i=1,noc
+          iface = iOCFacesStart + i
           ijp = ijl(i)
           ijn = ijr(i)
-          call fluxmc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), fmcor)
+          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
           fmoc(i)=fmoc(i)+fmcor
         end do  
 

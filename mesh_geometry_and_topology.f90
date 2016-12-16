@@ -63,26 +63,10 @@ real(dp), dimension(:), allocatable :: facint          ! Interpolation factor
 !real(dp), dimension(:), allocatable :: dpn            ! Distance between neigbor cell centers [1:numInnerFaces]
 
 ! Geometry parameters defined for boundary faces
-    real(dp), dimension(:), allocatable :: xni,yni,zni ! Boundary face normal componets, inlet faces
-    real(dp), dimension(:), allocatable :: xfi,yfi,zfi ! Boundary face center components, inlet faces
-
-    real(dp), dimension(:), allocatable :: xno,yno,zno ! Boundary face normal componets, outlet faces
-    real(dp), dimension(:), allocatable :: xfo,yfo,zfo ! Boundary face center components, outlet faces
 
 real(dp), dimension(:), allocatable :: srds,dns    ! srds = |are|/|dns|, dns = normal distance to cell center from face |dpn*face_normal_unit_vec|
-    real(dp), dimension(:), allocatable :: xns,yns,zns ! Boundary face normal componets, symmetry faces
-    real(dp), dimension(:), allocatable :: xfs,yfs,zfs ! Boundary face center components, symmetry faces
-
 real(dp), dimension(:), allocatable :: srdw,dnw    ! srdw = |are|/|dnw|, dnw = normal distance to cell center from face |dpn*face_normal_unit_vec|
-    real(dp), dimension(:), allocatable :: xnw,ynw,znw ! Boundary face normal componets, wall faces
-    real(dp), dimension(:), allocatable :: xfw,yfw,zfw ! Boundary face center components, wall faces
-
-    real(dp), dimension(:), allocatable :: xnpr,ynpr,znpr ! Boundary face normal componets, press outlet faces
-    real(dp), dimension(:), allocatable :: xfpr,yfpr,zfpr ! Boundary face center components, press. outlet faces
-
 real(dp), dimension(:), allocatable :: srdoc          ! srdoc = |are|/|dpn*face_normal_unit_vec| 
-    real(dp), dimension(:), allocatable :: xnoc,ynoc,znoc ! Boundary face normal componets, o-c- faces
-    real(dp), dimension(:), allocatable :: xfoc,yfoc,zfoc ! Boundary face center components, o-c- faces
 real(dp), dimension(:), allocatable :: foc            ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
 
 
@@ -722,6 +706,9 @@ if (native_mesh_files)  then
   ! Number of boundary faces
   numBoundaryFaces = numFaces - numInnerFaces
 
+  ! Size of arrays storing variables numCells+numBoundaryFaces
+  numTotal = numCells + numBoundaryFaces
+
 
 !
 ! > Write report on mesh size into log file
@@ -788,7 +775,16 @@ if (native_mesh_files)  then
   allocate ( owner(numFaces) )
   allocate ( neighbour(numInnerFaces) )
 
-  allocate ( dnw(nwal) )                                         
+  allocate ( dns(nsym) )      
+  allocate ( srds(nsym) )  
+
+  allocate ( dnw(nwal) )      
+  allocate ( srdw(nwal) )
+
+  allocate ( ijl(noc) ) 
+  allocate ( ijr(noc) ) 
+  allocate ( srdoc(noc) ) 
+  allocate ( foc(noc) )                                     
 
 
 !

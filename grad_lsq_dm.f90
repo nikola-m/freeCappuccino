@@ -42,7 +42,7 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
   !
   ! Locals
   !
-  integer :: i,ijp,ijn,inp
+  integer :: i,ijp,ijn,inp,iface
 
   real(dp) :: d11,d12,d13,d21,d22,d23,d31,d32,d33
   real(dp) :: we,ww,tmp
@@ -129,75 +129,6 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
       Dmat(5,ijp) = Dmat(5,ijp) + we*(yf(i)-yc(ijp))*(zf(i)-zc(ijp)) 
   end do
 
-  ! ! Inlet faces
-  ! do i=1,ninl
-  !     ijp = owner(iInletFacesStart+i)
-
-  !     we = 1./((xfi(i)-xc(ijp))**2+(yfi(i)-yc(ijp))**2+(zfi(i)-zc(ijp))**2)
-
-  !     Dmat(1,ijp) = Dmat(1,ijp) + we*(xfi(i)-xc(ijp))**2
-  !     Dmat(4,ijp) = Dmat(4,ijp) + we*(yfi(i)-yc(ijp))**2
-  !     Dmat(6,ijp) = Dmat(6,ijp) + we*(zfi(i)-zc(ijp))**2
-  !     Dmat(2,ijp) = Dmat(2,ijp) + we*(xfi(i)-xc(ijp))*(yfi(i)-yc(ijp)) 
-  !     Dmat(3,ijp) = Dmat(3,ijp) + we*(xfi(i)-xc(ijp))*(zfi(i)-zc(ijp)) 
-  !     Dmat(5,ijp) = Dmat(5,ijp) + we*(yfi(i)-yc(ijp))*(zfi(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Outlet faces
-  ! do i=1,nout
-  !     ijp = owner(iOutletFacesStart+i)
-
-  !     we = 1./((xfo(i)-xc(ijp))**2+(yfo(i)-yc(ijp))**2+(zfo(i)-zc(ijp))**2)
-
-  !     Dmat(1,ijp) = Dmat(1,ijp) + we*(xfo(i)-xc(ijp))**2
-  !     Dmat(4,ijp) = Dmat(4,ijp) + we*(yfo(i)-yc(ijp))**2
-  !     Dmat(6,ijp) = Dmat(6,ijp) + we*(zfo(i)-zc(ijp))**2
-  !     Dmat(2,ijp) = Dmat(2,ijp) + we*(xfo(i)-xc(ijp))*(yfo(i)-yc(ijp)) 
-  !     Dmat(3,ijp) = Dmat(3,ijp) + we*(xfo(i)-xc(ijp))*(zfo(i)-zc(ijp)) 
-  !     Dmat(5,ijp) = Dmat(5,ijp) + we*(yfo(i)-yc(ijp))*(zfo(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Symmetry faces
-  ! do i=1,nsym
-  !     ijp = owner(iSymmetryFacesStart+i)
-
-  !     we = 1./((xfs(i)-xc(ijp))**2+(yfs(i)-yc(ijp))**2+(zfs(i)-zc(ijp))**2)
-
-  !     Dmat(1,ijp) = Dmat(1,ijp) + (xfs(i)-xc(ijp))**2
-  !     Dmat(4,ijp) = Dmat(4,ijp) + (yfs(i)-yc(ijp))**2
-  !     Dmat(6,ijp) = Dmat(6,ijp) + (zfs(i)-zc(ijp))**2
-  !     Dmat(2,ijp) = Dmat(2,ijp) + (xfs(i)-xc(ijp))*(yfs(i)-yc(ijp)) 
-  !     Dmat(3,ijp) = Dmat(3,ijp) + (xfs(i)-xc(ijp))*(zfs(i)-zc(ijp))   
-  !     Dmat(5,ijp) = Dmat(5,ijp) + (yfs(i)-yc(ijp))*(zfs(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Wall faces
-  ! do i=1,nwal
-  !     ijp = owner(iWallFacesStart+i)
-
-  !     we = 1./((xfw(i)-xc(ijp))**2+(yfw(i)-yc(ijp))**2+(zfw(i)-zc(ijp))**2)
-
-  !     Dmat(1,ijp) = Dmat(1,ijp) + (xfw(i)-xc(ijp))**2
-  !     Dmat(4,ijp) = Dmat(4,ijp) + (yfw(i)-yc(ijp))**2
-  !     Dmat(6,ijp) = Dmat(6,ijp) + (zfw(i)-zc(ijp))**2
-  !     Dmat(2,ijp) = Dmat(2,ijp) + (xfw(i)-xc(ijp))*(yfw(i)-yc(ijp)) 
-  !     Dmat(3,ijp) = Dmat(3,ijp) + (xfw(i)-xc(ijp))*(zfw(i)-zc(ijp))  
-  !     Dmat(5,ijp) = Dmat(5,ijp) + (yfw(i)-yc(ijp))*(zfw(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Pressure outlet faces
-  ! do i=1,npru
-  !     ijp = owner(iPressOutletFacesStart+i)
-
-  !     we = 1./((xfpr(i)-xc(ijp))**2+(yfpr(i)-yc(ijp))**2+(zfpr(i)-zc(ijp))**2)
-
-  !     Dmat(1,ijp) = Dmat(1,ijp) + (xfpr(i)-xc(ijp))**2
-  !     Dmat(4,ijp) = Dmat(4,ijp) + (yfpr(i)-yc(ijp))**2
-  !     Dmat(6,ijp) = Dmat(6,ijp) + (zfpr(i)-zc(ijp))**2
-  !     Dmat(2,ijp) = Dmat(2,ijp) + (xfpr(i)-xc(ijp))*(yfpr(i)-yc(ijp)) 
-  !     Dmat(3,ijp) = Dmat(3,ijp) + (xfpr(i)-xc(ijp))*(zfpr(i)-zc(ijp)) 
-  !     Dmat(5,ijp) = Dmat(5,ijp) + (yfpr(i)-yc(ijp))*(zfpr(i)-zc(ijp))    
-  ! end do
 
 !**************************************************************************************************
   elseif(istage.eq.2) then
@@ -248,67 +179,16 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
   end do
 
   ! Boundary faces:
-
-  do i=numInnerFaces+1,numFaces
-    ijp = owner(i)
+  do i=1,numBoundaryFaces
+    iface = numInnerFaces + i
+    ijp = owner(iface)
     ijn = numCells+i
         we = 1./((xf(i)-xc(ijp))**2+(yf(i)-yc(ijp))**2+(zf(i)-zc(ijp))**2)
-        b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xf(i)-xc(ijp)) 
-        b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yf(i)-yc(ijp))  
-        b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zf(i)-zc(ijp)) 
+        b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
   end do
 
-  ! ! Inlet faces
-  ! do i=1,ninl
-  !   ijp = owner(iInletFacesStart+i)
-  !   ijn = iInletStart+i
-  !       we = 1./((xfi(i)-xc(ijp))**2+(yfi(i)-yc(ijp))**2+(zfi(i)-zc(ijp))**2)
-  !       b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xfi(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yfi(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zfi(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Outlet faces
-  ! do i=1,nout
-  !   ijp = owner(iOutletFacesStart+i)
-  !   ijn = iOutletStart+i
-  !       we = 1./((xfo(i)-xc(ijp))**2+(yfo(i)-yc(ijp))**2+(zfo(i)-zc(ijp))**2)
-  !       b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xfo(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yfo(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zfo(i)-zc(ijp)) 
-
-  ! end do
-
-  ! ! Symmetry faces
-  ! do i=1,nsym
-  !   ijp = owner(iSymmetryFacesStart+i)
-  !   ijn = iSymmetryStart+i
-  !       we = 1./((xfs(i)-xc(ijp))**2+(yfs(i)-yc(ijp))**2+(zfs(i)-zc(ijp))**2)
-  !       b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xfs(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yfs(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zfs(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Wall faces
-  ! do i=1,nwal
-  !   ijp = owner(iWallFacesStart+i)
-  !   ijn = iWallStart+i
-  !       we = 1./((xfw(i)-xc(ijp))**2+(yfw(i)-yc(ijp))**2+(zfw(i)-zc(ijp))**2)
-  !       b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xfw(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yfw(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zfw(i)-zc(ijp)) 
-        
-  ! end do
-
-  ! ! Pressure outlet faces
-  ! do i=1,npru
-  !   ijp = owner(iPressOutletFacesStart+i)
-  !   ijn = iPressOutletStart+i
-  !       we = 1./((xfpr(i)-xc(ijp))**2+(yfpr(i)-yc(ijp))**2+(zfpr(i)-zc(ijp))**2)
-  !       b1(ijp) = b1(ijp) + we*(Fi(ijn)-Fi(ijp))*(xfpr(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + we*(Fi(ijn)-Fi(ijp))*(yfpr(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + we*(Fi(ijn)-Fi(ijp))*(zfpr(i)-zc(ijp))     
-  ! end do
 
   ! Calculate gradient
 

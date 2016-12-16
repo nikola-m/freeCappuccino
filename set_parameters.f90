@@ -21,7 +21,7 @@ subroutine set_parameters
 !***********************************************************************
 !
   use parameters
-  use geometry, only: numTotal,numCells,numInnerFaces,Ninl,Nout,Nsym,Nwal,Npru,Noc,&
+  use geometry, only: numCells,numInnerFaces,Ninl,Nout,Nsym,Nwal,Npru,&
     iInletStart,iOutletStart,iSymmetryStart,iWallStart,iPressOutletStart,iOCStart,&
     iInletFacesStart,iOutletFacesStart,iSymmetryFacesStart,iWallFacesStart,iPressOutletFacesStart,iOCFacesStart
 
@@ -29,7 +29,6 @@ subroutine set_parameters
 !
 !***********************************************************************
 !
-  numTotal = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc
 
   ! numFacesTotal = numInnerFaces+Ninl+Nout+Nsym+Nwal+Npru ! maybe good for checking only..?
 

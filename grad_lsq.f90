@@ -38,7 +38,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   !
   ! Locals
   !
-  integer :: i,ijp,ijn,inp
+  integer :: i,ijp,ijn,inp,iface
 
   real(dp) :: d11,d12,d13,d21,d22,d23,d31,d32,d33
   real(dp) :: tmp
@@ -138,8 +138,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
         b2(ijn) = b2(ijn) + (Fi(ijp)-Fi(ijn))*(yc(ijp)-yc(ijn))  
 
         b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zc(ijn)-zc(ijp)) 
-        b3(ijn) = b3(ijn) + (Fi(ijp)-Fi(ijn))*(zc(ijp)-zc(ijn))
-                                                                                                                         
+        b3(ijn) = b3(ijn) + (Fi(ijp)-Fi(ijn))*(zc(ijp)-zc(ijn))                                                                                                                        
   enddo     
 
 
@@ -161,67 +160,15 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   end do
 
   ! Boundary faces:
-
-  do i=numInnerFaces+1,numFaces
-    ijp = owner(i)
+  do i=1,numBoundaryFaces
+    iface = numInnerFaces + i
+    ijp = owner(iface)
     ijn = numCells+i
 
-        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(i)-xc(ijp)) 
-        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(i)-yc(ijp))  
-        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(i)-zc(ijp)) 
+        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
   end do
-
-  ! ! Inlet faces
-  ! do i=1,ninl
-  !   ijp = owner(iInletFacesStart+i)
-  !   ijn = iInletStart+i
-
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xfi(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yfi(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zfi(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Outlet faces
-  ! do i=1,nout
-  !   ijp = owner(iOutletFacesStart+i)
-  !   ijn = iOutletStart+i
-
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xfo(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yfo(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zfo(i)-zc(ijp)) 
-
-  ! end do
-
-  ! ! Symmetry faces
-  ! do i=1,nsym
-  !   ijp = owner(iSymmetryFacesStart+i)
-  !   ijn = iSymmetryStart+i
-
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xfs(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yfs(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zfs(i)-zc(ijp)) 
-  ! end do
-
-  ! ! Wall faces
-  ! do i=1,nwal
-  !   ijp = owner(iWallFacesStart+i)
-  !   ijn = iWallStart+i
-
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xfw(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yfw(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zfw(i)-zc(ijp)) 
-        
-  ! end do
-
-  ! ! Pressure outlet faces
-  ! do i=1,npru
-  !   ijp = owner(iPressOutletFacesStart+i)
-  !   ijn = iPressOutletStart+i
-
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xfpr(i)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yfpr(i)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zfpr(i)-zc(ijp))     
-  ! end do
 
   ! Calculate gradient
 
@@ -244,12 +191,33 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 
         ! Solve system 
         
-        tmp = 1./(d11*d22*d33 - d11*d23*d32 - d12*d21*d33 + d12*d23*d31 + d13*d21*d32 - d13*d22*d31)
+        tmp = 1.0_dp/(d11*d22*d33 - d12*d23*d32 - d12*d21*d33 + d12*d23*d31 + d13*d21*d32 - d13*d22*d31)
 
         dFidxi(1,inp) = ( (b1(inp)*(d22*d33 - d23*d32)) - (b2(inp)*(d21*d33 - d23*d31)) + (b3(inp)*(d21*d32 - d22*d31)) ) * tmp
         dFidxi(2,inp) = ( (b2(inp)*(d11*d33 - d13*d31)) - (b1(inp)*(d12*d33 - d13*d32)) - (b3(inp)*(d11*d32 - d12*d31)) ) * tmp
         dFidxi(3,inp) = ( (b1(inp)*(d12*d23 - d13*d22)) - (b2(inp)*(d11*d23 - d13*d21)) + (b3(inp)*(d11*d22 - d12*d21)) ) * tmp
 
+!
+!     Solve the equations A*X = B.
+!
+      INTEGER          INFO
+      INTEGER          IPIV( 3 )
+      DOUBLE PRECISION A( 3, 3 ), B( 3, 1 )
+      A(1,1) = 
+      A(1,2) = 
+      A(1,3) = 
+      A(2,1) = 
+      A(2,2) = 
+      A(2,3) = 
+      A(3,1) = 
+      A(3,2) = 
+      A(3,3) = 
+
+      B(1,1) = 
+      B(2,1) = 
+      B(3,1) = 
+
+      CALL DGESV( 3, 1, A, 3, IPIV, B, 3, INFO )
   enddo
    
 

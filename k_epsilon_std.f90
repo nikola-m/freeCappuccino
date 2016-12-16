@@ -123,7 +123,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 !
 ! Local variables
 !
-  integer ::  i, k, inp, ijp, ijn, ijb
+  integer ::  i, k, inp, ijp, ijn, ijb, iface
   real(dp) :: gam, prtr, apotime, const, urfrs, urfms, &
               utp, vtp, wtp, utn, vtn, wtn, &
               genp, genn, sut, &
@@ -330,9 +330,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Contribution from o- and c-grid cuts
   do i=1,noc
+        iface = iOCFacesStart+i
         ijp=ijl(i)
         ijn=ijr(i)
-        call facefluxsc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), fmoc(i), foc(i), gam, &
+        call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
          fi, dfidxi, prtr, al(i), ar(i), suadd)
 
         sp(ijp) = sp(ijp) - ar(i)
@@ -349,12 +350,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Inlet faces
   do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
     ijb = iInletStart+i
 
     dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xfi(i), yfi(i), zfi(i), xni(i), yni(i), zni(i), fmi(i), zero, one, &
+    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), zero, one, &
      Fi, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -364,12 +366,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Outlet faces
   do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
     dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xfo(i), yfo(i), zfo(i), xno(i), yno(i), zno(i), fmo(i), zero, one, &
+    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), zero, one, &
      FI, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -382,7 +385,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   if (ifi .eq. ite) then
 
     do i=1,nwal
-      ijp=owner(iWallFacesStart+i)
+      iface = iWallFacesStart+i
+      ijp=owner(iface)
       ijb=iWallStart+i
 
       su(ijp)=su(ijp)-gen(ijp)*vol(ijp) ! oduzmi produkciju iz wall ajdecent celije
@@ -390,12 +394,12 @@ subroutine calcsc(Fi,dFidxi,ifi)
       if(ypl(i).gt.ctrans) viss=visw(i)
 
       ! Face area 
-      Are=sqrt(Xnw(i)**2+Ynw(i)**2+Znw(i)**2)
+      are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
       ! Face normals
-      nxf=Xnw(i)/(Are+Small)
-      nyf=Ynw(i)/(Are+Small)
-      nzf=Znw(i)/(Are+Small)
+      nxf = arx(iface)/are
+      nyf = ary(iface)/are
+      nzf = arz(iface)/are
 
       ! Magnitude of a cell center velocity projected on boundary face normal
       Vnp = U(ijp)*nxf+V(ijp)*nyf+W(ijp)*nzf
@@ -423,7 +427,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
       gen(ijp)=abs(tau)*cmu25*sqrt(max(zero,te(ijp)))/(dnw(i)*cappa)
       su(ijp)=su(ijp)+gen(ijp)*vol(ijp)
-    END DO
+    end do
 
   else
 
@@ -432,7 +436,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ! to be zero, su equal the dissipation, and ap = 1
 
     do i=1,nwal
-      ijp=owner(iWallFacesStart+i)
+      iface = iWallFacesStart+i
+      ijp=owner(iface)
       ijb=iWallStart+i
 
       ed(ijp)=cmu75*(max(zero,te(ijp)))**1.5/(cappa*dnw(i))
@@ -513,14 +518,16 @@ subroutine calcsc(Fi,dFidxi,ifi)
 !
   ! Symmetry faces
   do i=1,nsym
-    ijp = owner(iSymmetryFacesStart+i)
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
     ijb = iSymmetryStart+i
     fi(ijb)=fi(ijp)
   end do
   !
  ! Outlet faces
   do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
     fi(ijb)=fi(ijp)
   end do
@@ -746,7 +753,7 @@ subroutine modify_mu_eff()
   use variables
   implicit none
 
-  integer :: inp
+  integer :: i,inp
   integer :: iface, ijp,ijb
   real(dp) :: visold
   real(dp) :: nxf,nyf,nzf,are
@@ -774,17 +781,18 @@ subroutine modify_mu_eff()
   !----------------------------------------------------------------------------
   ! Wall boundaries - update Visw and Ypl
   !----------------------------------------------------------------------------
-  do iface=1,nwal  
-    ijp = owner(iWallFacesStart+iface)
-    ijb = iWallStart+iface
+  do i=1,nwal  
+    iface = iWallFacesStart+i
+    ijp = owner(iface)
+    ijb = iWallStart+i
 
-    ! Face area 
-    Are=sqrt(Xnw(iface)**2+Ynw(iface)**2+Znw(iface)**2)
+      ! Face area 
+      are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
-    ! Face normals
-    nxf=Xnw(iface)/(Are+Small)
-    nyf=Ynw(iface)/(Are+Small)
-    nzf=Znw(iface)/(Are+Small)
+      ! Face normals
+      nxf = arx(iface)/are
+      nyf = ary(iface)/are
+      nzf = arz(iface)/are
 
     ! Magnitude of a cell center velocity projected on boundary face normal
     Vnp = U(ijp)*nxf+V(ijp)*nyf+W(ijp)*nzf
@@ -805,32 +813,33 @@ subroutine modify_mu_eff()
     ! projektovanje razlike brzina na pravac tangencijalne brzine u cell centru ijp
     Ut2 = abs( (U(ijb)-U(ijp))*xtp + (V(ijb)-V(ijp))*ytp + (W(ijb)-W(ijp))*ztp )
 
-    Tau = viscos*Ut2/(dnw(iface)+small)
+    Tau = viscos*Ut2/(dnw(i)+small)
     Utau = sqrt( Tau / den(ijb) )
-    ypl(iface) = den(ijb)*Utau*dnw(iface)/viscos
+    ypl(i) = den(ijb)*Utau*dnw(i)/viscos
 
     ! Ima i ova varijanta u cisto turb. granicni sloj varijanti sa prvom celijom u log sloju
     ck = cmu25*sqrt(max(te(ijp),zero))
-    ypl(iface) = den(ijb)*ck*dnw(iFace)/viscos
+    ypl(i) = den(ijb)*ck*dnw(i)/viscos
     ! ...ovo je tehnicki receno ystar iliti y* a ne y+
 
     viscw = zero
 
-    if(ypl(iface) > ctrans) then
-      viscw = ypl(iface)*viscos*cappa/log(Elog*ypl(iface))
+    if(ypl(i) > ctrans) then
+      viscw = ypl(i)*viscos*cappa/log(Elog*ypl(i))
     endif
 
-    visw(iface) = max(viscos,viscw)
-    vis(ijb) = visw(iface)
+    visw(i) = max(viscos,viscw)
+    vis(ijb) = visw(i)
   enddo
   !----------------------------------------------------------------------------
 
   !----------------------------------------------------------------------------
   ! Symmetry
   !----------------------------------------------------------------------------
-  do iface=1,nsym
-    ijp = owner(iSymmetryFacesStart+iface)
-    ijb = iSymmetryStart+iface
+  do i=1,nsym
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
+    ijb = iSymmetryStart+i
 
     Vis(ijb) = Vis(ijp)
   enddo
@@ -839,9 +848,10 @@ subroutine modify_mu_eff()
   !----------------------------------------------------------------------------
   ! Inlet
   !----------------------------------------------------------------------------
-  do iface=1,ninl
-    ijp = owner(iInletFacesStart+iface)
-    ijb = iInletStart+iface
+  do i=1,ninl
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
+    ijb = iInletStart+i
 
     Vis(ijb) = Vis(ijp)
   enddo
@@ -850,9 +860,10 @@ subroutine modify_mu_eff()
   !----------------------------------------------------------------------------
   ! Outlet
   !----------------------------------------------------------------------------
-  do iface=1,nout
-    ijp = owner(iOutletFacesStart+iface)
-    ijb = iOutletStart+iface
+  do i=1,nout
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
+    ijb = iOutletStart+i
 
     Vis(ijb) = Vis(ijp)
   enddo

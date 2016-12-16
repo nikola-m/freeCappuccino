@@ -7,14 +7,15 @@ subroutine adjustMassFlow
 
   implicit none
 
-  integer :: i,ijb,ijp
+  integer :: i,ijb,ijp,iface
   real(dp) :: flowo,fac
 
 
   ! Inlet boundaries (mass fluxes prescribed in routine 'bcin')
   do i=1,ninl
 
-    ijp = owner(iInletFacesStart+i)
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
 
     ! Minus sign is there to make fmi(i) positive since it enters the cell.
     ! Check out comments in bcin.f90
@@ -30,14 +31,15 @@ subroutine adjustMassFlow
 
   do i=1,nout
 
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
     u(ijb) = u(ijp)
     v(ijb) = v(ijp)
     w(ijb) = w(ijp)
 
-    fmo(i) = den(ijp)*( u(ijb)*xno(i)+v(ijb)*yno(i)+w(ijb)*zno(i) )
+    fmo(i) = den(ijp)*( u(ijb)*arx(iface)+v(ijb)*ary(iface)+w(ijb)*arz(iface) )
     
 
     flowo = flowo + fmo(i) 
@@ -48,8 +50,9 @@ subroutine adjustMassFlow
   fac = flomas/(flowo+small)
 
   do i=1,nout
-
-    ijp = owner(iOutletFacesStart+i)
+    
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
 

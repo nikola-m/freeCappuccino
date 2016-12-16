@@ -18,5 +18,5 @@
          ! # Pressure gradient force that will drive the flow - we use it in calcuvw.
          gradPcmf  = gradPcmf + gragPplus
 
-         write(66,'(2(a,es13.6))') "Uncorrected Ubar = ",magUbarStar," pressure gradient = ",gradPcmf
+         write(6,'(2(a,es13.6))') "Uncorrected Ubar = ",magUbarStar," pressure gradient = ",gradPcmf
          !............................................................................

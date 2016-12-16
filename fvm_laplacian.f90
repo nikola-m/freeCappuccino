@@ -23,7 +23,7 @@ subroutine fvm_laplacian(mu,phi)
   ! Local variables
   !
 
-  integer :: i, k, ijp, ijn, ijb
+  integer :: i, k, ijp, ijn, ijb, iface
   real(dp) :: cap, can
   real(dp) :: are,dpw
 
@@ -67,10 +67,11 @@ subroutine fvm_laplacian(mu,phi)
   ! o- and c-grid cuts
   do i=1,noc
 
+    iface = iOCFacesStart+i
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxlaplacian(ijp, ijn,  xnoc(i), ynoc(i), znoc(i), foc(i), mu, al(i), ar(i))
+    call facefluxlaplacian(ijp, ijn, arx(iface), ary(iface), arz(iface), foc(i), mu, al(i), ar(i))
     
     ! > Elements on main diagonal:
 
@@ -89,12 +90,13 @@ subroutine fvm_laplacian(mu,phi)
 
   ! Contribution from inlet boundaries
   do i=1,ninl
-    ijp = owner(iInletFacesStart+i)
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
     ijb = iInletStart+i
 
     k=diag(ijp)
-    are = sqrt( xni(i)**2 + yni(i)**2 + zni(i)**2 )
-    dpw = sqrt( (xc(ijp)-xfi(i))**2 + (yc(ijp)-yfi(i))**2 + (zc(ijp)-zfi(i))**2 )
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
     a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
     su(ijp) = su(ijp) + a(k)*phi(ijb)
@@ -103,12 +105,13 @@ subroutine fvm_laplacian(mu,phi)
 
   ! Contribution from outlet boundaries
   do i=1,nout
-    ijp = owner(iOutletFacesStart+i)
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
     ijb = iOutletStart+i
 
     k=diag(ijp)
-    are = sqrt( xno(i)**2 + yno(i)**2 + zno(i)**2 )
-    dpw = sqrt( (xc(ijp)-xfo(i))**2 + (yc(ijp)-yfo(i))**2 + (zc(ijp)-zfo(i))**2 )
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
     a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
     su(ijp) = su(ijp) + a(k)*phi(ijb)

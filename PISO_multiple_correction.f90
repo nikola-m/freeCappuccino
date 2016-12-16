@@ -90,10 +90,11 @@ subroutine PISO_multiple_correction
     ! O- and C-grid cuts
     do i=1,noc
 
+      iface = iOCFacesStart+i
       ijp=ijl(i)
       ijn=ijr(i)
 
-      call facefluxmass_piso(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), al(i), ar(i), fmoc(i))
+      call facefluxmass_piso(ijp,ijn,xf(iface),yf(iface),zf(iface),arx(iface),ary(iface),arz(iface),foc(i),al(i),ar(i),fmoc(i))
 
 
       ! > Elements on main diagonal:
@@ -120,7 +121,7 @@ subroutine PISO_multiple_correction
     if(.not.const_mflux) call adjustMassFlow
 
     ! Test continutity: sum=0
-    write(66,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+    write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
     !!  "If you have a pressure equations with boundaries that do not fix pressure level, you have to fix a reference pressure." H.Jasak cfd-online forum
     !// In incompressible flow, only relative pressure matters.  Unless there is a pressure BC present,
@@ -151,27 +152,36 @@ subroutine PISO_multiple_correction
         ! Clean RHS vector
         su(:) = 0.0d0
 
-        do i=1,numInnerFaces                                                      
+        do i=1,numInnerFaces
+
           ijp = owner(i)
           ijn = neighbour(i)
+
           call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+
           flmass(i) = flmass(i)+fmcor 
           su(ijp) = su(ijp)-fmcor
-          su(ijn) = su(ijn)+fmcor                                                                                              
+          su(ijn) = su(ijn)+fmcor 
+
         enddo                                                              
 
         ! Faces along O-C grid cuts
         do i=1,noc
+
+          iface = iOCFacesStart+i
           ijp = ijl(i)
           ijn = ijr(i)
-          call fluxmc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), fmcor)
+
+          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+
           fmoc(i)=fmoc(i)+fmcor
           su(ijp)=su(ijp)-fmcor
           su(ijn)=su(ijn)+fmcor
+
         end do
 
           ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-        write(66,'(20x,i1,a,/,a,1pe10.3,/,20x,a,1pe10.3)')  &
+        write(6,'(20x,i1,a,/,a,1pe10.3,/,20x,a,1pe10.3)')  &
                             ipcorr,'. nonorthogonal pass:', &
                                    ' sum  =',sum(su(:)),    &
                                    '|sum| =',abs(sum(su(:)))
@@ -216,19 +226,28 @@ subroutine PISO_multiple_correction
         ! 
 
         ! Inner faces      
-        do i=1,numInnerFaces                                                      
+        do i=1,numInnerFaces  
+
           ijp = owner(i)
           ijn = neighbour(i)
+
           call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-          flmass(i) = flmass(i)+fmcor                                                                                             
+
+          flmass(i) = flmass(i)+fmcor 
+
         enddo                                                              
 
         ! Faces along O-C grid cuts
         do i=1,noc
+
+          iface = iOCFacesStart+i
           ijp = ijl(i)
           ijn = ijr(i)
-          call fluxmc(ijp, ijn, xfoc(i), yfoc(i), zfoc(i), xnoc(i), ynoc(i), znoc(i), foc(i), fmcor)
+
+          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+
           fmoc(i)=fmoc(i)+fmcor
+
         end do 
 
       endif 

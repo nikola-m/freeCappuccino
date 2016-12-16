@@ -5,7 +5,7 @@ subroutine allocate_arrays
 !***********************************************************************
 !
   use parameters
-  use geometry
+  use geometry, only: numTotal,numCells,numInnerFaces,nnz,ninl,nout,nwal,noc
   use variables
   use hcoef
   use title_mod
@@ -16,157 +16,7 @@ subroutine allocate_arrays
 !
 !***********************************************************************
 !
-  integer :: ierr
-
-
-  ! allocate(x(numNodes),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: x" 
-  ! allocate(y(numNodes),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: y" 
-  ! allocate(z(numNodes),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: z" 
-
-  ! allocate(xc(numCells),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xc" 
-  ! allocate(yc(numCells),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yc" 
-  ! allocate(zc(numCells),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zc" 
-
-  ! allocate(vol(numCells),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: vol"
-
-  ! allocate(wallDistance(numCells),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: wallDistance" 
-
-
-  ! allocate(arx(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: arx" 
-  ! allocate(ary(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ary" 
-  ! allocate(arz(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: arz" 
-
-  ! allocate( xf(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xf"
-  ! allocate( yf(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yf"
-  ! allocate( zf(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zf"
-
-  ! allocate(facint(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: facint" 
-
-
-  ! allocate(owner(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: li"
-  ! allocate(neighbour(numInnerFaces),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: lk"
-
-
-  ! allocate( ijl(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ijl"
-  ! allocate( ijr(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ijr"
-
-
-
-  ! allocate( xni(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xni"
-  ! allocate( yni(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yni"
-  ! allocate( zni(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zni"
-  ! allocate( xfi(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfi"
-  ! allocate( yfi(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfi"
-  ! allocate( zfi(ninl),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfi"
-
-
-  ! allocate( xno(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xno"
-  ! allocate( yno(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yno"
-  ! allocate( zno(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zno"
-  ! allocate( xfo(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfo"
-  ! allocate( yfo(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfo"
-  ! allocate( zfo(nout),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfo"
-
-  ! allocate( srds(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: srds"
-  ! allocate( dns(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: dns"
-  ! allocate( xns(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xns"
-  ! allocate( yns(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yns"
-  ! allocate( zns(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zns"
-  ! allocate( xfs(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfs"
-  ! allocate( yfs(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfs"
-  ! allocate( zfs(nsym),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfs"
-
-
-  ! allocate( srdw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: srdw"
-  ! allocate( dnw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: dnw"
-  ! allocate( visw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: visw"
-  ! allocate( ypl(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ypl"
-  ! allocate( xnw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xnw"
-  ! allocate( ynw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ynw"
-  ! allocate( znw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: znw"
-  ! allocate( xfw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfw"
-  ! allocate( yfw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfw"
-  ! allocate( zfw(nwal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfw"
-
-  ! allocate( xnpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xnpr"
-  ! allocate( ynpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ynpr"
-  ! allocate( znpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: znpr"
-  ! allocate( xfpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfpr"
-  ! allocate( yfpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfpr"
-  ! allocate( zfpr(npru),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfpr"
-
-  ! allocate( srdoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: srdoc"
-  ! allocate( xnoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xnoc"
-  ! allocate( ynoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ynoc"
-  ! allocate( znoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: znoc"
-  ! allocate( xfoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: xfoc"
-  ! allocate( yfoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: yfoc"
-  ! allocate( zfoc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: zfoc"
-  ! allocate( foc(noc),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: foc"
- 
+  integer :: ierr 
 
   ! Variables
 
@@ -225,6 +75,10 @@ subroutine allocate_arrays
   allocate(fmoc(noc),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: fmoc"
 
+  allocate( visw(nwal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: visw"
+  allocate( ypl(nwal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: ypl"
 
   ! Turbulence production
   allocate(gen(numCells),stat=ierr) 
@@ -339,7 +193,7 @@ subroutine allocate_arrays
   ! allocate(cono(numTotal),stat=ierr) 
   !   if(ierr /= 0)write(*,*)"allocation error: cono" 
 
-  if( bdf .and. btime.gt.0.5 ) then
+  if( bdf .and. btime.gt.0.99 ) then
   allocate(uoo(numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: uoo" 
   allocate(voo(numTotal),stat=ierr) 
