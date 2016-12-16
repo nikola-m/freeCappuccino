@@ -36,7 +36,7 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 
   implicit none
 
-  integer, parameter :: m=6, n=3 ! m is the number of neighbours, for structured 3D mesh it's 6
+  integer, parameter :: n=3, m=6  ! m is the number of neighbours, for structured 3D mesh it's 6
 
   integer, intent(in) :: istage
   real(dp), dimension(numTotal), intent(in)   :: fi
@@ -95,7 +95,7 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
       D(3,l,ijn) = zc(ijp)-zc(ijn)
                                                             
   enddo     
-  
+
   ! Faces along O-C grid cuts
   do i=1,noc
     ijp = ijl(i)

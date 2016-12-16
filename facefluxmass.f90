@@ -31,12 +31,6 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   real(dp) :: duxi,duyi,duzi
 
 
-  ! Tentative (!) velocity gradients: 
-  call grad(U,dUdxi)
-  call grad(V,dVdxi)
-  call grad(W,dWdxi)
-
-
   ! > Geometry:
 
   ! Face interpolation factor

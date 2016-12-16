@@ -27,12 +27,12 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
   !**Arguments************************************************************
   real(dp), dimension(numTotal), intent(in) :: u
-  real(dp), dimension(numCells), intent(inout) :: dudx,dudy,dudz
+  real(dp), dimension(numTotal), intent(inout) :: dudx,dudy,dudz
 
   !**Locals***************************************************************
   integer :: i,ijp,ijn,ijb,lc,iface
   real(dp) :: volr
-  real(dp), dimension(numCells) :: dfxo,dfyo,dfzo
+  real(dp), dimension(numTotal) :: dfxo,dfyo,dfzo
 
   ! Initialize gradient
   dfxo(:) = 0.0d0
@@ -76,11 +76,10 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
     ! Calculate gradient components at cv-centers
     do ijp=1,numCells
-          volr=1./vol(ijp)
+          volr=1.0_dp/vol(ijp)
           dudx(ijp)=dudx(ijp)*volr
           dudy(ijp)=dudy(ijp)*volr
           dudz(ijp)=dudz(ijp)*volr
-          if(lc.eq.nigrad) print*,ijp,dudx(ijp)
     enddo
 
     ! Set old gradient = new gradient for the next iteration
@@ -116,8 +115,8 @@ subroutine gradco(ijp,ijn, &
   real(dp), intent(in) :: sx,sy,sz
   real(dp), intent(in) :: fif
   real(dp), dimension(numTotal), intent(in) :: fi
-  real(dp), dimension(numCells), intent(in) :: dfxo,dfyo,dfzo
-  real(dp), dimension(numCells), intent(inout)  :: dfx,dfy,dfz
+  real(dp), dimension(numTotal), intent(in) :: dfxo,dfyo,dfzo
+  real(dp), dimension(numTotal), intent(inout)  :: dfx,dfy,dfz
 
 
   real(dp) :: xi,yi,zi,dfxi,dfyi,dfzi
@@ -173,7 +172,7 @@ subroutine gradbc(ijp,ijb,sx,sy,sz,fi,dfx,dfy,dfz)
   integer,    intent(in) :: ijp,ijb
   real(dp), intent(in) :: sx,sy,sz
   real(dp), dimension(numTotal), intent(in) :: fi
-  real(dp), dimension(numCells), intent(inout)  :: dfx,dfy,dfz
+  real(dp), dimension(numTotal), intent(inout)  :: dfx,dfy,dfz
 
   dfx(ijp)=dfx(ijp)+fi(ijb)*sx
   dfy(ijp)=dfy(ijp)+fi(ijb)*sy

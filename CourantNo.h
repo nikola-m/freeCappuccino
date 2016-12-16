@@ -88,12 +88,11 @@
 
   time = time + timestep
 
- write(66,*)
- write(66,'(a,i0,a,es10.3,a,f12.6)') " Time step no. : ",ITIME," dt : ",timestep," Time = ",TIME
- write(66,*)
+ write(6,*)
+ write(6,'(a,i0,a,es10.3,a,f12.6)') "  Time step no. : ",ITIME," dt : ",timestep," Time = ",TIME
+ write(6,*)
 
- write(66,'(2(a,es10.3))') "Courant Number mean: ", meanCoNum, &
-&                          " max: ", CoNum
+ write(6,'(2(a,es10.3))') "  Courant Number mean: ", meanCoNum," max: ", CoNum
 
 
 

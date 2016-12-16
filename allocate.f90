@@ -256,13 +256,13 @@ subroutine allocate_arrays
 
 
   ! Gradient
-  allocate(dUdxi(3,numCells),stat=ierr) 
+  allocate(dUdxi(3,numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: dUdxi"
-  allocate(dVdxi(3,numCells),stat=ierr) 
+  allocate(dVdxi(3,numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: dVdxi"
-  allocate(dWdxi(3,numCells),stat=ierr) 
+  allocate(dWdxi(3,numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: dWdxi"
-  allocate(dPdxi(3,numCells),stat=ierr) 
+  allocate(dPdxi(3,numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: dPdxi"
 
       ! allocate(dTEdxi(3,numCells),stat=ierr) 

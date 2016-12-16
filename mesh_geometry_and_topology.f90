@@ -197,72 +197,6 @@ pure function centroid_component_part_polymesh(ax,bx,cx,nx,vol) result(cc_part)
 end function  
 
 
-  function hex_volume( x0,y0,z0, x1,y1,z1, x3,y3,z3, x2,y2,z2, &
-                       x4,y4,z4, x5,y5,z5, x7,y7,z7, x6,y6,z6   )
-!
-!! Given coordinates of hexahedron vertices calculate its volume.
-!
-!  Discussion:
-!  Element Type and Node-Numbering Conventions
-!  polyMesh:
-!	   3----------------2
-!	  /|               /|
-!	 / |              / |
-!	7----------------6  |
-!	|  |             |  |
-!	|  |             |  |
-!	|  |             |  |
-!	|  0-------------|--1
-!	| /              | /
-!	|/               |/
-!	4----------------5
-!  This func:
-!	   2----------------3
-!	  /|               /|
-!	 / |              / |
-!	6----------------7  |
-!	|  |             |  |
-!	|  |             |  |
-!	|  |             |  |
-!	|  0-------------|--1
-!	| /              | /
-!	|/               |/
-!	4----------------5
-!
-!
-  implicit none
-
-  real(dp), intent(in) :: x0,y0,z0, x1,y1,z1, x2,y2,z2, x3,y3,z3, &
-                          x4,y4,z4, x5,y5,z5, x6,y6,z6, x7,y7,z7
-  real(dp) :: hex_volume
-
-
-!...Version 1.
-!  hex_volume = 1.0d0/6.0d0*(               &
-!  determinant( (x7-x0),(y7-y0),(z7-z0),    &
-!               (x1-x0),(y1-y0),(z1-z0),    &
-!               (x3-x5),(y3-y5),(z3-z5) ) + &
-!  determinant( (x7-x0),(y7-y0),(z7-z0),    &
-!               (x4-x0),(y4-y0),(z4-z0),    &
-!               (x5-x6),(y5-y6),(z5-z6) ) + &
-!  determinant( (x7-x0),(y7-y0),(z7-z0),    &
-!               (x2-x0),(y2-y0),(z2-z0),    &
-!               (x6-x3),(y6-y3),(z6-z3) ) )
-
-!.....Version 2.
-  hex_volume = 1.0d0/12.0d0*( &
-  determinant( (x7-x1+(x6-x0)),(y7-y1+(y6-y0)),(z7-z1+(z6-z0)), &
-               (x7-x2),(y7-y2),(z7-z2), &
-               (x3-x0),(y3-y0),(z3-z0)                      ) + &
-  determinant( (x6-x0),(y6-y0),(z6-z0), &
-               (x7-x2+(x5-x0)),(y7-y2+(y5-y0)),(z7-z2+(z5-z0)), &
-               (x7-x4),(y7-y4),(z7-z4)                      ) + &
-  determinant( (x7-x1),(y7-y1),(z7-z1), &
-               (x5-x0),(y5-y0),(z5-z0), &
-               (x7-x4+(x3-x0)),(y7-y4+(y3-y0)),(z7-z4+(z3-z0)) )) 
-
-  end function
-
   function determinant(a1,a2,a3,b1,b2,b3,q1,q2,q3)
 !
 ! Calculates determinant of 3x3 matrix
@@ -276,135 +210,6 @@ end function
                +(a1*b2-a2*b1)*q3
   end function
 
-! subroutine face_centroid_component(x,y,z,nd,xf,yf,zf)
-! !
-! ! The centroid of the vertices of a quadrilateral 
-! ! is the midpoint of the line M_(AC)M_(BD) connecting 
-! ! the midpoints of the diagonals AC and BD (Honsberger 1995, pp. 39-40).
-! !
-! ! [1] Honsberger, R. "On Quadrilaterals." Ch. 4 in Episodes in Nineteenth 
-! ! and Twentieth Century Euclidean Geometry. Washington, DC: Math. Assoc. Amer., pp. 35-41, 1995. 
-! !
-!   implicit none
-!   integer, intent(in) :: nd
-!   real(dp), dimension(nd), intent(in) :: x,y,z
-!   real(dp), intent(out) :: xf,yf,zf
-
-!   integer :: i
-!   real(dp) :: avr
-!   real(dp) :: a,b,c
-
-!   if (nd == 4) then 
-
-!     ! Quadrangular face
-!     avr = 0.25_dp
-!     xf = 0.0_dp
-!     yf = 0.0_dp
-!     zf = 0.0_dp
-!     do i=1,nd
-!       xf = xf + x(i)
-!       yf = yf + y(i)
-!       zf = zf + z(i)
-!     enddo
-!     xf = avr*xf
-!     yf = avr*yf
-!     zf = avr*zf
-
-!   elseif (nd == 3) then
-
-!     ! Triangular face
-!     a = sqrt((x(3)-x(2))**2+(y(3)-y(2))**2+(z(3)-z(2))**2)
-!     b = sqrt((x(3)-x(1))**2+(y(3)-y(1))**2+(z(3)-z(1))**2)
-!     c = sqrt((x(1)-x(2))**2+(y(1)-y(2))**2+(z(1)-z(2))**2)
-
-!     xf = x(1)/(a*x(1)+b*x(2)+c*x(3)) + &
-!          y(1)/(a*y(1)+b*y(2)+c*y(3)) + &
-!          z(1)/(a*z(1)+b*z(2)+c*z(3)) 
-!     yf = x(2)/(a*x(1)+b*x(2)+c*x(3)) + &
-!          y(2)/(a*y(1)+b*y(2)+c*y(3)) + &
-!          z(2)/(a*z(1)+b*z(2)+c*z(3)) 
-!     zf = x(3)/(a*x(1)+b*x(2)+c*x(3)) + &
-!          y(3)/(a*y(1)+b*y(2)+c*y(3)) + &
-!          z(3)/(a*z(1)+b*z(2)+c*z(3)) 
-
-!   endif 
-  
-! end subroutine
-
-
-
-
-
-! subroutine face_area_components_quad(px,py,pz,qx,qy,qz,rx,ry,rz,Sfx,Sfy,Sfz)
-! !
-! ! 
-! !
-!   implicit none
-!   real(dp), intent(in) :: px,py,pz,qx,qy,qz,rx,ry,rz
-!   real(dp), intent(inout) :: Sfx,Sfy,Sfz
-
-!   real(dp) :: pqx,pqy,pqz
-!   real(dp) :: qrx,qry,qrz
-
-
-! !.....Cross Products for triangle surface vectors
-!       pqx = py*qz-pz*qy
-!       pqy = pz*qx-px*qz
-!       pqz = px*qy-py*qx
-
-!       qrx = qy*rz-qz*ry
-!       qry = qz*rx-qx*rz
-!       qrz = qx*ry-qy*rx
-
-! !.....Face surface vectors
-!       Sfx = 0.5*(pqx+qrx)
-!       Sfy = 0.5*(pqy+qry)
-!       Sfz = 0.5*(pqz+qrz)
-
-! end subroutine
-
-! subroutine face_area_components_tri(px,py,pz,qx,qy,qz,Sfx,Sfy,Sfz)
-! !
-! !
-! !
-!   implicit none
-!   real(dp), intent(in) :: px,py,pz,qx,qy,qz
-!   real(dp), intent(inout) :: Sfx,Sfy,Sfz
-
-!   real(dp) :: pqx,pqy,pqz
-
-! !.....Cross Products for triangle surface vectors
-!       pqx = py*qz-pz*qy
-!       pqy = pz*qx-px*qz
-!       pqz = px*qy-py*qx
-
-! !.....Face surface vectors
-!       Sfx = 0.5*pqx
-!       Sfy = 0.5*pqy
-!       Sfz = 0.5*pqz
-
-! end subroutine
-
-! subroutine face_area_components_tri2( x1,y1,z1, x2,y2,z2, x3,y3,z3, Sfx,Sfy,Sfz )
-!   implicit none
-!   real(dp), intent(in) :: x1,y1,z1, x2,y2,z2, x3,y3,z3
-!   real(dp), intent(inout) :: Sfx,Sfy,Sfz
-
-!   Sfx = 0.5_dp*(-y2*z1+y3*z1+y1*z2-y3*z2-y1*z3+y2*z3)
-!   Sfy = 0.5_dp*(-z2*x1+z3*x1+z1*x2-z3*x2-z1*x3+z2*x3)
-!   Sfz = 0.5_dp*(-x2*y1+x3*y1+x1*y2-x3*y2-x1*y3+x2*y3)
-! end subroutine
-
-
-! function cell_centroid_component(x1,x2,x3,x4,x5,x6,x7,x8) result(xc)
-! !
-! ! Self-explanatory
-! !
-!   implicit none
-!   real(dp), intent(in) :: x1,x2,x3,x4,x5,x6,x7,x8
-!   real(dp) :: xc
-!   xc = 0.125*(x1+x2+x3+x4+x5+x6+x7+x8)
-! end function
 
 
 subroutine find_intersection_point( &
@@ -1015,14 +820,14 @@ if (native_mesh_files)  then
                                  ! intersection point (output):
                                  xjp,yjp,zjp &
                                 )
-    xpn = xc(inn)-xjp
-    ypn = yc(inn)-yjp
-    zpn = zc(inn)-zjp
+    xpn = xjp - xc(inp)
+    ypn = yjp - yc(inp)
+    zpn = zjp - zc(inp)
 
     djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
 
-    ! Interpolation factor |Pj j'|/|P Pj| where P is cell center, Pj neighbour cell center and j' intersection point.
-    facint(iface) = 1.0_dp - djn/dpn
+    ! Interpolation factor |P Pj'|/|P Pj| where P is cell center, Pj neighbour cell center and j' intersection point.
+    facint(iface) = djn/dpn
 
   enddo
 

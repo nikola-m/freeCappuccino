@@ -57,16 +57,24 @@ subroutine bicgstab(fi,ifi)
 ! If ltest=true, print the norm 
 !
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
+
 !
-!.....calculate elements of diagonal preconditioning matrix
+! Calculate elements of diagonal preconditioning matrix
 !
   do i=1,numCells
     d(i) = a( diag(i) )
     do k = ioffset(i), diag(i)-1
-      d(i) = d(i) - a( k ) * d( ja( k )) * a( diag( ja(k) ) + k )
+      do l = diag( ja(k) ), ioffset( ja( k )+1 )-1
+        ! kolona u kojoj je trenutni dijagonalni element je i
+        ! kada je pronadje izlazi sa poslednjom vrednosti l indeksa:
+        if ( ja( l ) == i ) exit 
+      end do
+      d(i) = d(i) - a( k ) * d( ja( k )) * a( l )
     end do
-    d(i) = 1. / d(i)
-  enddo
+    d(i) = 1.0_dp / d(i)
+  enddo 
+
+ 
 ! !
 ! !.....CALCULATE ELEMENTS OF PRECONDITIONING MATRIX DIAGONAL
 ! !
@@ -81,34 +89,22 @@ subroutine bicgstab(fi,ifi)
 !         END DO
 !       END DO
 
-! !
-! !.....INITIALIZE WORKING ARRAYS AND CONSTANTS
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             RESO(IJK)=RES(IJK)
-!             PK(IJK)=0.0_dp
-!             UK(IJK)=0.0_dp
-!             ZK(IJK)=0.0_dp
-!             VK(IJK)=0.0_dp
-!           END DO
-!         END DO
-!       END DO
+
 
 !
 ! Initialize working arrays and constants
 !
-  reso(:) = res(:)     
-  pk(:) = 0.0_dp
-  uk(:) = 0.0_dp
-  zk(:) = 0.0_dp
-  vk(:) = 0.0_dp
+  reso  = res    
+  pk = 0.0_dp
+  uk = 0.0_dp
+  zk = 0.0_dp
+  vk = 0.0_dp
 
   alf = 1.0_dp
   beto = 1.0_dp
   gam = 1.0_dp
+
+
 !
 ! Start iterations
 !
@@ -133,7 +129,7 @@ subroutine bicgstab(fi,ifi)
 !
 ! Calculate beta and omega
 !
-  bet = sum(res(:)*reso(:))
+  bet = sum(res*reso)
   om = bet*gam/(alf*beto+small)
   beto = bet
 
@@ -153,7 +149,7 @@ subroutine bicgstab(fi,ifi)
 !
 ! Calculate pk
 !
-  pk(:) = res(:) + om*(pk(:)-alf*uk(:))
+  pk = res + om*(pk -alf*uk)
 
 ! !
 ! !.....SOLVE (M ZK = PK) - FORWARD SUBSTITUTION
@@ -189,7 +185,7 @@ subroutine bicgstab(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk(:) = zk(:)/(d(:)+small)
+  zk = zk/(d+small)
 
 ! !
 ! !..... BACKWARD SUBSTITUTION
@@ -276,8 +272,8 @@ subroutine bicgstab(fi,ifi)
 !
 ! Update 'fi' and calculate 'w' (overwrite 'res; - it is res-update)
 !
-  fi(1:numCells) = fi(1:numCells) + gam*zk(:)
-  res(:)         = res(:)         - gam*uk(:) ! <- W
+  fi(1:numCells) = fi(1:numCells) + gam*zk
+  res            = res            - gam*uk   ! <- W
 
 ! !
 ! !.....SOLVE (M Y = W); Y OVERWRITES ZK; FORWARD SUBSTITUTION
@@ -313,7 +309,7 @@ subroutine bicgstab(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk(:) = zk(:)/(d(:)+small)
+  zk = zk/(d+small)
 
 ! !
 ! !.....BACKWARD SUBSTITUTION
@@ -383,7 +379,7 @@ subroutine bicgstab(fi,ifi)
 !
 ! Calculate alpha (alf)
 !
-  alf = sum(vk(:)*res(:)) / (sum(vk(:)*vk(:))+small)
+  alf = sum(vk*res) / (sum(vk*vk)+small)
 
 ! !
 ! !.....UPDATE VARIABLE (FI) AND RESIDUAL (RES) VECTORS
@@ -401,13 +397,13 @@ subroutine bicgstab(fi,ifi)
 !       END DO
 
   ! Update solution vector
-  fi(:) = fi(:) + alf*zk(:)
+  fi(1:numCells) = fi(1:numCells) + alf*zk
 
   ! Update residual vector
-  res(:) = res(:) - alf*vk(:)
+  res = res - alf*vk
 
   ! L^1-norm of residual
-  resl = sum(abs(res(:)))
+  resl = sum(abs(res))
 
 !
 ! Check convergence
@@ -423,8 +419,7 @@ subroutine bicgstab(fi,ifi)
   end do
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
-  'BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
   ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
 
 end subroutine

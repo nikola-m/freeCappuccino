@@ -136,7 +136,6 @@ subroutine calcuvw
   end do
 
 
-
   !=======================================================================
   ! Additional asm terms:
   !=======================================================================
@@ -192,7 +191,6 @@ subroutine calcuvw
     sw(ijn) = sw(ijn) - swp
 
   end do
-
 
 
   ! O- and C-grid cuts (these are not boundaries!)
@@ -432,7 +430,6 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(u,iu) 
-
 
 
 

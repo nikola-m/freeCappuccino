@@ -67,14 +67,14 @@ subroutine iccg(fi,ifi)
 !
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 !
-!.....calculate elements of diagonal preconditioning matrix
+! Calculate elements of diagonal preconditioning matrix
 !
   do i=1,numCells
     d(i) = a( diag(i) )
     do k = ioffset(i), diag(i)-1
       d(i) = d(i) - a( k )**2 * d( ja( k )) 
     end do
-    d(i) =  1. / d(i)
+    d(i) =  1.0_dp / d(i)
   enddo
 
   s0=1.e20
@@ -140,7 +140,7 @@ subroutine iccg(fi,ifi)
   alf=sk/pkapk
 
   ! Update solution vector
-  fi(:) = fi(:) + alf*pk(:)
+  fi(1:numCells) = fi(1:numCells) + alf*pk(:)
 
   ! Update residual vector
   res(:) = res(:) - alf*zk(:)
@@ -162,8 +162,7 @@ subroutine iccg(fi,ifi)
   end do
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
-  'PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
   ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
 
 end subroutine

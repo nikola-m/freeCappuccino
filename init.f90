@@ -195,7 +195,7 @@ subroutine init
   do inp = 1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp) = xc(inp)+yc(inp)+zc(inp)!uin
+  u(inp) = uin !xc(inp)+yc(inp)+zc(inp)!
   v(inp) = vin
   w(inp) = win
   te(inp) = tein
@@ -211,12 +211,50 @@ subroutine init
       ! w(inp) = perturb/100.
 
   enddo
+ 
+  ! Initialize variables at boundaries
 
-  do i=1,numBoundaryFaces
-  iface = numInnerFaces + i
-  ijp = numCells+i
-  u(ijp) = xf(iface)+yf(iface)+zf(iface)
-  enddo
+  ! ! Inlet
+  ! do i=1,ninl
+  ! iface = iInletFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
+
+  ! ! Outlet
+  ! do i=1,nout
+  ! iface = iOutletFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
+
+  ! ! Symmetry
+  ! do i=1,nsym
+  ! iface = iSymmetryFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
+
+  ! ! Wall
+  ! do i=1,nwal
+  ! iface = iWallFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
+
+  ! ! Pressure Outlet
+  ! do i=1,npru
+  ! iface = iPressOutletFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
+
+  ! ! OC faces
+  ! do i=1,noc
+  ! iface = iOCFacesStart + i
+  ! ijp = numCells+i
+  ! u(ijp) = ...
+  ! enddo
 
   !-------------------------------------------------------    
   ! Field initialisation over inner cells + boundary faces
@@ -224,12 +262,16 @@ subroutine init
 
   ! Density
   den = densit
+
   ! Effective viscosity
   vis = viscos
+
   ! Temperature
   ! t = tin
+
   ! ! Temperature variance
   ! vart=vartin
+  
   ! ! Concentration
   ! con=conin
 
@@ -281,8 +323,8 @@ subroutine init
   endif
 
   call grad(U,dUdxi)
-  ! call grad(V,dVdxi)
-  ! call grad(W,dWdxi)
+  call grad(V,dVdxi)
+  call grad(W,dWdxi)
 
 ! print*,'gradijenti:'
 ! do i=1,numCells

@@ -31,7 +31,7 @@ subroutine bcin
     iface = iInletFacesStart+i
     ini = iInletStart + i
 
-    read(7,*) u(ini),v(ini),w(ini),p(ini)!,te(ini),ed(ini),t(ini)
+    read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini)!,t(ini)
 
     vis(ini) = viscos
 
@@ -117,5 +117,4 @@ subroutine bcin
     write ( *, '(a)' ) ' '
   endif
 
-stop
 end subroutine

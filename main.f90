@@ -77,7 +77,11 @@ program caffa3d
 !     T i m e   l o o p : 
 !===============================================
 !
-      time_loop: do itime=1,numstep ! time_loop 
+  write(6,'(a)') ' '
+  write(6,'(a)') '  Start iteration!'
+  write(6,'(a)') ' '
+
+  time_loop: do itime=1,numstep ! time_loop 
 !
 !===============================================
 !     Update variables : 
@@ -161,7 +165,7 @@ program caffa3d
 
 
       call cpu_time(finish)
-      write(6,'(a,g0.3,a)') 'ExecutionTime = ',finish-start,' s'
+      write(6,'(a,f6.3,a)') '  ExecutionTime = ',finish-start,' s'
       write(6,*)
 
 

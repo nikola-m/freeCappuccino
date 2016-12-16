@@ -29,6 +29,11 @@ subroutine calcp
   a(:) = 0.0d0
   su(:) = 0.0d0
 
+  ! Tentative (!) velocity gradients used for velocity interpolation: 
+  call grad(U,dUdxi)
+  call grad(V,dVdxi)
+  call grad(W,dWdxi)
+
   ! > Assemble off diagonal entries of system matrix and find mass flux at faces using Rhie-Chow interpolation
 
   ! Internal faces:
@@ -103,7 +108,7 @@ subroutine calcp
 
 
   ! Test continutity:
-  write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  if(ltest) write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
 

@@ -40,22 +40,14 @@
   end do
 
 
-!//   In OpenFOAM:
-!//     scalar sumLocalContErr = runTime.deltaTValue()*
-!//         mag(contErr)().weightedAverage(mesh.V()).value();
-      sumLocalContErr = sum( abs( su ) ) 
+  sumLocalContErr = sum( abs( su ) ) 
 
-!//   In OpenFOAM:
-!//     scalar globalContErr = runTime.deltaTValue()*
-!//         contErr.weightedAverage(mesh.V()).value();
-       globalContErr = sum( su )
+   globalContErr = sum( su )
 
-!//     cumulativeContErr += globalContErr;
-       cumulativeContErr = cumulativeContErr + globalContErr
+   cumulativeContErr = cumulativeContErr + globalContErr
 
 
-      write(66,'(3(a,es10.3))') "time step continuity errors : sum local = ", sumLocalContErr, &
-     &                          ", global = ", globalContErr, &
-     &                          ", cumulative = ", cumulativeContErr
+  write(6,'(3(a,es10.3))') "  time step continuity errors : sum local = ", sumLocalContErr, &
+ &                          ", global = ", globalContErr, &
+ &                          ", cumulative = ", cumulativeContErr
 
-!// ************************************************************************* //
