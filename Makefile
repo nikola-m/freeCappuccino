@@ -21,14 +21,15 @@ MOD_FILES=\
 
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
-    bicgstab.f90
+    bicgstab.f90 \
+    pcg-jacobi.f90 \
+    gauss-seidel.f90
 
 TURBULENCE_FILES=\
     temperature.f90 \
     k_epsilon_std.f90
 
 SRCS=\
-    set_parameters.f90 \
     asm_stress_terms.f90 \
     asm_heatflux_terms.f90 \
     adjustMassFlow.f90 \
@@ -47,6 +48,7 @@ SRCS=\
     facefluxmass_piso.f90 \
     facefluxMassCorr.f90 \
     facefluxuvw.f90 \
+    boundary_facefluxuvw.f90 \
     fvm_laplacian.f90 \
     find_strain_rate.f90 \
     get_rAU_x_UEqnH.f90 \
@@ -80,13 +82,13 @@ OBJS = ${RK4FILES:.f90=.o}
 # Targets for make.
 ##################################################################
 
-all: caffa3d #rk4Projection
+all: caffa3d #rk4ProjectionCaffa
 
 caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${F90OBJS}
 	@echo  "Linking" $@ "... "
 	${F90} ${F90OBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o caffa3d 
 
-rk4ProjectionChannel: ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
+rk4ProjectionCaffa: ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 	@echo  "Linking" $@ "... "
 	${F90} ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o rk4ProjectionChannel 
 

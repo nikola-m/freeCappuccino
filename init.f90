@@ -24,7 +24,7 @@ subroutine init
   use variables
   use title_mod
   use gradients
-  use sparse_matrix, only: create_CSR_matrix_from_mesh_data
+  use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
   use k_epsilon_std, only: te,ed,dTEdxi,dEDdxi,allocate_k_epsilon_std
   use temperature, only: t,utt,vtt,wtt,pranl
   use utils, only: timestamp, show_logo, i4vec_print2
@@ -37,9 +37,12 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, ijp, inp, iface
+  integer :: i, ijp, ijn, inp, ijo, ijw, ijs, iface
+  real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
+  integer :: nsw_backup
+  real(dp) :: sor_backup
 
 !
 !***********************************************************************
@@ -89,8 +92,8 @@ subroutine init
       CLOSE (5)
 
 !.....Create an input file reading log:
-      WRITE(6,'(a)') ' Input file log: '
-      WRITE(6,'(a)') '--------------------------------------------------------------------------------'
+      WRITE(6,'(a)') '  Input file log: '
+      WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
       WRITE(6,'(a70)') TITLE
       WRITE(6,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
       WRITE(6,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10'
@@ -98,7 +101,7 @@ subroutine init
       WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
       WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
       WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
-      WRITE(6,'(L1,1x,3f5.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
+      WRITE(6,'(L1,1x,3f6.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
       WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
       WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
       WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
@@ -118,7 +121,7 @@ subroutine init
       WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
       WRITE(6,'(1(L1,1x),5x,a)') const_mflux,'const_mflux'
       WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
-      WRITE(6,'(a)') '--------------------------------------------------------------------------------'
+      WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
       WRITE(6,'(a)') ' '
 
 
@@ -126,8 +129,6 @@ subroutine init
 ! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
 !
   call mesh_geometry
-
-  call set_parameters  
 
   call allocate_arrays
 
@@ -152,7 +153,7 @@ subroutine init
   lturb = levm.or.lles
 
 
-  ! Reciprocal values of underrrelaxation factors
+  ! Reciprocal values of underrelaxation factors
   do i=1,nphi
     urfr(i)=1.0_dp / urf(i)
     urfm(i)=1.0_dp - urf(i)
@@ -168,34 +169,22 @@ subroutine init
 ! 5.0)  Parameter Initialisation
 
   ! Initial time
-  if(.not.lread) time=0.0d0
+  if(.not.lread) time = 0.0d0
 
-  !Set to zero cumulative error in continuity
+  ! Set to zero cumulative error in continuity
   cumulativeContErr = 0.0_dp
 
-! Bulk velocity - important const_mflux flow!
+  ! Bulk velocity - important const_mflux flow!
   magUbar = uin
 
-! 5.1)  Field Initialisation - Turbulence kinetic energy and dissipation at inlet
 
-  ! IF(Wilcox.or.SST.or.SAS.or.EARSM_WJ.or.EARSM_M) THEN
-  !   TEIN=1e-6*UIN*UIN
-  !   EDIN=5.*UIN/(zc(intc)-zc(inbc))
-  ! ELSEIF(stdkeps.or.Durbin.or.RNG.or.Realizable.or.LowRe_LB) THEN 
-  !   TEIN=1.5*(0.05*UIN)**2 ! for Ti=0.05  
-  !   EDIN=cmu75*tein**1.5/(zc(intc)-zc(inbc)) 
-  ! ENDIF
-
-! 5.2)  Field Initialisation - reading inlet file
-
-
-! 5.3)  Field Initialisation
+! 5.1)  Field Initialisation
 
 ! Field initialisation loop over inner cells--------------------------------
   do inp = 1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp) = uin !xc(inp)+yc(inp)+zc(inp)!
+  u(inp) = uin
   v(inp) = vin
   w(inp) = win
   te(inp) = tein
@@ -214,33 +203,56 @@ subroutine init
  
   ! Initialize variables at boundaries
 
-  ! ! Inlet
+  ! do i=1,numBoundaryFaces
+  ! iface = numInnerFaces+i
+  ! ijp = numCells+i
+  ! u(ijp) = xf(iface)+yf(iface)+zf(iface)
+  ! enddo
+
+  ! ! Inlet - will be defined in 'bcin'
   ! do i=1,ninl
   ! iface = iInletFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
+  ! ijp = iInletStart + i
+  ! u(ijp) = uin
   ! enddo
 
-  ! ! Outlet
+  ! ! Outlet - zero gradient
   ! do i=1,nout
   ! iface = iOutletFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
+  ! ijp = owner(iface)
+  ! ijo = iOutletStart+i
+  ! u(ijo) = u(ijp)
+  ! v(ijo) = v(ijp)
+  ! w(ijo) = w(ijp)
   ! enddo
 
-  ! ! Symmetry
-  ! do i=1,nsym
-  ! iface = iSymmetryFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
-  ! enddo
+  ! Symmetry
+  do i=1,nsym
+  iface = iSymmetryFacesStart + i
+  ijp = owner(iface)
+  ijs = iSymmetryStart + i
+  u(ijs) = u(ijp)
+  v(ijs) = v(ijp)
+  w(ijs) = w(ijp)
+  enddo
 
-  ! ! Wall
-  ! do i=1,nwal
-  ! iface = iWallFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
-  ! enddo
+  ! Wall
+  do i=1,nwal
+  iface = iWallFacesStart + i
+  ijw = iWallStart+i
+  u(ijw) = 0.0_dp
+  v(ijw) = 0.0_dp
+  w(ijw) = 0.0_dp
+  enddo
+
+  ! Moving Wall
+  do i=1,20!nwalm
+  iface = iWallFacesStart + i !iWallMFacesStart + i
+  ijw = iWallStart+i !iWallMStart+i
+  u(ijw) = 1.0_dp
+  v(ijw) = 0.0_dp
+  w(ijw) = 0.0_dp
+  enddo
 
   ! ! Pressure Outlet
   ! do i=1,npru
@@ -292,10 +304,24 @@ subroutine init
   ! if(earsm_wj.or.earsm_m) bij(:,:)=0.0_dp
 
   ! Pressure and pressure correction
-  p = small
+  p = 0.0_dp
   pp = p
 
+  ! Initialize mass flow
+  do i=1,numInnerFaces
+    ijp = owner(i)
+    ijn = neighbour(i)
 
+    fxn = facint(i)
+    fxp = 1.0_dp-facint(i)
+
+    ui = u(ijp)*fxp + u(ijn)*fxn
+    vi = v(ijp)*fxp + v(ijn)*fxn
+    wi = w(ijp)*fxp + w(ijn)*fxn
+
+    flmass(i) = den(ijp)*(arx(i)*ui+ary(i)*vi+arz(i)*wi)
+
+  enddo
 
 !
 ! 6)  Read Restart File And Set Field Values
@@ -314,8 +340,8 @@ subroutine init
   dVdxi = 0.0_dp
   dWdxi = 0.0_dp
   dPdxi = 0.0_dp
-  ! dTEdxi = 0.0_dp
-  ! dEDdxi = 0.0_dp
+  dTEdxi = 0.0_dp
+  dEDdxi = 0.0_dp
 
 
   if (lstsq .or. lstsq_qr .or. lstsq_dm) then
@@ -328,13 +354,13 @@ subroutine init
 
 ! print*,'gradijenti:'
 ! do i=1,numCells
-!   print*,i,':',u(i),dudxi(1,i)
+!   print*,i,':',dudxi(1,i)!abs(1.0d0-dudxi(1,i))!
 ! enddo
 
 
-
-
+!
 ! 8) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
+!
 
   ! Loop over wall boundaries to calculate normal distance from cell center dnw.
   do i = 1,nwal
@@ -386,74 +412,55 @@ subroutine init
   ! 9) Distance to the nearest wall needed for some turbulence models
   !
 
-      ! Source term
-!      do k=2,nkm; do i=2,nim; do j=2,njm
-!      inp=lk(k)+li(i)+j
-!          ! Wall distance Poisson eq. source :
-!          su(inp) = Vol(inp) 
-!      enddo; enddo; enddo  
+    ! Source term
+    su = 0.0_dp
+    su(1:numCells) = Vol(1:numCells)
 
+    ! Initialize solution
+    p(1:numCells) = 0.0_dp
 
+    do i=1,numBoundaryFaces
+      iface = numInnerFaces+i
+      ijp = numCells+i
+      p(ijp) = sqrt( arx(iface)**2 + ary(iface)**2 + arz(iface)**2)
+    enddo
 
+    ! Wall
+    do i=1,nwal
+      iface = iWallFacesStart + i
+      ijp = iWallStart+i
+      p(ijp) = 0.0_dp
+    enddo
 
+    !  Coefficient array for Laplaciann
+    sv = 1.0_dp       
 
-      ! ! Initialize solution and set fixedValue boundaries
-      ! pp=0. 
-      ! do k=1,nk; do i=1,ni; do j=1,nj
-      ! inp=lk(k)+li(i)+j
-      ! intc = lk(nk)+li(i)+j
-      ! inbc = lk(1)+li(i)+j
-      !     ! 1. If channel - upper and lower boundaries are Wall:
-      !     pp(inp) = min(zc(intc)-zc(inp),zc(inp)-zc(inbc))
-      !     ! 2. If Boundary layer - only lower boundary is Wall:
-      !     !pp(inp) = zc(inp)-zc(inbc)
-      ! enddo; enddo; enddo   
+    ! Laplacian operator and BCs         
+    call fvm_laplacian(sv,p) 
 
-      ! wallDistance = pp
-      ! pp=p
+    sor_backup = sor(ip)
+    nsw_backup = nsw(ip)
 
+    sor(ip) = 1e-13
+    nsw(ip) = 100
 
+    ! Solve system
+    call iccg(p,ip) 
 
+    sor(ip) = sor_backup
+    nsw(ip) = nsw_backup
 
+    ! Gradient of solution field stored in p (gradient stored in dPdxi) :
+    call grad(p,dPdxi)
 
-      ! Initial internal field
-      !do k=2,nkm; do i=2,nim; do j=2,njm
-      !inp=lk(k)+li(i)+j
-      !    pp(inp) = 0.
-      !enddo; enddo; enddo 
- 
-!      sv = 1.0_dp                ! Unit coefficient array
-!      call fvm_laplacian(sv,pp) ! Laplacian operator and BCs
+    ! Wall distance computation from Poisson eq. solution stored in pp:
+    wallDistance = -sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:)  ) + &
+                    sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2*p  )
 
-!      call cgstab_sip(pp,ip) 
-
-      ! Gradient of solution field stored in pp (gradient stored in dPdxi) :
-!      call grad_lsq_qr(pp,dPdxi,2,d)
-
-      ! Wall distance computation from Poisson eq. solution stored in pp:
-!      wallDistance = -sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:)  ) + &
-!                      sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2.*pp  )
-
- 
-!      su = 0.0_dp; sv = 0.0_dp ! Clear arrays
-
-!      call plot_3D_field_vtk (88, trim(out_folder_path)//'/wallDistance_scalar_field', 'scalar', &
-!                             'vtk', 'WDIS_field', 'wall-distance ',                      &
-!                              NI, NJ, NK, 1, 1, 1, Xc, Yc, Zc, wallDistance, 0.0, 0.0)
-
-!       Open(Unit=87,File=Trim(Out_Folder_Path)//'/wallDistance.plt') 
-!       Rewind 87
-!       Write(87,*) 'Title     = " "'
-!       Write(87,*) 'Variables = "X"'
-!       Write(87,*) '"Y"'
-!       Write(87,*) '"Z"'
-!       Write(87,*) '"Wdist"'
-!       Write(87,*) 'Zone T=" "'
-!       Write(87,*) 'I=',Ni, ' ,J=',Nj, ' ,K=',Nk,', F=Point'
-!       Do k=1,nk; do j=1,nj; do i=1,ni
-!       Inp=Lk(K)+Li(I)+J
-!       Write(87,*) Xc(Inp),Yc(Inp),Zc(Inp),wallDistance(Inp)
-!       Enddo; Enddo; Enddo 
-!       Close(87)        
-
+    ! Clear arrays
+    su = 0.0_dp
+    sv = 0.0_dp 
+    p = 0.0_dp
+    dPdxi = 0.0_dp
+     
 end subroutine

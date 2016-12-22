@@ -13,7 +13,7 @@ subroutine iccg(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: numTotal,ijl,ijr
+  use geometry, only: numCells,numTotal,ijl,ijr
   use sparse_matrix
   use title_mod
 
@@ -60,7 +60,7 @@ subroutine iccg(fi,ifi)
   end do
 
   ! L^1-norm of residual
-  res0=sum(abs(res(:)))
+  res0=sum(abs(res))
 
 !
 ! If ltest=true, print the norm 
@@ -94,7 +94,7 @@ subroutine iccg(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk(:) = zk(:)/(d(:)+small)     
+  zk = zk/(d+small)     
 !
 ! Backward substitution
 !
@@ -106,7 +106,7 @@ subroutine iccg(fi,ifi)
   enddo
   
   ! Inner product
-  sk = sum(res(:)*zk(:)) !..or  dot_product(res,zk)
+  sk = sum(res*zk) !..or  dot_product(res,zk)
 
 !
 ! Calculate beta
@@ -116,7 +116,7 @@ subroutine iccg(fi,ifi)
 !
 ! Calculate new search vector pk
 !
-  pk(:) = zk(:) + bet*pk(:)
+  pk = zk + bet*pk
 
 !
 ! Calculate scalar product (pk.a pk) and alpha (overwrite zk)
@@ -135,18 +135,18 @@ subroutine iccg(fi,ifi)
   end do
 
   ! Inner product
-  pkapk=sum(pk(:)*zk(:))
+  pkapk=sum(pk*zk)
 
   alf=sk/pkapk
 
   ! Update solution vector
-  fi(1:numCells) = fi(1:numCells) + alf*pk(:)
+  fi(1:numCells) = fi(1:numCells) + alf*pk
 
   ! Update residual vector
-  res(:) = res(:) - alf*zk(:)
+  res = res - alf*zk
 
   ! L^1-norm of residual
-  resl = sum(abs(res(:)))
+  resl = sum(abs(res))
 
   s0=sk
 !

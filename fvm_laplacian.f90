@@ -17,7 +17,8 @@ subroutine fvm_laplacian(mu,phi)
 
   implicit none
 
-  real(dp), dimension(numTotal), intent(in) :: mu,phi
+  real(dp), dimension(numTotal), intent(in) :: phi
+  real(dp), dimension(numCells), intent(in) :: mu
 
   !
   ! Local variables
@@ -29,7 +30,7 @@ subroutine fvm_laplacian(mu,phi)
 
 
   ! Initialize matrix array
-  a(:) = 0.0_dp
+  a = 0.0_dp
 
   ! > Assemble Laplacian system matrix
 
@@ -39,7 +40,7 @@ subroutine fvm_laplacian(mu,phi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxlaplacian(ijp, ijn, arx(ijp), ary(ijp), arz(ijp), facint(i), mu, cap, can)
+    call facefluxlaplacian(ijp, ijn, arx(i), ary(i), arz(i), facint(i), mu, cap, can)
 
     ! > Off-diagonal elements:
 
@@ -163,14 +164,14 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
 !
   use types
   use parameters
-  use geometry, only: numTotal,xc,yc,zc
+  use geometry, only: numCells,numTotal,xc,yc,zc
 
   implicit none
 
   integer, intent(in) :: ijp, ijn
   real(dp), intent(in) :: arx, ary, arz
   real(dp), intent(in) :: lambda
-  real(dp), dimension(numTotal), intent(in) :: mu
+  real(dp), dimension(numCells), intent(in) :: mu
   real(dp), intent(inout) :: cap, can
 
   ! Local variables
@@ -179,12 +180,9 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
   real(dp) :: xpn,ypn,zpn,smdpn,sfdpnr
   real(dp) :: nxx,nyy,nzz
 
-
-  ! > Geometry:
-
   ! Face interpolation factor
   fxn=lambda 
-  fxp=1.0d0-lambda
+  fxp=1.0_dp-lambda
 
   ! Distance vector between cell centers
   xpn=xc(ijn)-xc(ijp)
@@ -201,7 +199,8 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
 
   sfdpnr=1./(arx*xpn*nxx+ary*ypn*nyy+arz*zpn*nzz)
   smdpn = (arx*arx+ary*ary+arz*arz)*sfdpnr
-!.....Coefficients of discretized Laplace equation
+
+  ! Coefficients of discretized Laplace equation
   cap = (fxp*mu(ijp)+fxn*mu(ijn))*smdpn
   can = cap
 

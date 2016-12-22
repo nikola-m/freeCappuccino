@@ -18,7 +18,7 @@ integer :: numTotal                           ! number of volume field values + 
 integer :: nnz                                ! no.of nonzeros
 
 integer :: ninl,nout,nsym,npru,nwal,noc, &
-           nwali,nwala,nwalf
+           nwalm,nwali,nwala,nwalf
 
 integer :: iInletStart
 integer :: iOutletStart
@@ -68,7 +68,6 @@ real(dp), dimension(:), allocatable :: srds,dns    ! srds = |are|/|dns|, dns = n
 real(dp), dimension(:), allocatable :: srdw,dnw    ! srdw = |are|/|dnw|, dnw = normal distance to cell center from face |dpn*face_normal_unit_vec|
 real(dp), dimension(:), allocatable :: srdoc          ! srdoc = |are|/|dpn*face_normal_unit_vec| 
 real(dp), dimension(:), allocatable :: foc            ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
-
 
 ! Mesh topology information - connectivity of cells trough faces
 integer, dimension(:), allocatable :: owner     ! Index of the face owner cell
@@ -404,6 +403,12 @@ subroutine mesh_geometry
   npru = 0
   noc = 0
 
+  ! Different types of walls: moving, isothermal, adiabatic, flux.
+  nwalm = 0
+  nwali = 0
+  nwala = 0
+  nwalf = 0
+
   read(boundary_file,'(a)') line_string
   read(boundary_file,'(i1)') numBoundaries
 
@@ -411,27 +416,55 @@ subroutine mesh_geometry
   read(boundary_file,*) bctype,nfaces,startFace
 
     select case (bctype)
+
       case (1)
         if (ninl==0) iInletFacesStart = startFace
         ninl = ninl + nfaces
+
       case (2)
         if (nout==0) iOutletFacesStart = startFace
         nout = nout + nfaces
+
       case (3)
         if (nsym==0) iSymmetryFacesStart = startFace
         nsym = nsym + nfaces
+
       case (4)
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
+
+      case (41)
+        if (nwal==0) iWallFacesStart = startFace
+        nwal = nwal + nfaces
+        nwalm = nwalm + nfaces
+
+      case (42)
+        if (nwal==0) iWallFacesStart = startFace
+        nwal = nwal + nfaces
+        nwali = nwali + nfaces
+
+      case (43)
+        if (nwal==0) iWallFacesStart = startFace
+        nwal = nwal + nfaces
+        nwala = nwala + nfaces
+
+      case (44)
+        if (nwal==0) iWallFacesStart = startFace
+        nwal = nwal + nfaces
+        nwalf = nwalf + nfaces
+
       case (5)
         if (npru==0) iPressOutletFacesStart = startFace
         npru = npru + nfaces
+
       case (6)
         if (noc==0) iOCFacesStart = startFace
         noc = noc + nfaces
+
       case default
         write(*,*) "Non-existing boundary type in polymesh/boundary file!"
         stop
+
     end select 
 
   enddo  
@@ -514,6 +547,18 @@ if (native_mesh_files)  then
   ! Size of arrays storing variables numCells+numBoundaryFaces
   numTotal = numCells + numBoundaryFaces
 
+  ! Where in variable arrays, the boundary face values are stored, 
+  ! e.g. for inlet faces it is: (iInletStart+1, iInletStart+Ninl),
+  ! for outlet faces it is: (iOutletStart+1, iOutletStart+Nout) etc.
+  ! Having all values of a variable, incuding those of volume field (defined in cell centers)
+  ! and those of boundary surface field in a single array is helpful.
+  iInletStart = numCells
+  iOutletStart = numCells+Ninl
+  iSymmetryStart = numCells+Ninl+Nout
+  iWallStart = numCells+Ninl+Nout+Nsym
+  iPressOutletStart = numCells+Ninl+Nout+Nsym+Nwal
+  iOCStart = numCells+Ninl+Nout+Nsym+Nwal+Npru
+
 
 !
 ! > Write report on mesh size into log file
@@ -540,18 +585,53 @@ if (native_mesh_files)  then
   write ( *, '(a)' ) '  Boundary information:'
   write ( *, '(a)' ) ' '
   write ( *, '(a,i8)' ) '  Number of cell-faces on boundary, numBoundaryFaces = ', numBoundaryFaces
-  write ( *, '(a)' ) ' '
-  if(ninl .gt.0 ) write ( *, '(a,i8)' ) '  Number of inlet faces  = ', ninl
-  write ( *, '(a)' ) ' '
-  if(nout .gt.0 ) write ( *, '(a,i8)' ) '  Number of outlet faces  = ', nout
-  write ( *, '(a)' ) ' '
-  if(nsym .gt.0 ) write ( *, '(a,i8)' ) '  Number of symmetry faces  = ', nsym
-  write ( *, '(a)' ) ' '
-  if(nwal .gt.0 ) write ( *, '(a,i8)' ) '  Number of wall faces  = ', nwal
-  write ( *, '(a)' ) ' '
-  if(npru .gt.0 ) write ( *, '(a,i8)' ) '  Number of pressure-outlet faces  = ', npru
-  write ( *, '(a)' ) ' '
-  if(noc .gt.0 ) write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
+
+
+  if( ninl.gt.0 ) then 
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of inlet faces  = ', ninl
+  endif
+
+  if( nout.gt.0 ) then 
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of outlet faces  = ', nout
+  endif
+
+  if( nsym.gt.0 ) then
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of symmetry faces  = ', nsym
+  endif
+
+  if( nwal.gt.0 ) then
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of wall faces  = ', nwal
+    if( nwalm.gt.0 ) then
+      write ( *, '(a)' ) ' '
+      write ( *, '(4x,a,i8)' ) 'Number of moving wall faces  = ', nwalm
+    endif
+    if( nwali.gt.0 ) then
+      write ( *, '(a)' ) ' '
+      write ( *, '(4x,a,i8)' ) 'Number of isothermal wall faces  = ', nwali
+    endif
+    if( nwala.gt.0 ) then
+      write ( *, '(a)' ) ' '
+      write ( *, '(4x,a,i8)' ) 'umber of adiabatic wall faces  = ', nwala
+    endif
+    if( nwalf.gt.0 ) then
+      write ( *, '(a)' ) ' '
+      write ( *, '(4x,a,i8)' ) 'Number of flux wall faces  = ', nwalf
+    endif
+  endif
+
+  if( npru.gt.0 ) then
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of pressure-outlet faces  = ', npru
+  endif
+    
+  if( noc.gt.0 ) then
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
+  endif
 
 !
 ! > Allocate arrays for Mesh description
@@ -566,6 +646,8 @@ if (native_mesh_files)  then
   allocate ( zc(numCells) )
 
   allocate ( vol(numCells) )
+
+  allocate ( wallDistance(numCells) )
 
   allocate ( arx(numFaces) )
   allocate ( ary(numFaces) )
@@ -584,7 +666,7 @@ if (native_mesh_files)  then
   allocate ( srds(nsym) )  
 
   allocate ( dnw(nwal) )      
-  allocate ( srdw(nwal) )
+  allocate ( srdw(nwal) ) 
 
   allocate ( ijl(noc) ) 
   allocate ( ijr(noc) ) 
@@ -598,46 +680,46 @@ if (native_mesh_files)  then
 
   if (native_mesh_files) then
     
-        ! 'points' file
-        do i=1,numNodes
-            read( points_file, * ) x(i), y(i), z(i) 
-        enddo
+    ! 'points' file
+    do i=1,numNodes
+        read( points_file, * ) x(i), y(i), z(i) 
+    enddo
 
-        ! 'owner' file
-        do iface=1,numFaces
-          read( owner_file, * ) owner(iface)
-        enddo
+    ! 'owner' file
+    do iface=1,numFaces
+      read( owner_file, * ) owner(iface)
+    enddo
 
-        ! 'neighbour' file
-        do iface=1,numInnerFaces
-          read( neighbour_file, * ) neighbour(iface)
-        enddo
+    ! 'neighbour' file
+    do iface=1,numInnerFaces
+      read( neighbour_file, * ) neighbour(iface)
+    enddo
 
   else ! OpenFOAM polyMesh format
 
-        ! 'points' file
-        do i=1,numNodes
-          read(points_file,*) char_string,y(i),char_string2
+    ! 'points' file
+    do i=1,numNodes
+      read(points_file,*) char_string,y(i),char_string2
 
-          ! Char to double conversion:
-          read(char_string(2:),*) x(i)
-          read(char_string2(1:len_trim(char_string2)-1),*) z(i)  
-        end do
-
-
-        ! 'owner' file
-        do i=1,numFaces
-          read(owner_file,*) owner(i)
-          owner(i) = owner(i) + 1 ! fortran starts from 1
-        end do
+      ! Char to double conversion:
+      read(char_string(2:),*) x(i)
+      read(char_string2(1:len_trim(char_string2)-1),*) z(i)  
+    end do
 
 
+    ! 'owner' file
+    do i=1,numFaces
+      read(owner_file,*) owner(i)
+      owner(i) = owner(i) + 1 ! fortran starts from 1
+    end do
 
-        ! 'neighbour' file
-        do i=1,numInnerFaces
-          read(neighbour_file,*) neighbour(i)
-          neighbour(i) = neighbour(i) + 1 ! fortran starts from 1
-        end do
+
+
+    ! 'neighbour' file
+    do i=1,numInnerFaces
+      read(neighbour_file,*) neighbour(i)
+      neighbour(i) = neighbour(i) + 1 ! fortran starts from 1
+    end do
 
   endif
 
@@ -672,7 +754,7 @@ if (native_mesh_files)  then
       qx = x(node(i+2))-x(node(1))
       qy = y(node(i+2))-y(node(1))
       qz = z(node(i+2))-z(node(1))
-   
+
       call triangular_face_area_components_polymesh( px,py,pz, qx,qy,qz, nx,ny,nz )
 
       !
@@ -682,11 +764,11 @@ if (native_mesh_files)  then
       arx(iface) = arx(iface) + half*nx
       ary(iface) = ary(iface) + half*ny
       arz(iface) = arz(iface) + half*nz
-
+ 
       !
       ! > Cell-face centroid components - accumulation stage
       !
-
+      
       cx = one_third*( x(node(i+2)) + x(node(i+1)) + x(node(1)) )
       cy = one_third*( y(node(i+2)) + y(node(i+1)) + y(node(1)) )
       cz = one_third*( z(node(i+2)) + z(node(i+1)) + z(node(1)) )
@@ -706,15 +788,30 @@ if (native_mesh_files)  then
       vol(inp) = vol(inp) + cell_volume_part_polymesh( cx, cy, cz, nx, ny, nz ) 
       if ( iface <= numInnerFaces ) then 
       inn = neighbour(iface)
-      vol(inn) = vol(inn) + cell_volume_part_polymesh( cx, cy, cz,  -nx,  -ny,  -nz )
+      vol(inn) = vol(inn) + cell_volume_part_polymesh( cx, cy, cz, -nx, -ny, -nz )
       endif
 
     enddo
 
+    if(iface.le.numInnerFaces) then
     ! > Cell-face centroid components - final
-    xf(iface) = xf(iface) / (ax+1e-30)
-    yf(iface) = yf(iface) / (ay+1e-30)
-    zf(iface) = zf(iface) / (az+1e-30)
+        xf(iface) = xf(iface) / (ax+1e-30)
+        yf(iface) = yf(iface) / (ay+1e-30)
+        zf(iface) = zf(iface) / (az+1e-30)
+    else
+        xf(iface) = x(node(1))+x(node(2))+x(node(3))
+        yf(iface) = y(node(1))+y(node(2))+y(node(3))
+        zf(iface) = z(node(1))+z(node(2))+z(node(3))
+        if(nnodes.gt.3) then
+          xf(iface) = xf(iface)+x(node(4))
+          yf(iface) = yf(iface)+y(node(4))
+          zf(iface) = zf(iface)+z(node(4))
+        endif 
+        xf(iface) = xf(iface) / dble(nnodes)
+        yf(iface) = yf(iface) / dble(nnodes)
+        zf(iface) = zf(iface) / dble(nnodes)
+        ! print*,iface,xf(iface),yf(iface),zf(iface)
+    endif
 
   enddo
 
@@ -828,7 +925,7 @@ if (native_mesh_files)  then
 
     ! Interpolation factor |P Pj'|/|P Pj| where P is cell center, Pj neighbour cell center and j' intersection point.
     facint(iface) = djn/dpn
-
+    
   enddo
 
 

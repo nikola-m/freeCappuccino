@@ -122,7 +122,7 @@ res(ijr(:)) = res(ijr(:)) - al(:)*fi(ijl(:))
 
 
   ! L^1-norm of residual
-  res0=sum(abs(res(:)))
+  res0=sum(abs(res))
 
 !
 ! If ltest=true, print the norm 
@@ -149,7 +149,7 @@ res(ijr(:)) = res(ijr(:)) - al(:)*fi(ijl(:))
     do k = ioffset(i), diag(i)-1
       d(i) = d(i) - a( k )**2 * d( ja( k )) 
     end do
-    d(i) =  1. / d(i)
+    d(i) =  1.0_dp / d(i)
   enddo
 
 !..or
@@ -222,7 +222,7 @@ res(ijr(:)) = res(ijr(:)) - al(:)*fi(ijl(:))
       !   end do
       ! end do
 
-  zk(:) = zk(:)/(d(:)+small)     
+  zk = zk/(d+small)     
 !
 !..... backward substitution; calculate scalar product sk
 !
@@ -262,7 +262,7 @@ res(ijr(:)) = res(ijr(:)) - al(:)*fi(ijl(:))
   !   zk(i) = zk(i)*d(i)
   ! enddo
 
-  sk = sum(res(:)*zk(:))
+  sk = sum(res*zk)
 !
 ! Calculate beta
 !
@@ -279,7 +279,7 @@ res(ijr(:)) = res(ijr(:)) - al(:)*fi(ijl(:))
       !   end do
       ! end do
 
-  pk(:) = zk(:) + bet*pk(:)
+  pk = zk + bet*pk
 !
 !.... calculate scalar product (pk.a pk) and alpha (overwrite zk)
 !

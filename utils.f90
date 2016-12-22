@@ -9,7 +9,7 @@ contains
 subroutine show_logo
 
 write(6,'(a)')' '
-write(6,'(a)')' You are running caffa3d-uns. '
+write(6,'(a)')'  You are running caffa3d-uns. '
 write(6,'(a)')' '
 
   call timestamp ()
@@ -240,7 +240,7 @@ subroutine timestamp ( )
 
   write(6,'(a)') ' '
 
-  write ( 6, '(a,1x,i2,1x,i4,2x,i2,a1,i2.2,a1,i2.2,a1,i3.3,1x,a)' ) &
+  write ( 6, '(2x,a,1x,i2,1x,i4,2x,i2,a1,i2.2,a1,i2.2,a1,i3.3,1x,a)' ) &
     trim ( month(m) ), d, y, h, ':', n, ':', s, '.', mm, trim ( ampm )
 
   write(6,'(a)') ' '

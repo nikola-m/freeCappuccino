@@ -7,7 +7,6 @@ subroutine correct_turbulence_inlet()
     case (1)
       call correct_turbulence_inlet_k_epsilon_std()
     case default
-      call correct_turbulence_inlet_k_epsilon_std()
   end select
 
 end subroutine

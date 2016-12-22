@@ -32,8 +32,8 @@ program caffa3d
   real(dp):: suma,dt
   real :: start, finish
   character(len=5) :: timechar
-  ! integer :: imon
-  ! character(len=2) :: trpn
+  integer :: imon
+  !character(len=2) :: trpn
 !                                                                       
 !***********************************************************************
 !
@@ -60,17 +60,17 @@ program caffa3d
 !-----------------------------------------------
 !  Open files for data at monitoring points 
 !-----------------------------------------------
-  ! if(ltransient) then
-  ! open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
-  ! open(unit=91,file=trim(out_folder_path)//'/transient_monitoring_points_names')
-  ! rewind 89
-  ! rewind 91
-  !  do imon=1,mpoints
-  !     read(91, *) trpn
-  !     open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//trpn,access='append')
-  !     if(.not.lread) rewind(91+imon)
-  !  end do
-  ! end if
+  if(ltransient) then
+  open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
+  !open(unit=91,file=trim(out_folder_path)//'/transient_monitoring_points_names')
+  rewind 89
+  !rewind 91
+   do imon=1,mpoints
+      !read(91, *) trpn
+      open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//'imon',access='append')
+      if(.not.lread) rewind(91+imon)
+   end do
+  end if
 
 !
 !===============================================
@@ -143,31 +143,23 @@ program caffa3d
       ! // IF(.not.const_mflux)    CALL OUTBC  
 
 !.....Pressure-velocity coupling. Two options: SIMPLE and PISO
-      IF(SIMPLE)   CALL CALCP
-      IF(PISO)     CALL PISO_multiple_correction
-      IF(PIMPLE)   CALL PIMPLE_multiple_correction
+      if(SIMPLE)   call CALCP
+      if(PISO)     call PISO_multiple_correction
+      if(PIMPLE)   call PIMPLE_multiple_correction
 
 !.....Turbulence
-      call correct_turbulence()
+      ! call correct_turbulence()
 
-! !.....Turbulence equations
-!       IF(LCAL(ITE))   CALL CALCSCM(TE,dTEdxi  ,ITE) 
-!       IF(LCAL(IED))   CALL CALCSCM(ED,dEDdxi  ,IED)
-! !.....Update turbulent eddy viscosity
-!       IF( LCAL(IVIS) .AND. .NOT. LLES)  CALL MODVIS
-!       ! The SGS viscosity of les model
-!       IF(LCAL(IVIS) .AND. LLES)         CALL CALC_VIS_LES
 
-! !.....Temperature , temperature variance, and concentration eqs.
-!       IF(LCAL(IEN))   CALL CALCSCT(T,   dTdxi     ,IEN)
-!       IF(LCAL(IVART)) CALL CALCSCT(VART,dVartdxi  ,IVART)
-!       IF(LCAL(ICON))  CALL CALCSCT(CON, dCondxi   ,ICON)
+! !.....Scalars: Temperature , temperature variance, and concentration eqs.
+!       if(lcal(ien))   call calcsc(t,   dTdxi     ,ien)
+!       if(lcal(ivart)) call calcsc(vart,dVartdxi  ,ivart)
+!       if(lcal(icon))  call calcsc(con, dCondxi   ,icon)
 
 
       call cpu_time(finish)
       write(6,'(a,f6.3,a)') '  ExecutionTime = ',finish-start,' s'
       write(6,*)
-
 
 
 !.....Residual normalization, convergence check  
@@ -204,7 +196,7 @@ program caffa3d
             endif
 
             if(mod(itime,nzapis).eq.0) call writefiles
-            call writehistory !<- write monitoring points
+            ! call writehistory !<- write monitoring points
             call calc_statistics 
 
 

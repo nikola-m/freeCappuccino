@@ -1,6 +1,6 @@
 !***********************************************************************
 !
-subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam, cap, can, sup, svp, swp)
+subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, cap, can, sup, svp, swp)
 !
 !***********************************************************************
 !
@@ -14,12 +14,12 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 !***********************************************************************
 ! 
 
-  integer, intent(in) :: ijp, ijn
+  integer, intent(in) :: ijp, ijb
   real(dp), intent(in) :: xf,yf,zf
   real(dp), intent(in) :: arx, ary, arz
   real(dp), intent(in) :: flomass
-  real(dp), intent(in) :: lambda
-  real(dp), intent(in) :: gam
+  ! real(dp), intent(in) :: lambda
+  ! real(dp), intent(in) :: gam
   real(dp), intent(inout) :: cap, can
   real(dp), intent(inout) :: sup, svp, swp
 
@@ -31,7 +31,6 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   real(dp) :: ixi1,ixi2,ixi3
   real(dp) :: dpn,costheta,costn
   real(dp) :: xi,yi,zi
-  real(dp) :: Cp,Ce
 
   real(dp) :: duxi,duyi,duzi, &
                 dvxi,dvyi,dvzi, &
@@ -60,13 +59,18 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
 
   ! Face interpolation factor
-  fxn=lambda 
-  fxp=1.0_dp-lambda
+  ! fxn=lambda 
+  ! fxp=1.0_dp-lambda
+  fxn=1.0_dp
+  fxp=0.0_dp
 
   ! Distance vector between cell centers
-  xpn=xc(ijn)-xc(ijp)
-  ypn=yc(ijn)-yc(ijp)
-  zpn=zc(ijn)-zc(ijp)
+  ! xpn=xc(ijb)-xc(ijp)
+  ! ypn=yc(ijb)-yc(ijp)
+  ! zpn=zc(ijb)-zc(ijp)
+  xpn=xf-xc(ijp)
+  ypn=yf-yc(ijp)
+  zpn=zf-zc(ijp)
 
   ! Distance from P to neighbor N
   dpn=sqrt(xpn**2+ypn**2+zpn**2)     
@@ -114,16 +118,13 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   ! > Equation coefficients:
 
   ! Cell face viscosity
-  game=(vis(ijp)*fxp+vis(ijn)*fxn)
+  game = vis(ijb) !<- it's (vis(ijp)*fxp+vis(ijb)*fxn) with fxn = 1.0
 
   ! Difusion coefficient
   de = game*are/dpn
 
 
   ! Equation coefficients - implicit diffusion and convection
-  Ce=Min(flomass,Zero) 
-  Cp=Max(flomass,Zero)
-
   can = -de + min(flomass,zero)
   cap = -de - max(flomass,zero)
 
@@ -133,54 +134,56 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   ! > Face velocity components and Explicit diffusion: 
 
   ! Coordinates of point j'
-  xi=xc(ijp)*fxp+xc(ijn)*fxn
-  yi=yc(ijp)*fxp+yc(ijn)*fxn
-  zi=zc(ijp)*fxp+zc(ijn)*fxn
+  ! xi=xc(ijp)*fxp+xc(ijb)*fxn
+  ! yi=yc(ijp)*fxp+yc(ijb)*fxn
+  ! zi=zc(ijp)*fxp+zc(ijb)*fxn
+  xi = xf
+  yi = yf
+  zi = zf
 
 
   !.....interpolate gradients defined at cv centers to faces
-  duxi = dUdxi(1,ijp)*fxp+dUdxi(1,ijn)*fxn
-  duyi = dUdxi(2,ijp)*fxp+dUdxi(2,ijn)*fxn
-  duzi = dUdxi(3,ijp)*fxp+dUdxi(3,ijn)*fxn
-
-  !  |________uj'_________|_______________ucorr___________________|
-  ue=u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
+  ! duxi = dUdxi(1,ijp)*fxp+dUdxi(1,ijb)*fxn
+  ! duyi = dUdxi(2,ijp)*fxp+dUdxi(2,ijb)*fxn
+  ! duzi = dUdxi(3,ijp)*fxp+dUdxi(3,ijb)*fxn
+  duxi = dUdxi(1,ijp)
+  duyi = dUdxi(2,ijp)
+  duzi = dUdxi(3,ijp) !...because constant gradient
 
   !.....du/dx_i interpolated at cell face:
-  duxii = duxi*d1x + arx/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
-  duyii = duyi*d1y + ary/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
-  duzii = duzi*d1z + arz/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
+  duxii = duxi*d1x + arx/vole*( u(ijb)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
+  duyii = duyi*d1y + ary/vole*( u(ijb)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
+  duzii = duzi*d1z + arz/vole*( u(ijb)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
 
-  dvxi = dVdxi(1,ijp)*fxp+dVdxi(1,ijn)*fxn
-  dvyi = dVdxi(2,ijp)*fxp+dVdxi(2,ijn)*fxn
-  dvzi = dVdxi(3,ijp)*fxp+dVdxi(3,ijn)*fxn
 
-  !  |________vj'_________|_______________vcorr___________________|
-  ve=v(ijp)*fxp+v(ijn)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
-  ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
+  ! dvxi = dVdxi(1,ijp)*fxp+dVdxi(1,ijb)*fxn
+  ! dvyi = dVdxi(2,ijp)*fxp+dVdxi(2,ijb)*fxn
+  ! dvzi = dVdxi(3,ijp)*fxp+dVdxi(3,ijb)*fxn
+  dvxi = dVdxi(1,ijp)
+  dvyi = dVdxi(2,ijp)
+  dvzi = dVdxi(3,ijp) !...because constant gradient
 
   !.....dv/dx_i interpolated at cell face:
-  dvxii = dvxi*d1x + arx/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
-  dvyii = dvyi*d1y + ary/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
-  dvzii = dvzi*d1z + arz/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
+  dvxii = dvxi*d1x + arx/vole*( v(ijb)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
+  dvyii = dvyi*d1y + ary/vole*( v(ijb)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
+  dvzii = dvzi*d1z + arz/vole*( v(ijb)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
 
-  dwxi = dWdxi(1,ijp)*fxp+dWdxi(1,ijn)*fxn
-  dwyi = dWdxi(2,ijp)*fxp+dWdxi(2,ijn)*fxn
-  dwzi = dWdxi(3,ijp)*fxp+dWdxi(3,ijn)*fxn
 
-  !  |________wj'_________|_______________wcorr___________________|
-  we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
-  ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
+  ! dwxi = dWdxi(1,ijp)*fxp+dWdxi(1,ijb)*fxn
+  ! dwyi = dWdxi(2,ijp)*fxp+dWdxi(2,ijb)*fxn
+  ! dwzi = dWdxi(3,ijp)*fxp+dWdxi(3,ijb)*fxn
+  dwxi = dWdxi(1,ijp)
+  dwyi = dWdxi(2,ijp)
+  dwzi = dWdxi(3,ijp) !...because constant gradient
 
   !.....dw/dx_i interpolated at cell face:
-  dwxii = dwxi*d1x + arx/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
-  dwyii = dwyi*d1y + ary/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
-  dwzii = dwzi*d1z + arz/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
+  dwxii = dwxi*d1x + arx/vole*( w(ijb)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
+  dwyii = dwyi*d1y + ary/vole*( w(ijb)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
+  dwzii = dwzi*d1z + arz/vole*( w(ijb)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!     we calculate explicit and implicit diffsion fde and fdi,
-!     later se put their difference (fde-fdi) to rhs vector
+!     we calculate explicit and implicit diffusion fde and fdi,
+!     later we put their difference (fde-fdi) to rhs vector
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   ! explicit diffussion 
@@ -205,9 +208,9 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   ! > Explicit convection: 
 
   ! Explicit convective fluxes for UDS
-  fuuds=max(flomass,zero)*u(ijp)+min(flomass,zero)*u(ijn)
-  fvuds=max(flomass,zero)*v(ijp)+min(flomass,zero)*v(ijn)
-  fwuds=max(flomass,zero)*w(ijp)+min(flomass,zero)*w(ijn)
+  fuuds=max(flomass,zero)*u(ijp)+min(flomass,zero)*u(ijb)
+  fvuds=max(flomass,zero)*v(ijp)+min(flomass,zero)*v(ijb)
+  fwuds=max(flomass,zero)*w(ijp)+min(flomass,zero)*w(ijb)
 
   fuhigh=0.0_dp
   fvhigh=0.0_dp
@@ -215,11 +218,23 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
   ! Explicit convective fluxes for CDS
   if(lcds) then
+
+    !  |________uj'_________|_______________ucorr___________________|
+    ue=u(ijp)*fxp+u(ijb)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+    ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
+
+    !  |________vj'_________|_______________vcorr___________________|
+    ve=v(ijp)*fxp+v(ijb)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
+    ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
+    !  |________wj'_________|_______________wcorr___________________|
+    we=w(ijp)*fxp+w(ijb)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
+    ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
+
     fuhigh=flomass*ue
     fvhigh=flomass*ve
     fwhigh=flomass*we
-  end if
 
+  end if
 !--------------------------------------------------------------------------------------------
 !     BOUNDED HIGH-ORDER CONVECTIVE SCHEMES (Waterson & Deconinck JCP 224 (2007) pp. 182-207)
 !--------------------------------------------------------------------------------------------
@@ -227,13 +242,13 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
   !.... find r's. this is universal for all schemes.
   !.....if flow goes from p to e
-  r1 = (2*dUdxi(1,ijp)*xpn + 2*dUdxi(2,ijp)*ypn + 2*dUdxi(3,ijp)*zpn)/(u(ijn)-u(ijp)) - 1.0_dp  
-  r2 = (2*dVdxi(1,ijp)*xpn + 2*dVdxi(2,ijp)*ypn + 2*dVdxi(3,ijp)*zpn)/(v(ijn)-v(ijp)) - 1.0_dp 
-  r3 = (2*dWdxi(1,ijp)*xpn + 2*dWdxi(2,ijp)*ypn + 2*dWdxi(3,ijp)*zpn)/(w(ijn)-w(ijp)) - 1.0_dp 
+  r1 = (2*dUdxi(1,ijp)*xpn + 2*dUdxi(2,ijp)*ypn + 2*dUdxi(3,ijp)*zpn)/(u(ijb)-u(ijp)) - 1.0_dp  
+  r2 = (2*dVdxi(1,ijp)*xpn + 2*dVdxi(2,ijp)*ypn + 2*dVdxi(3,ijp)*zpn)/(v(ijb)-v(ijp)) - 1.0_dp 
+  r3 = (2*dWdxi(1,ijp)*xpn + 2*dWdxi(2,ijp)*ypn + 2*dWdxi(3,ijp)*zpn)/(w(ijb)-w(ijp)) - 1.0_dp 
   !.....if flow goes from e to p
-  r4 = (2*dUdxi(1,ijn)*xpn + 2*dUdxi(2,ijn)*ypn + 2*dUdxi(3,ijn)*zpn)/(u(ijp)-u(ijn)) - 1.0_dp 
-  r5 = (2*dVdxi(1,ijn)*xpn + 2*dVdxi(2,ijn)*ypn + 2*dVdxi(3,ijn)*zpn)/(v(ijp)-v(ijn)) - 1.0_dp 
-  r6 = (2*dWdxi(1,ijn)*xpn + 2*dWdxi(2,ijn)*ypn + 2*dWdxi(3,ijn)*zpn)/(w(ijp)-w(ijn)) - 1.0_dp  
+  r4 = (2*dUdxi(1,ijb)*xpn + 2*dUdxi(2,ijb)*ypn + 2*dUdxi(3,ijb)*zpn)/(u(ijp)-u(ijb)) - 1.0_dp 
+  r5 = (2*dVdxi(1,ijb)*xpn + 2*dVdxi(2,ijb)*ypn + 2*dVdxi(3,ijb)*zpn)/(v(ijp)-v(ijb)) - 1.0_dp 
+  r6 = (2*dWdxi(1,ijb)*xpn + 2*dWdxi(2,ijb)*ypn + 2*dWdxi(3,ijb)*zpn)/(w(ijp)-w(ijb)) - 1.0_dp  
 
   !=====smart scheme================================
   if(lsmart) then
@@ -392,15 +407,15 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
 
 !......Darwish-Moukalled TVD schemes for unstructured girds, IJHMT, 2003.
-  fuhigh = ce*(u(ijn) + fxn*psie1*(u(ijp)-u(ijn)))+ &
-           cp*(u(ijp) + fxp*psiw1*(u(ijn)-u(ijp)))
+  fuhigh = min(flomass,zero) * (u(ijb) + fxn*psie1*(u(ijp)-u(ijb)))+ &
+           max(flomass,zero) * (u(ijp) + fxp*psiw1*(u(ijb)-u(ijp)))
   !       mass flux| bounded interpolation of velocity to face |
 
-  fvhigh = ce*(v(ijn) + fxn*psie2*(v(ijp)-v(ijn)))+ &
-           cp*(v(ijp) + fxp*psiw2*(v(ijn)-v(ijp)))
+  fvhigh = min(flomass,zero) * (v(ijb) + fxn*psie2*(v(ijp)-v(ijb)))+ &
+           max(flomass,zero) * (v(ijp) + fxp*psiw2*(v(ijb)-v(ijp)))
    
-  fwhigh = ce*(w(ijn) + fxn*psie3*(w(ijp)-w(ijn)))+ &
-           cp*(w(ijp) + fxp*psiw3*(w(ijn)-w(ijp)))
+  fwhigh = min(flomass,zero) * (w(ijb) + fxn*psie3*(w(ijp)-w(ijb)))+ &
+           max(flomass,zero) * (w(ijp) + fxp*psiw3*(w(ijb)-w(ijp)))
 
 !.....END OF BOUNDED HIGH-ORDER SCHEMES
 !--------------------------------------------------------------------------------------------
@@ -410,9 +425,12 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 ! Explicit part of diffusion fluxes and sources due to deffered correction,
 ! for all schemes!
 
-  sup = -gam*(fuhigh-fuuds)+fdue-fdui
-  svp = -gam*(fvhigh-fvuds)+fdve-fdvi
-  swp = -gam*(fwhigh-fwuds)+fdwe-fdwi
+  ! sup = -gam*(fuhigh-fuuds)+fdue-fdui
+  ! svp = -gam*(fvhigh-fvuds)+fdve-fdvi
+  ! swp = -gam*(fwhigh-fwuds)+fdwe-fdwi
+  sup = fdue-fdui
+  svp = fdve-fdvi
+  swp = fdwe-fdwi  !...because gam=0
 
   return
 end subroutine

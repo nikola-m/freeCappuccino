@@ -1,0 +1,52 @@
+ 
+ Test 1 - Real nonsymmetric 5x5 system.
+ 
+ 
+                    The ILU(0) preconditioned BiCGStab solver:
+                    res0 =  2.903E+01
+                    iter =    1 resl =  3.028E+01 rsm =  1.043E+00
+                    iter =    2 resl =  1.787E+01 rsm =  6.157E-01
+                    iter =    3 resl =  7.260E+00 rsm =  2.501E-01
+                    iter =    4 resl =  2.783E-01 rsm =  9.586E-03
+                    iter =    5 resl =  5.920E-09 rsm =  2.039E-10
+                    iter =    6 resl =  1.192E-14 rsm =  4.105E-16
+ 
+                   Solution:      Analytic solution:
+                   -0.80          -0.80
+                   -0.70          -0.70
+                    0.59           0.59
+                    1.32           1.32
+                    0.57           0.57
+ 
+ Test 2 - symmetric positive definite 5x5 system.
+ 
+ 
+                    The Incomplete Cholesky preconditioned CG solver:
+                    res0 =  3.725E+01
+                    iter =    1 resl =  2.750E+01 rsm =  7.382E-01
+                    iter =    2 resl =  3.059E+01 rsm =  8.211E-01
+                    iter =    3 resl =  4.465E+00 rsm =  1.199E-01
+                    iter =    4 resl =  1.086E-02 rsm =  2.914E-04
+                    iter =    5 resl =  6.894E-14 rsm =  1.851E-15
+ 
+                   Solution:      Analytic solution:
+                   -6.02          -6.02
+                   15.62          15.62
+                    3.02           3.02
+                    3.25           3.25
+                   -8.78          -8.78
+ 
+                    The Diagonally preconditioned CG solver:
+                    res0 =  7.150E-14
+                    iter =    1 resl =  6.677E-14 rsm =  9.339E-01
+                    iter =    2 resl =  1.346E-14 rsm =  1.883E-01
+                    iter =    3 resl =  1.510E-15 rsm =  2.112E-02
+                    iter =    4 resl =  4.246E-16 rsm =  5.939E-03
+                    iter =    5 resl =  2.262E-28 rsm =  3.164E-15
+ 
+                   Solution:      Analytic solution:
+                   -6.02          -6.02
+                   15.62          15.62
+                    3.02           3.02
+                    3.25           3.25
+                   -8.78          -8.78

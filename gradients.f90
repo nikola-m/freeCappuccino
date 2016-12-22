@@ -59,7 +59,7 @@ use parameters
 implicit none
 
   real(dp), dimension(numTotal), intent(in) :: phi
-  real(dp), dimension(3,numTotal), intent(inout) :: dPhidxi
+  real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
 
   if (lstsq) then
     call grad_lsq(phi,dPhidxi,1,dmat)
@@ -81,9 +81,9 @@ use parameters
 implicit none
 
   real(dp), dimension(numTotal), intent(in) :: phi
-  real(dp), dimension(3,numTotal), intent(inout) :: dPhidxi
+  real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
 
-  dPhidxi(:,:) = 0.0_dp
+  dPhidxi = 0.0_dp
   
   if (lstsq) then 
     call grad_lsq(phi,dPhidxi,2,dmat)

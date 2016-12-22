@@ -26,8 +26,8 @@ subroutine calcp
   real(dp) :: sum, ppref, cap, can, fmcor
 
 
-  a(:) = 0.0d0
-  su(:) = 0.0d0
+  a = 0.0d0
+  su = 0.0d0
 
   ! Tentative (!) velocity gradients used for velocity interpolation: 
   call grad(U,dUdxi)
@@ -106,7 +106,6 @@ subroutine calcp
   if(.not.const_mflux) call adjustMassFlow
 
 
-
   ! Test continutity:
   if(ltest) write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
@@ -116,13 +115,16 @@ subroutine calcp
   do ipcorr=1,npcor
 
     ! Initialize pressure correction
-    pp(:)=0.0d0
+    pp=0.0d0
 
     ! Solving pressure correction equation
+    ! call bicgstab(pp,ip) 
     call iccg(pp,ip)
-         
+    ! call dpcg(pp,ip)
+    ! call gaussSeidel(pp,ip)
+       
     ! SECOND STEP *** CORRECTOR STAGE
-     
+   
     do istage=1,nipgrad
 
       ! Pressure corr. at boundaries (for correct calculation of pp gradient)
@@ -135,6 +137,7 @@ subroutine calcp
 
     ! Reference pressure correction - p'
     ppref = pp(pRefCell)
+
 
     !
     ! Correct mass fluxes at inner cv-faces only (only inner flux)
@@ -152,7 +155,6 @@ subroutine calcp
         flmass(iface) = flmass(iface) + a(k) * (pp(ijn)-pp(ijp))
   
     enddo
-
 
     !
     ! Correct mass fluxes at faces along O-C grid cuts.
@@ -181,7 +183,7 @@ subroutine calcp
     !
 
       ! Clean RHS vector
-      su(:) = 0.0d0
+      su = 0.0d0
 
       do i=1,numInnerFaces                                                      
         ijp = owner(i)
@@ -229,7 +231,7 @@ subroutine calcp
         iface = iOCFacesStart+i
         call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
         fmoc(i)=fmoc(i)+fmcor
-    end do
+      end do
 
     endif                                                             
     !.......................................................................................................!

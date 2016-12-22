@@ -63,9 +63,9 @@ subroutine calcuvw
 
     !.....for u  sp => spu; for v  sp => spv; for w  sp => sp
     !.....sum source terms
-    spu(inp) = 0.0d0
-    spv(inp) = 0.0d0
-    sp(inp) = 0.0d0
+    spu(inp) = 0.0_dp
+    spv(inp) = 0.0_dp
+    sp(inp) = 0.0_dp
 
     !=======================================================================
     ! Pressure source terms
@@ -86,7 +86,7 @@ subroutine calcuvw
       !-----------------------------------------------------------------------
       !........[Boussinesq-ova aproximacija: ]
       !-----------------------------------------------------------------------
-      heat=0.0d0
+      heat=0.0_dp
       if(boussinesq.eq.1) then
         heat = beta*densit*(t(inp)-tref)*vol(inp)
       else ! if(boussinesq.eq.0)
@@ -216,7 +216,7 @@ subroutine calcuvw
       
   ! Implement boundary conditions
 
-  ! Inlet
+  ! Inlet (constant gradient bc)
 
   ! Loop Inlet faces
   do i=1,ninl
@@ -224,12 +224,12 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
-    dVdxi(:,ijb) = dVdxi(:,ijp)
-    dWdxi(:,ijb) = dWdxi(:,ijp)
+    ! dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
+    ! dVdxi(:,ijb) = dVdxi(:,ijp)
+    ! dWdxi(:,ijb) = dWdxi(:,ijp)
 
-    CALL faceFluxUVW(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), one, zero, &
-     cp, cb, sup, svp, swp)
+    CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
+      cp, cb, sup, svp, swp)
 
     spu(ijp) = spu(ijp) - cb
     spv(ijp) = spv(ijp) - cb
@@ -249,12 +249,12 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iOutletStart+i
 
-    dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
-    dVdxi(:,ijb) = dVdxi(:,ijp)
-    dWdxi(:,ijb) = dWdxi(:,ijp)
+    ! dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
+    ! dVdxi(:,ijb) = dVdxi(:,ijp)
+    ! dWdxi(:,ijb) = dWdxi(:,ijp)
 
-    CALL faceFluxUVW(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), one, zero, &
-     cp, cb, sup, svp, swp)  
+    CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
+      cp, cb, sup, svp, swp)  
 
     spu(ijp) = spu(ijp) - cb
     spv(ijp) = spv(ijp) - cb
@@ -273,8 +273,8 @@ subroutine calcuvw
     ijb = iSymmetryStart+i
 
     ! Diffusion coef.
-    Vsi = Vis(ijb)
-    cf = Vsi*Srds(i) ! cf v.s. vsol -> cf is calculated using normal distance in srds!
+    vsi = vis(ijb)
+    cf = vsi*srds(i) ! cf v.s. vsol -> cf is calculated using normal distance in srds!
 
     ! Face area 
     are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
@@ -284,9 +284,13 @@ subroutine calcuvw
     nyf = ary(iface)/are
     nzf = arz(iface)/are
 
+    ! Dist from cc of owner cell to cf @boundary, cannot expect dpb to be normal to boundary face in general
     dpb = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
-    vsol = vsi*are/(dpb+small)
 
+    ! Diffusion coef. 
+    vsol = vsi*are/dpb
+
+    ! Velocity difference vector components
     upb = u(ijp)-u(ijb)
     vpb = v(ijp)-v(ijb)
     wpb = w(ijp)-w(ijb)
@@ -310,7 +314,7 @@ subroutine calcuvw
 
     viss = viscos ! viskoznost interolirana na boundary face
     if(lturb.and.ypl(i).gt.ctrans) viss=visw(i)
-    cf=viss*srdw(i) ! cf v.s. vsol -> cf is callculated using normal distance in srdw!
+    cf=viss*srdw(i) ! cf v.s. vsol -> cf is calculated using normal distance in srdw!
 
     ! Face area 
     are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
@@ -320,21 +324,21 @@ subroutine calcuvw
     nyf = ary(iface)/are
     nzf = arz(iface)/are
 
-    ! Dist from cc of owner cell to cf @boundary, cannto expect dpb to be normal to boundary face in general
+    ! Dist from cc of owner cell to cf @boundary, cannot expect dpb to be normal to boundary face in general
     dpb = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
     ! Diffusion coef. 
-    vsol = viss*are/(dpb+small)
+    vsol = viss*are/dpb
 
-    ! Razlika brzina u dve tacke po komponentama
+    ! Velocity difference vector components
     upb = u(ijp)-u(ijb)
     vpb = v(ijp)-v(ijb)
     wpb = w(ijp)-w(ijb)
 
-    ! Projektujes taj vektor razlike brzina na normalu za brzinu duz normale
+    ! Velocity difference vector projected to wall face normal.
     vnp = upb*nxf+vpb*nyf+wpb*nzf
 
-    ! Tangencijalna komponente brzina.
+    ! Velocity difference in tangential direction.
     utp = upb-vnp*nxf
     vtp = vpb-vnp*nyf
     wtp = wpb-vnp*nzf

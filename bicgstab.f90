@@ -2,13 +2,13 @@ subroutine bicgstab(fi,ifi)
 !
 !***********************************************************************
 !
-! BiCGStab for sparse matricesin CSR format.   
+! BiCGStab for sparse matrices in CSR format.   
 !
 !***********************************************************************
 !
   use types
   use parameters
-  use geometry, only: numTotal,ijl,ijr
+  use geometry, only: numCells,numTotal,ijl,ijr
   use sparse_matrix
   use title_mod
 

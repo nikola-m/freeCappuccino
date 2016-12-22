@@ -35,7 +35,7 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 
   ! Face interpolation factor
   fxn=lambda 
-  fxp=1.-lambda
+  fxp=1.0_dp-lambda
 
   ! Coordinates of point e'
   xi=xc(ijp)*fxp+xc(ijn)*fxn
@@ -62,10 +62,13 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   dene=den(ijp)*fxp+den(ijn)*fxn
 
   ! COEFFICIENTS OF PRESSURE-CORRECTION EQUATION
-  smdpn = (arx**2+ary**2+arz**2)*sfdpnr
-  cap = -(fxp*vol(ijp)*apu(ijp)+fxn*vol(ijn)*apu(ijn))*dene*smdpn
-  can = cap
+  ! smdpn = (arx**2+ary**2+arz**2)*sfdpnr
+  ! cap = -(fxp*vol(ijp)*apu(ijp)+fxn*vol(ijn)*apu(ijn))*dene*smdpn
+  ! can = cap
 
+  smdpn = (arx**2+ary**2+arz**2)/(arx*xpn+ary*ypn+arz*zpn)
+  cap = -0.5*(vol(ijp)*apu(ijp)+vol(ijn)*apu(ijn))*dene*smdpn
+  can = cap
 !
 ! CELL FACE PRESSURE GRADIENTS AND VELOCITIES
 !
@@ -96,63 +99,65 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   duyi = dudxi(2,ijp)*fxp+dudxi(2,ijn)*fxn
   duzi = dudxi(3,ijp)*fxp+dudxi(3,ijn)*fxn
   !    |________Ue'_________|_______________Ucorr___________________|
-  ui = u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+  ui = u(ijp)*fxp+u(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
   ! UI = face_interpolated(U,dUdxi,ijp,idew,idns,idtb,fxp,fxn)
 
   duxi = dvdxi(1,ijp)*fxp+dvdxi(1,ijn)*fxn
   duyi = dvdxi(2,ijp)*fxp+dvdxi(2,ijn)*fxn
   duzi = dvdxi(3,ijp)*fxp+dvdxi(3,ijn)*fxn
   !  |________Ve'_________|_______________Vcorr___________________|
-  vi=v(ijp)*fxp+v(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+  vi=v(ijp)*fxp+v(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
   ! VI = face_interpolated(V,dVdxi,ijp,idew,idns,idtb,fxp,fxn)
 
   duxi = dwdxi(1,ijp)*fxp+dwdxi(1,ijn)*fxn
   duyi = dwdxi(2,ijp)*fxp+dwdxi(2,ijn)*fxn
   duzi = dwdxi(3,ijp)*fxp+dwdxi(3,ijn)*fxn
   !  |________We'_________|_______________Wcorr___________________|
-  wi=w(ijp)*fxp+w(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
+  wi=w(ijp)*fxp+w(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
   ! WI = face_interpolated(W,dWdxi,ijp,idew,idns,idtb,fxp,fxn) 
   
   !+END: Interpolate velocities to face center:+++++++++++++++++++++++++
 
 
-  ! DPDXI-> (dPdx*Vol*(1/ap))f -> second order interpolation at cell face
-  !+Interpolate pressure gradients to cell face center++++++++++++++++++
-  dpxi = (fxn*Vol(ijn)*Apu(ijn)*dPdxi(1,ijn)+fxp*Vol(ijp)*Apu(ijp)*dPdxi(1,ijp))*xpn*nxx
-  dpyi = (fxn*Vol(ijn)*Apv(ijn)*dPdxi(2,ijn)+fxp*Vol(ijp)*Apv(ijp)*dPdxi(2,ijp))*ypn*nyy
-  dpzi = (fxn*Vol(ijn)*Apw(ijn)*dPdxi(3,ijn)+fxp*Vol(ijp)*Apw(ijp)*dPdxi(3,ijp))*zpn*nzz
-  !+END: Interpolate pressure gradients to cell face center+++++++++++++
+  ! ! DPDXI-> (dPdx*Vol*(1/ap))f -> second order interpolation at cell face
+  ! !+Interpolate pressure gradients to cell face center++++++++++++++++++
+  ! dpxi = (fxn*Vol(ijn)*Apu(ijn)*dPdxi(1,ijn)+fxp*Vol(ijp)*Apu(ijp)*dPdxi(1,ijp))*xpn*nxx
+  ! dpyi = (fxn*Vol(ijn)*Apv(ijn)*dPdxi(2,ijn)+fxp*Vol(ijp)*Apv(ijp)*dPdxi(2,ijp))*ypn*nyy
+  ! dpzi = (fxn*Vol(ijn)*Apw(ijn)*dPdxi(3,ijn)+fxp*Vol(ijp)*Apw(ijp)*dPdxi(3,ijp))*zpn*nzz
+  ! !+END: Interpolate pressure gradients to cell face center+++++++++++++
 
 
-  ! (1/ap)f*Sf*(Pn-Pp)
-  !+Pressure deriv. along normal+++++++++++++++++++++++++++++++++++++++++ 
-  !.....Values at points p' and e' due to non-orthogonality. 
-  xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
-  xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz
-  !.....Distances |P'P| and |E'E| projected ionto x,y,z-axis
-  xpp=xpp-xc(ijp); ypp=ypp-yc(ijp); zpp=zpp-zc(ijp)
-  xep=xep-xc(ijn); yep=yep-yc(ijn); zep=zep-zc(ijn)
+  ! ! (1/ap)f*Sf*(Pn-Pp)
+  ! !+Pressure deriv. along normal+++++++++++++++++++++++++++++++++++++++++ 
+  ! !.....Values at points p' and e' due to non-orthogonality. 
+  ! xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
+  ! xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz
+  ! !.....Distances |P'P| and |E'E| projected ionto x,y,z-axis
+  ! xpp=xpp-xc(ijp); ypp=ypp-yc(ijp); zpp=zpp-zc(ijp)
+  ! xep=xep-xc(ijn); yep=yep-yc(ijn); zep=zep-zc(ijn)
 
-  dpe = (p(ijn)-p(ijp)) + &
-  ( dPdxi(1,ijn)*xep+dPdxi(2,ijn)*yep+dPdxi(3,ijn)*zep - & !<<--Correction
-    dPdxi(1,ijp)*xpp+dPdxi(2,ijp)*ypp+dPdxi(3,ijp)*zpp  )  !<<|
+  ! dpe = (p(ijn)-p(ijp)) + &
+  ! ( dPdxi(1,ijn)*xep+dPdxi(2,ijn)*yep+dPdxi(3,ijn)*zep - & !<<--Correction
+  !   dPdxi(1,ijp)*xpp+dPdxi(2,ijp)*ypp+dPdxi(3,ijp)*zpp  )  !<<|
 
-  dpex = (fxn*Vol(ijn)*Apu(ijn)+fxp*Vol(ijp)*Apu(ijp))*(arx*sfdpnr)*dpe
-  dpey = (fxn*Vol(ijn)*Apv(ijn)+fxp*Vol(ijp)*Apv(ijp))*(ary*sfdpnr)*dpe
-  dpez = (fxn*Vol(ijn)*Apw(ijn)+fxp*Vol(ijp)*Apw(ijp))*(arz*sfdpnr)*dpe
-  !+END: Pressure deriv. along normal++++++++++++++++++++++++++++++++++++
+  ! dpex = (fxn*Vol(ijn)*Apu(ijn)+fxp*Vol(ijp)*Apu(ijp))*(arx*sfdpnr)*dpe
+  ! dpey = (fxn*Vol(ijn)*Apv(ijn)+fxp*Vol(ijp)*Apv(ijp))*(ary*sfdpnr)*dpe
+  ! dpez = (fxn*Vol(ijn)*Apw(ijn)+fxp*Vol(ijp)*Apw(ijp))*(arz*sfdpnr)*dpe
+  ! !+END: Pressure deriv. along normal++++++++++++++++++++++++++++++++++++
 
-  ! Rhie-Chow Interpolation 
-  ue = ui - dpex + dpxi
-  ve = vi - dpey + dpyi
-  we = wi - dpez + dpzi
+  ! ! Rhie-Chow Interpolation 
+  ! ue = ui - dpex + dpxi
+  ! ve = vi - dpey + dpyi
+  ! we = wi - dpez + dpzi
 
-  ! MASS FLUX via Rhie-Chow Interpolation of velocity
-  flmass=dene*(ue*arx+ve*ary+we*arz)
+  ! ! MASS FLUX via Rhie-Chow Interpolation of velocity
+  ! flmass=dene*(ue*arx+ve*ary+we*arz)
 
-  ! dpxii = (fxn*dPdxi(1,ijn)+fxp*dPdxi(1,ijp))*xpn*nxx
-  ! dpyii = (fxn*dPdxi(2,ijn)+fxp*dPdxi(2,ijp))*ypn*nyy
-  ! dpzii = (fxn*dPdxi(3,ijn)+fxp*dPdxi(3,ijp))*zpn*nzz
-  ! flmass = dene*(ui*arx+vi*ary+wi*arz) + cap*(p(ijn)-p(ijp)-dpxii-dpyii-dpzii)
+
+
+  dpxi = 0.5*(dPdxi(1,ijn)+dPdxi(1,ijp))*xpn
+  dpyi = 0.5*(dPdxi(2,ijn)+dPdxi(2,ijp))*ypn
+  dpzi = 0.5*(dPdxi(3,ijn)+dPdxi(3,ijp))*zpn
+  flmass = dene*(ui*arx+vi*ary+wi*arz) + cap*(p(ijn)-p(ijp)-dpxi-dpyi-dpzi)
 
 end subroutine

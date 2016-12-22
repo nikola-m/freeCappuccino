@@ -34,7 +34,7 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
 
   ! Face interpolation factor
   fxn=lambda 
-  fxp=1.-lambda
+  fxp=1.0_dp-lambda
 
   ! Coordinates of point e'
   xi=xc(ijp)*fxp+xc(ijn)*fxn

@@ -16,75 +16,90 @@ subroutine bcin
   real(dp) :: are
 
 
-
   flomas = 0.0_dp 
   flomom = 0.0_dp
   flowen = 0.0_dp
   flowte = 0.0_dp
   flowed = 0.0_dp
 
-  open(unit=7,file=inlet_file)
-  rewind 7
 
-  ! Loop over inlet boundaries
-  do i = 1,ninl
-    iface = iInletFacesStart+i
-    ini = iInletStart + i
+  if(ninl.gt.0) then
 
-    read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini)!,t(ini)
+    open(unit=7,file=inlet_file)
+    rewind 7
 
-    vis(ini) = viscos
+    ! Loop over inlet boundaries
+    do i = 1,ninl
+      iface = iInletFacesStart+i
+      ini = iInletStart + i
 
-    fmi(i) = den(ini)*(arx(iface)*u(ini)+ary(iface)*v(ini)+arz(iface)*w(ini))
+      read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini)!,t(ini)
 
-    ! Face normal vector is faced outwards, while velocity vector at inlet
-    ! is faced inwards. That means their scalar product will be negative,
-    ! so minus signs here is to turn net mass influx - flomas, into positive value.
-    flomas = flomas - fmi(i) 
+      vis(ini) = viscos
 
-    flomom = flomom - fmi(i)*sqrt(u(ini)**2+v(ini)**2+w(ini)**2)
+      fmi(i) = den(ini)*(arx(iface)*u(ini)+ary(iface)*v(ini)+arz(iface)*w(ini))
 
-    flowen = flowen + abs(fmi(i)*t(ini))
+      ! Face normal vector is faced outwards, while velocity vector at inlet
+      ! is faced inwards. That means their scalar product will be negative,
+      ! so minus signs here is to turn net mass influx - flomas, into positive value.
+      flomas = flomas - fmi(i) 
 
-    flowte = flowte + abs(fmi(i)*te(ini))
+      flomom = flomom + abs(fmi(i))*sqrt(u(ini)**2+v(ini)**2+w(ini)**2)
 
-    flowed = flowed + abs(fmi(i)*ed(ini))
+      flowen = flowen + abs(fmi(i)*t(ini))
 
-  enddo
+      flowte = flowte + abs(fmi(i)*te(ini))
 
-  close(7)
+      flowed = flowed + abs(fmi(i)*ed(ini))
 
-  ! Loop over outlet boundaries
+    enddo
 
-  ! Outlet area
-  outare = 0.0_dp
-  do i = 1,nout
-    iface = iOutletFacesStart + i
-    outare = outare + sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
-  enddo
+    close(7)
 
-  ! Average velocity at outlet boundary
-  uav = flomas/(densit*outare+small)
+    ! Loop over outlet boundaries
 
-  ! Mass flow trough outlet faces using Uav velocity
-  do i = 1,nout
-    iface = iOutletFacesStart + i
-    ino = iOutletStart + i
+    ! Outlet area
+    outare = 0.0_dp
+    do i = 1,nout
+      iface = iOutletFacesStart + i
+      outare = outare + sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    enddo
 
-    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    ! Average velocity at outlet boundary
+    uav = flomas/(densit*outare+small)
 
-    u(ino) = uav * arx(iface)/are
-    v(ino) = uav * ary(iface)/are
-    w(ino) = uav * arz(iface)/are
+    ! Mass flow trough outlet faces using Uav velocity
+    do i = 1,nout
+      iface = iOutletFacesStart + i
+      ino = iOutletStart + i
 
-    !fmo(i)=den(ino)*uav*(Xno(i)+Yno(i)+Zno(i)) ! Originalno u caffa kodu.
-    fmo(i)=den(ino)*(arx(iface)*u(ino)+ary(iface)*v(ino)+arz(iface)*w(ino))
+      are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
-  enddo
+      u(ino) = uav * arx(iface)/are
+      v(ino) = uav * ary(iface)/are
+      w(ino) = uav * arz(iface)/are
 
-  ! No inflow into the domain: eg. natural convection case, etc.
-  if(flomas.lt.small) flomas=1.0_dp
-  !if(flomom.lt.small) flomom=1.0_dp
+      !fmo(i)=den(ino)*uav*(Xno(i)+Yno(i)+Zno(i)) ! Originalno u caffa kodu.
+      fmo(i)=den(ino)*(arx(iface)*u(ino)+ary(iface)*v(ino)+arz(iface)*w(ino))
+
+    enddo
+
+    write ( *, '(a)' ) '  Inlet boundary condition information:'
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,e12.6)' ) '  Mass inflow: ', flomas
+    write ( *, '(a,e12.6)' ) '  Momentum inflow: ', flomom
+
+  else
+
+    ! No inflow into the domain: eg. natural convection case, etc.
+    flomas=1.0_dp
+    flomom=1.0_dp
+    flowen = 1.0_dp
+    flowte=1.0_dp
+    flowed=1.0_dp
+
+  endif
+
 
 
   ! Initialization of residual for all variables
@@ -102,19 +117,8 @@ subroutine bcin
   rnor(ied)   = 1.0_dp/(flowed+small)
 
 
-   ! Correct turbulence at inlet for appropriate turbulence model
-  if(lturb) call correct_turbulence_inlet()
 
-  if(ninl.gt.0) then
-    write ( *, '(a)' ) ' '
-    write ( *, '(a)' ) '  Inlet boundary condition information:'
-    write ( *, '(a)' ) ' '
-    write ( *, '(a,e12.6)' ) '  Mass inflow: ', flomas
-    write ( *, '(a,e12.6)' ) '  Momentum inflow: ', flomom
-  else
-    write ( *, '(a)' ) ' '
-    write ( *, '(a)' ) '  You are running closed cavity case, no inlet bc information.'
-    write ( *, '(a)' ) ' '
-  endif
+  ! Correct turbulence at inlet for appropriate turbulence model
+  if(lturb) call correct_turbulence_inlet()
 
 end subroutine

@@ -1,0 +1,10 @@
+set logscale y
+set title "Residuals"
+set ylabel 'Residual'
+set xlabel 'Iteration'
+plot "< cat monitor | grep 'Solving for U,' | cut -d' ' -f12 | tr -d ','" title 'Ux' with lines,\
+     "< cat monitor | grep 'Solving for V,' | cut -d' ' -f12 | tr -d ','" title 'Uy' with lines,\
+     "< cat monitor | grep 'Solving for W,' | cut -d' ' -f12 | tr -d ','" title 'Uz' with lines,\
+     "< cat monitor | grep 'Solving for p' | cut -d' ' -f12 | tr -d ','" title 'p' with lines
+pause 5
+reread

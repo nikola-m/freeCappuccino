@@ -100,7 +100,7 @@ module parameters
   integer :: npcor     ! No. of pressure-corrections; non-orthogonality correctors
   integer :: ipcorr    ! Iteration no.: ipcorr=1..npcor
   integer :: nigrad    ! No. of iters. for iterative cell-centered gradient calculation
-  integer, parameter :: nipgrad = 2! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
+  integer, parameter :: nipgrad = 2 ! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
 
   ! Turbulence model case selector: 
   ! 1-Std k-eps,

@@ -61,7 +61,7 @@ subroutine allocate_k_epsilon_std
       allocate( teo(numTotal) ) 
       allocate(edo(numTotal) )
 
-      if( bdf .and. btime.gt.0.5 ) then 
+      if( bdf .and. btime.gt.0.99 ) then 
         allocate( teoo(numTotal) ) 
         allocate( edoo(numTotal) ) 
       endif 
@@ -252,9 +252,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
              vttbuoy=-gravy*vtt(inp)*const*beta
              wttbuoy=-gravz*wtt(inp)*const*beta
           else ! if(boussinesq.eq.0)
-             uttbuoy=-gravx*utt(inp)*const/(t(inp)+273.)
-             vttbuoy=-gravy*vtt(inp)*const/(t(inp)+273.)
-             wttbuoy=-gravz*wtt(inp)*const/(t(inp)+273.)
+             uttbuoy=-gravx*utt(inp)*const/(t(inp)+273.15)
+             vttbuoy=-gravy*vtt(inp)*const/(t(inp)+273.15)
+             wttbuoy=-gravz*wtt(inp)*const/(t(inp)+273.15)
           end if
 
           utp=max(uttbuoy,zero)
@@ -354,9 +354,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
+    ! dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), zero, one, &
+    call boundary_facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
      Fi, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -370,9 +370,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iOutletStart+i
 
-    dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
+    ! dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), zero, one, &
+    call boundary_facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
      FI, dFidxi, prtr, cap, can, suadd)
 
     Sp(ijp) = Sp(ijp)-can
@@ -420,7 +420,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
       ! projektovanje razlike brzina na pravac tangencijalne brzine u cell centru ijp
       Ut2 = abs( (U(ijb)-U(ijp))*xtp + (V(ijb)-V(ijp))*ytp + (W(ijb)-W(ijp))*ztp )
 
-      Tau = viss*Ut2/(dnw(i)+small)
+      Tau = viss*Ut2/dnw(i)
 
       ! TAU=VISS*((U(IJB)-U(IJP))*XTW(IW) &
       !          +(V(IJB)-V(IJP))*YTW(IW))/DN(IW)
@@ -709,14 +709,14 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
     !---------------------------------------------
     ! Interpolate variable FI defined at CV centers to face using corrected CDS:
     !   |________Ue'___________|_______________Ucorr_____________________|
-    fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
+    !@fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
     !fii = face_interpolated(fi,dfidxi,inp,idew,idns,idtb,fxp,fxn)
 
     ! Explicit second order convection 
-    fcfie=fm*fii
+    !@fcfie=fm*fii
   else
     !---------------------------------------------
-    ! Darwish-Moukalled TVD schemes for unstructured girds, IJHMT, 2003. 
+    ! Darwish-Moukalled TVD schemes for unstructured grids, IJHMT, 2003. 
     !---------------------------------------------
     ! Find r's - the gradient ratio. This is universal for all schemes.
     ! If flow goes from P to E
@@ -771,7 +771,7 @@ subroutine modify_mu_eff()
         ! \mu_{eff}=\mu+\mu_t; \mu_t = C_\mu * \frac{k^2}{\epsilon} for standard k-epsilon
         vis(inp)=viscos + den(inp)*cmu*te(inp)**2/(ed(inp)+small)
         ! Underelaxation
-        vis(inp)=urf(ivis)*vis(inp)+(1.0d0-urf(ivis))*visold
+        vis(inp)=urf(ivis)*vis(inp)+(1.0_dp-urf(ivis))*visold
   enddo
 
 !==============================================================================
@@ -786,13 +786,13 @@ subroutine modify_mu_eff()
     ijp = owner(iface)
     ijb = iWallStart+i
 
-      ! Face area 
-      are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    ! Face area 
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
 
-      ! Face normals
-      nxf = arx(iface)/are
-      nyf = ary(iface)/are
-      nzf = arz(iface)/are
+    ! Face normals
+    nxf = arx(iface)/are
+    nyf = ary(iface)/are
+    nzf = arz(iface)/are
 
     ! Magnitude of a cell center velocity projected on boundary face normal
     Vnp = U(ijp)*nxf+V(ijp)*nyf+W(ijp)*nzf
@@ -813,14 +813,14 @@ subroutine modify_mu_eff()
     ! projektovanje razlike brzina na pravac tangencijalne brzine u cell centru ijp
     Ut2 = abs( (U(ijb)-U(ijp))*xtp + (V(ijb)-V(ijp))*ytp + (W(ijb)-W(ijp))*ztp )
 
-    Tau = viscos*Ut2/(dnw(i)+small)
+    Tau = viscos*Ut2/dnw(i)
     Utau = sqrt( Tau / den(ijb) )
     ypl(i) = den(ijb)*Utau*dnw(i)/viscos
 
-    ! Ima i ova varijanta u cisto turb. granicni sloj varijanti sa prvom celijom u log sloju
-    ck = cmu25*sqrt(max(te(ijp),zero))
-    ypl(i) = den(ijb)*ck*dnw(i)/viscos
-    ! ...ovo je tehnicki receno ystar iliti y* a ne y+
+    ! ! Ima i ova varijanta u cisto turb. granicni sloj varijanti sa prvom celijom u log sloju
+    ! ck = cmu25*sqrt(max(te(ijp),zero))
+    ! ypl(i) = den(ijb)*ck*dnw(i)/viscos
+    ! ! ...ovo je tehnicki receno ystar iliti y* a ne y+
 
     viscw = zero
 
@@ -900,3 +900,259 @@ end subroutine modify_mu_eff_inlet
 
 
 end module k_epsilon_std
+
+
+
+
+
+
+!***********************************************************************
+!
+subroutine boundary_facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, dFidxi, prtr, cap, can, suadd)
+!
+!***********************************************************************
+!
+  use types
+  use parameters
+  use geometry, only: xc,yc,zc,numCells,numTotal
+  use variables, only: vis
+
+  implicit none
+!
+!***********************************************************************
+! 
+
+  integer, intent(in) :: ijp, ijn
+  real(dp), intent(in) :: xf,yf,zf
+  real(dp), intent(in) :: arx, ary, arz
+  real(dp), intent(in) :: flmass
+  ! real(dp), intent(in) :: lambda
+  ! real(dp), intent(in) :: gam 
+  real(dp), dimension(numTotal), intent(in) :: Fi
+  real(dp), dimension(3,numTotal), intent(in) :: dFidxi
+  real(dp), intent(in) :: prtr
+  real(dp), intent(inout) :: cap, can, suadd
+
+
+! Local variables
+  real(dp) :: are
+  real(dp) :: xpn,ypn,zpn
+  real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
+  real(dp) :: xi,yi,zi
+  real(dp) :: Cp,Ce
+  real(dp) :: fii,fm
+
+  real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
+
+  real(dp) :: d1x,d1y,d1z,d2x,d2y,d2z
+
+  real(dp) :: de, vole, game, viste
+
+  real(dp) :: fxp,fxn
+  real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
+  real(dp) :: nablaFIxdnnp,nablaFIxdppp
+  real(dp) :: dfixi,dfiyi,dfizi
+  real(dp) :: dfixii,dfiyii,dfizii
+  real(dp) :: r1,r2
+  real(dp) :: psie,psiw
+!----------------------------------------------------------------------
+
+  dfixi = 0.0d0
+  dfiyi = 0.0d0
+  dfizi = 0.0d0
+
+  ! > Geometry:
+
+  ! Face interpolation factor
+  ! fxn=lambda 
+  ! fxp=1.0d0-lambda
+  fxn=1.0_dp
+  fxp=0.0_dp
+
+  ! Distance vector between cell centers
+  ! xpn=xc(ijn)-xc(ijp)
+  ! ypn=yc(ijn)-yc(ijp)
+  ! zpn=zc(ijn)-zc(ijp)
+  xpn=xf-xc(ijp)
+  ypn=yf-yc(ijp)
+  zpn=zf-zc(ijp)
+
+  ! Distance from P to neighbor N
+  dpn=sqrt(xpn**2+ypn**2+zpn**2)     
+
+  ! Components of the unit vector i_ksi
+  ixi1=xpn/dpn
+  ixi2=ypn/dpn
+  ixi3=zpn/dpn
+
+  ! cell face area
+  are=sqrt(arx**2+ary**2+arz**2)
+
+  ! Unit vectors of the normal
+  nxx=arx/are
+  nyy=ary/are
+  nzz=arz/are
+
+  ! Angle between vectorsa n and i_xi - we need cosine
+  costheta=nxx*ixi1+nyy*ixi2+nzz*ixi3
+
+  ! Relaxation factor for higher-order cell face gradient
+  ! Minimal correction: nrelax = +1 :
+  !costn = costheta
+  ! Orthogonal correction: nrelax =  0 : 
+  costn = 1.0d0
+  ! Over-relaxed approach: nrelax = -1 :
+  !costn = 1./costheta
+  ! In general, nrelax can be any signed integer from some 
+  ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
+  !costn = costheta**nrelax
+
+  ! dpp_j * sf
+  vole=xpn*arx+ypn*ary+zpn*arz
+
+
+  ! Cell face diffussion coefficint
+  viste = (vis(ijp)-viscos)*fxp+(vis(ijn)-viscos)*fxn
+  game = (viste*prtr+viscos)
+
+
+
+
+  ! Coordinates of point j'
+  ! xi=xc(ijp)*fxp+xc(ijn)*fxn
+  ! yi=yc(ijp)*fxp+yc(ijn)*fxn
+  ! zi=zc(ijp)*fxp+zc(ijn)*fxn
+  xi = xf
+  yi = yf
+  zi = zf
+
+
+
+ !  !-- Intersection point offset and skewness correction --
+
+ !  ! Find points P' and Pj'
+ !  xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
+ !  xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz     
+
+ !  xpnp = xep-xpp; ypnp = yep-ypp; zpnp = zep-zpp
+ !  volep = arx*xpnp+ary*ypnp+arz*zpnp
+
+ !  ! Overrelaxed correction vector d2, where S=dpn+d2
+ !  d1x = costn
+ !  d1y = costn
+ !  d1z = costn
+  
+ !  xpnp = xpnp*costn
+ !  ypnp = ypnp*costn
+ !  zpnp = zpnp*costn
+
+ !  ! Interpolate gradients defined at CV centers to faces
+ !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+ !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+ !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+
+ !  ! The cell face interpolated gradient (d phi / dx_i)_j:
+ !  ! Nonorthogonal corrections:         ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
+ !  ! And:                               ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
+ !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
+ !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+
+ !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+
+ !  !-- Intersection point offset and skewness correction --
+
+
+
+  !-- Skewness correction --
+
+  ! Overrelaxed correction vector d2, where s=dpn+d2
+  d1x = costn
+  d1y = costn
+  d1z = costn
+
+  d2x = xpn*costn
+  d2y = ypn*costn
+  d2z = zpn*costn
+
+  ! Interpolate gradients defined at CV centers to faces
+  ! dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+  ! dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+  ! dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+  dfixi = dFidxi(1,ijp)
+  dfiyi = dFidxi(2,ijp)
+  dfizi = dFidxi(3,ijp) !...because constant gradient
+
+  !.....du/dx_i interpolated at cell face:
+  dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+
+  !-- Skewness correction --
+ 
+
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ! Explicit diffusion
+  fdfie = game*(dfixii*arx + dfiyii*ary + dfizii*arz)   
+  ! Implicit diffussion 
+  fdfii = game*are/dpn*(dfixi*xpn+dfiyi*ypn+dfizi*zpn)
+!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+  ! Difusion coefficient
+  de = game*are/dpn
+
+  ! Convection fluxes - uds
+  fm = flmass
+  ce = min(fm,zero) 
+  cp = max(fm,zero)
+
+  ! System matrix coefficients
+  cap = -de - max(fm,zero)
+  can = -de + min(fm,zero)
+
+  ! if(lcds) then
+  !   !---------------------------------------------
+  !   ! CENTRAL DIFFERENCING SCHEME (CDS) 
+  !   !---------------------------------------------
+  !   ! Interpolate variable FI defined at CV centers to face using corrected CDS:
+  !   !   |________Ue'___________|_______________Ucorr_____________________|
+  !   fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
+  !   !fii = face_interpolated(fi,dfidxi,inp,idew,idns,idtb,fxp,fxn)
+
+  !   ! Explicit second order convection 
+  !   fcfie=fm*fii
+  ! else
+  !   !---------------------------------------------
+  !   ! Darwish-Moukalled TVD schemes for unstructured grids, IJHMT, 2003. 
+  !   !---------------------------------------------
+  !   ! Find r's - the gradient ratio. This is universal for all schemes.
+  !   ! If flow goes from P to E
+  !   r1 = (2*dFidxi(1,ijp)*xpn + 2*dFidxi(2,ijp)*ypn + 2*dFidxi(3,ijp)*zpn)/(FI(ijn)-FI(ijp)) - 1.0d0  
+  !   ! If flow goes from E to P
+  !   r2 = (2*dFidxi(1,ijn)*xpn + 2*dFidxi(2,ijn)*ypn + 2*dFidxi(3,ijn)*zpn)/(FI(ijp)-FI(ijn)) - 1.0d0 
+  !   ! Find Psi for [ MUSCL ] :
+  !   psiw = max(0., min(2.*r1, 0.5*r1+0.5, 2.))
+  !   psie = max(0., min(2.*r2, 0.5*r2+0.5, 2.))
+  !   ! High order flux at cell face
+  !   fcfie =  ce*(fi(ijn) + fxn*psie*(fi(ijp)-fi(ijn)))+ &
+  !            cp*(fi(ijp) + fxp*psiw*(fi(ijn)-fi(ijp)))
+  ! endif
+
+  ! ! Explicit first order convection
+  ! fcfii = ce*fi(ijn)+cp*fi(ijp)
+
+  ! Deffered correction for convection = gama_blending*(high-low)
+  !ffic = gam*(fcfie-fcfii)
+
+  !-------------------------------------------------------
+  ! Explicit part of fluxes
+  !-------------------------------------------------------
+  ! suadd = -ffic+fdfie-fdfii 
+  suadd = fdfie-fdfii 
+  !-------------------------------------------------------
+
+end subroutine boundary_facefluxsc

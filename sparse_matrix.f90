@@ -75,7 +75,7 @@ subroutine create_CSR_matrix_from_mesh_data
 
  call find_main_diag_element_positions ( ia,ja,nnz,diag,numCells )
 
- call i4vec_print ( 20, diag, '  First 20 lines of Diagonal adjacency vector:' )
+ call i4vec_print ( 10, diag, '  First 20 lines of Diagonal adjacency vector:' )
 
 !
 ! > Find positions of row starting in COO matrix format
@@ -145,14 +145,14 @@ subroutine create_CSR_matrix_from_mesh_data
 ! >Index arrays of matrix elements stored in CSR format
 !
   do i=1,numInnerFaces                                                       
-          ijp = owner(i)
-          ijn = neighbour(i)
+    ijp = owner(i)
+    ijn = neighbour(i)
 
-          ! Index of the (icell,jcell) matrix element:
-          icell_jcell_csr_value_index(i) = csr_to_k(ijp,ijn,ioffset,ja) 
+    ! Index of the (icell,jcell) matrix element:
+    icell_jcell_csr_value_index(i) = csr_to_k(ijp,ijn,ioffset,ja) 
 
-          ! Index of the (jcell,icell) matrix element:
-          jcell_icell_csr_value_index(i) = csr_to_k(ijn,ijp,ioffset,ja) 
+    ! Index of the (jcell,icell) matrix element:
+    jcell_icell_csr_value_index(i) = csr_to_k(ijn,ijp,ioffset,ja) 
   enddo
 
 !+-----------------------------------------------------------------------------+
