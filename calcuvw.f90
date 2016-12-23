@@ -41,21 +41,19 @@ subroutine calcuvw
   real(dp) :: Utp, Vtp, Wtp
   real(dp) :: Vnp
   real(dp) :: viss
-
-  ! ScndOrderWallBC_Model = .false.
   
   ! Velocity gradients: 
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
 
-  ! Pressure gradient
-  do istage=1,nipgrad
-    ! Pressure at boundaries (for correct calculation of press. gradient)
-    call bpres(p,istage)
-    ! Calculate pressure gradient.
-    call grad(p,dPdxi)
-  end do
+  ! ! Pressure gradient
+  ! do istage=1,nipgrad
+  !   ! Pressure at boundaries (for correct calculation of press. gradient)
+  !   call bpres(p,istage)
+  !   ! Calculate pressure gradient.
+  !   call grad(p,dPdxi)
+  ! end do
 
 
   ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME

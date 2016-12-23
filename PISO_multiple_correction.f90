@@ -22,11 +22,11 @@ subroutine PISO_multiple_correction
   integer :: i, k, inp, iface, istage
   integer :: ijp, ijn
   real(dp) :: cap, can
-  real(dp) :: fmcor
   real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
-  h(:) = a(:)  
+  h = a  
+
 
 !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   DO icorr=1,ncorr
@@ -43,12 +43,18 @@ subroutine PISO_multiple_correction
     ! bez uticaja gradijenta pritiska!
     !
     call get_rAU_x_UEqnH() 
-    
 
-    a(:) = 0.0d0
-    su(:) = 0.0d0 
+    ! Tentative (!) velocity gradients used for velocity interpolation: 
+    call grad(U,dUdxi)
+    call grad(V,dVdxi)
+    call grad(W,dWdxi) 
 
-       ! > Assemble off diagonal entries of system matrix and find mass flux,
+    ! Initialize coeffisient array and source:
+    a = 0.0_dp
+    su = 0.0_dp 
+
+
+    ! > Assemble off diagonal entries of system matrix and find mass flux,
     !   accumulate diagonal entries of sysem matrix, and rhs vector stored in su array.
 
     ! Internal faces:
@@ -121,7 +127,8 @@ subroutine PISO_multiple_correction
     if(.not.const_mflux) call adjustMassFlow
 
     ! Test continutity: sum=0
-    write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+    ! write(6,'(19x,a,1pe10.3)') ' Initial sum  =',sum(abs(su))
+    include 'continuityErrors.h'
 
     !!  "If you have a pressure equations with boundaries that do not fix pressure level, you have to fix a reference pressure." H.Jasak cfd-online forum
     !// In incompressible flow, only relative pressure matters.  Unless there is a pressure BC present,
@@ -132,61 +139,57 @@ subroutine PISO_multiple_correction
     a( diag(pRefCell) ) = 1.0_dp
 
     ! Reference pressure
-    su(pRefCell) = pp(pRefCell)
+    su(pRefCell) = p(pRefCell)
 
 
     !=====Multiple pressure corrections======================================================.
-    DO ipcorr=1,npcor                                                                    
-                                                                                            
+    DO ipcorr=1,npcor
+     
       ! Initialize pressure
-      pp(:)=0.0d0                                                        
-                                                                                         
-      ! Solving pressure equation
+      pp=0.0_dp 
+
+      ! Solve pressure equation system
       call iccg(pp,ip)
 
       !                                                                                  
       ! Mass flux correction and source term modification for the ipcorr-th corrector.
       !                
-      if(ipcorr.ne.npcor) then !---------------------------------------------------------------                                             
-                                                                              
-        ! Clean RHS vector
-        su(:) = 0.0d0
+      ! if(ipcorr.ne.npcor) then                                            
 
-        do i=1,numInnerFaces
+      !   do i=1,numInnerFaces
 
-          ijp = owner(i)
-          ijn = neighbour(i)
+      !     ijp = owner(i)
+      !     ijn = neighbour(i)
 
-          call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+      !     call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
 
-          flmass(i) = flmass(i)+fmcor 
-          su(ijp) = su(ijp)-fmcor
-          su(ijn) = su(ijn)+fmcor 
+      !     flmass(i) = flmass(i)+fmcor 
+      !     su(ijp) = su(ijp)-fmcor
+      !     su(ijn) = su(ijn)+fmcor 
 
-        enddo                                                              
+      !   enddo                                                              
 
-        ! Faces along O-C grid cuts
-        do i=1,noc
+      !   ! Faces along O-C grid cuts
+      !   do i=1,noc
 
-          iface = iOCFacesStart+i
-          ijp = ijl(i)
-          ijn = ijr(i)
+      !     iface = iOCFacesStart+i
+      !     ijp = ijl(i)
+      !     ijn = ijr(i)
 
-          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+      !     call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
 
-          fmoc(i)=fmoc(i)+fmcor
-          su(ijp)=su(ijp)-fmcor
-          su(ijn)=su(ijn)+fmcor
+      !     fmoc(i)=fmoc(i)+fmcor
+      !     su(ijp)=su(ijp)-fmcor
+      !     su(ijn)=su(ijn)+fmcor
 
-        end do
+      !   end do
 
-          ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-        write(6,'(20x,i1,a,/,a,1pe10.3,/,20x,a,1pe10.3)')  &
-                            ipcorr,'. nonorthogonal pass:', &
-                                   ' sum  =',sum(su(:)),    &
-                                   '|sum| =',abs(sum(su(:)))
-
-      endif                                                                   
+      !     ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
+      !   write(6,'(20x,i1,a,/,20x,a,1pe10.3,/,20x,a,1pe10.3)')  &
+      !         ipcorr,'. nonorthogonal pass:', &
+      !         ' sum  =',sum(su),    &
+      !         '|sum| =',abs(sum(su))
+      ! endif                                                                   
 
                                                                                                                                                                                
                                                                                              
@@ -195,7 +198,7 @@ subroutine PISO_multiple_correction
       !                    phi -= pEqn.flux();                                                 
                                                                                                
       ! We have hit the last iteration of nonorthogonality correction:                         
-      if(icorr.eq.npcor) THEN 
+      if(ipcorr.eq.npcor) THEN 
 
         !
         ! Correct mass fluxes at inner cv-faces only (only inner flux)
@@ -221,39 +224,39 @@ subroutine PISO_multiple_correction
 
 
 
-        !
-        ! Correct mass fluxes at inner cv-faces with second corr.  
-        ! 
+        ! !
+        ! ! Correct mass fluxes at inner cv-faces with second corr.  
+        ! ! 
 
-        ! Inner faces      
-        do i=1,numInnerFaces  
+        ! ! Inner faces      
+        ! do i=1,numInnerFaces  
 
-          ijp = owner(i)
-          ijn = neighbour(i)
+        !   ijp = owner(i)
+        !   ijn = neighbour(i)
 
-          call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+        !   call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
 
-          flmass(i) = flmass(i)+fmcor 
+        !   flmass(i) = flmass(i)+fmcor 
 
-        enddo                                                              
+        ! enddo                                                              
 
-        ! Faces along O-C grid cuts
-        do i=1,noc
+        ! ! Faces along O-C grid cuts
+        ! do i=1,noc
 
-          iface = iOCFacesStart+i
-          ijp = ijl(i)
-          ijn = ijr(i)
+        !   iface = iOCFacesStart+i
+        !   ijp = ijl(i)
+        !   ijn = ijr(i)
 
-          call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+        !   call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
 
-          fmoc(i)=fmoc(i)+fmcor
+        !   fmoc(i)=fmoc(i)+fmcor
 
-        end do 
+        ! end do 
 
       endif 
 
-    ! Write PISO continuity error report:
-    include 'continuityErrors.h' 
+      ! Write PISO continuity error report:
+      include 'continuityErrors.h' 
 
     !=====END:Multiple pressure corrections==================================================!
     enddo
@@ -266,14 +269,15 @@ subroutine PISO_multiple_correction
     !// NOTE: This is whole pressure, opposite to what is done in SIMPLE: p(inp)+urf(ip)*(pp(inp)-ppref) !
 
     ! No under-relaxation - this is the whole pressure
-    p(:) = pp(:)                                                                                                                             
-      
+    p = pp 
+
+    ! Pressure gradient
     do istage=1,nipgrad
       ! Pressure at boundaries.
       call bpres(p,istage)
       ! Calculate pressure gradient field.
       call grad(p,dPdxi)
-    end do   
+    end do  
 
     !
     ! Correct velocities
@@ -284,13 +288,11 @@ subroutine PISO_multiple_correction
         w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
     enddo 
 
-!.....Explicit correction of boundary conditions 
-    call correctBoundaryConditionsVelocity
-
-    ! Write continuity error report:
-    !include 'continuityErrors.h'
+    ! Explicit correction of boundary conditions 
+    ! call correctBoundaryConditionsVelocity
 
 !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   enddo
-
+                                                                                                                       
+      
 end subroutine

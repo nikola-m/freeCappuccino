@@ -30,9 +30,9 @@ subroutine get_rAU_x_UEqnH()
   real(dp) :: heat
   real(dp) :: off_diagonal_terms
 
-  su(:) = 0.0d0
-  sv(:) = 0.0d0
-  sw(:) = 0.0d0
+  su = 0.0_dp
+  sv = 0.0_dp
+  sw = 0.0_dp
 
   ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME
   do inp=1,numCells
@@ -44,7 +44,7 @@ subroutine get_rAU_x_UEqnH()
         !----------------------------------------------
         !........[Boussinesq-ova aproximacija: ]
         !----------------------------------------------
-          heat=0.0d0
+          heat=0.0_dp
           if(boussinesq.eq.1) then
            heat=beta*densit*(t(inp)-tref)*vol(inp)
           else
@@ -189,9 +189,9 @@ subroutine get_rAU_x_UEqnH()
 
 
 
-  ! U = rAU*UEqnH()
-  u(1:numCells)= apu(1:numCells)*su(1:numCells)
-  v(1:numCells)= apv(1:numCells)*sv(1:numCells)
-  w(1:numCells)= apw(1:numCells)*sw(1:numCells)
+  ! Finally U = rAU*UEqnH()
+  u(1:numCells)= apu*su
+  v(1:numCells)= apv*sv
+  w(1:numCells)= apw*sw
 
 end subroutine

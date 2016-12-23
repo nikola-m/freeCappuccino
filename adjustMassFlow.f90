@@ -27,7 +27,7 @@ subroutine adjustMassFlow
   ! Loop Outlet cells, first to get flowo, then again after calculating fac.
 
   ! Extrapolated velocity at outlet boundary, outlet mass fluxes
-  flowo=0.0d0
+  flowo=0.0_dp
 
   do i=1,nout
 

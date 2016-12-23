@@ -137,10 +137,7 @@ program caffa3d
       call cpu_time(start)
 
 !.....Calculate velocities.
-      call calcuvw
-
-!.....Update OUTLET BC.
-      ! // IF(.not.const_mflux)    CALL OUTBC  
+      call calcuvw 
 
 !.....Pressure-velocity coupling. Two options: SIMPLE and PISO
       if(SIMPLE)   call CALCP

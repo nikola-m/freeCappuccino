@@ -86,7 +86,7 @@ subroutine calcp
     ! (icell,icell) main diagonal element
     k = diag(ijp)
     a(k) = a(k) - ar(i)
-
+    
     ! (jcell,jcell) main diagonal element
     k = diag(ijn)
     a(k) = a(k) - al(i)
@@ -107,7 +107,7 @@ subroutine calcp
 
 
   ! Test continutity:
-  if(ltest) write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  if(ltest) write(6,'(19x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
 
