@@ -9,16 +9,19 @@ subroutine writefiles
   use geometry
   use variables
   use statistics
+  use sparse_matrix
 
   implicit none
 !
 !***********************************************************************
 !
-  ! integer :: 
+  integer :: i
   ! real(dp) :: 
 
 
-
+do i=1,numCells
+write(6,'(a,es11.4,1x,es11.4,1x,es11.4,a)') '(',u(i),v(i),w(i),')'
+enddo
 
 
 

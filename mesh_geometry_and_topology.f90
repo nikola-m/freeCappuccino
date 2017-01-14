@@ -810,7 +810,6 @@ if (native_mesh_files)  then
         xf(iface) = xf(iface) / dble(nnodes)
         yf(iface) = yf(iface) / dble(nnodes)
         zf(iface) = zf(iface) / dble(nnodes)
-        ! print*,iface,xf(iface),yf(iface),zf(iface)
     endif
 
   enddo

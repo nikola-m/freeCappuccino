@@ -36,31 +36,15 @@ subroutine calcheatflux
 
   ! Temperature gradient
   call grad(T,dTdxi)
-  
-  ! if (lstsq) then 
-  !   call grad_lsq_qr(T,dTdxi,2,d)
-  ! else 
-  !   call grad_gauss(T,dTdxi(1,:),dTdxi(2,:),dTdxi(3,:))
-  ! endif
 
   ! Velocity gradients of tentative velocity fields 
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
 
-  ! if (lstsq) then 
-  !   call grad_lsq_qr(u,dUdxi,2,d)
-  !   call grad_lsq_qr(v,dVdxi,2,d)
-  !   call grad_lsq_qr(w,dWdxi,2,d)
-  ! else
-  !   call grad_gauss(u,dUdxi(1,:),dUdxi(2,:),dUdxi(3,:))
-  !   call grad_gauss(v,dVdxi(1,:),dVdxi(2,:),dVdxi(3,:))
-  !   call grad_gauss(w,dWdxi(1,:),dWdxi(2,:),dWdxi(3,:))
-  ! endif
-
   do inp = 1,numCells
 
-        volr=1./vol(inp)
+        volr=1.0_dp/vol(inp)
         vist=(vis(inp)-viscos)/densit
         tedi=te(inp)/(ed(inp)+small)
 

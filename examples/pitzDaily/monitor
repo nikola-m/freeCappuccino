@@ -1,0 +1,348 @@
+ 
+  You are running caffa3d-uns. 
+ 
+ 
+  January 15 2017   0:37:43.633 AM
+ 
+ 
+ 
+             MM          MMM
+            NMN.           MM
+           MMM..   OMM.    MMM.
+          .MMO.    MMM      MMM                         ...
+          MMM:     MMM      MMM                       .. .?DMD7..
+          MMM      MMM      MMM                      ..MMMMMMMMMMM~
+          MMM:     .M       MMM.                    .NMMMMMMMMMMMMMM
+          .MMM     .M.     .MMM.    ... .?MMMMM .. .MMMMMMMMMMMMMMMMM
+           MMM.    .M .    MMM. ....MMMMMMMMMMMM$..MMMMMM?     .7MMMMM.
+              MM.  M  M   MM  ..MMMMMMM~.. .MMMMM7MMMMMM.        7MMMMN
+                            =MMMMMM7..  ..MMM.MMMMMMMMM+         .MMMMM.
+                         DMMMMMD..  . . MMMM. .MMMMMMMM.        ..MMMMM.
+                    ..=MMMMMZ.     ...MMMM      MMMMMMMI.        .MMMM$.
+                    MMMMM8.   ..  .NMMMM..      :MMMMMMM         :MMMM.
+                 :MMMMM.......  ~MMMMN           MMMMMMMMO.      MMMM+
+             . ?MMMM:. ....  ,MMMMM              .MMMMMMMMM.    :MMMM.
+           ..IMMMM  .  .  =MMMMMI                ..MMMMMMMM.    MMMM=
+           .MMMM. .... DMMMMM?                     8MMMMM=     NMMMM
+          +MMM.   .~MMMMMM~                        .MMMM.     ,MMMM.
+         ~MM?.~MMMMMMM$                              MMMD    .MMMMM
+        .DMMMMMMM$                                   MMMM.  .MMMMM
+         .MMMM.                                      .MMMN..MMMMM,
+         ..MMMM.                                     .MMMM.MMMMMM
+           =MMMZ..   .=. ..         ..      =. ,:     .MMMMMMMMM
+           .MMMM~..  7  .MM.M   M   MM.    M.  ..  M  .MMMMMMMM+
+             MMMM....Z. .MM.M...M...MM..O:.  M . ~.M...ZMMMMMMM
+              MMMM,. ., :  ,:   :  :  :    .,  ,,  ,  . MMMMMMM
+               MMMM7. ..................................MMMMMM
+                MMMM8 ..................................MMMMMM
+                 NMMMM  ................................MMMMD
+                  7MMMM ............................... MMMM
+                    MMMMO............................. :MMM
+                     MMMMM..............................MMM
+                       MMMMM..........................MMMMM
+                        ZMMMMD.......................MMMMM
+                          MMMMMM.................. MMMMM
+                            MMMMMM. ............OMMMMMZ
+                              NMMMMM8.......=MMMMMMMI
+                                =MMMMMMMMMMMMMMMMM
+                                   NMMMMMMMMMM
+ 
+  Input file log: 
+---cut here-----------------------------------------------------------------------------
+Pitz-Daily backwad facing step      TITLE                             
+F T F      READ3,WRIT3,LTEST
+T T T T F T T T F F      (LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10
+  1   1   1      monCell,pRefCell,MPoints
+ 1.0000E+30  1.0000E-05      SLARGE,SORMAX
+ 1.0000E+00  1.0000E-05 DENSIT,VISCOS
+ 7.1000E-01  2.0000E+01  0.0000E+00 PRANL,TREF,BETA
+F   0.00 -9.81  0.00 1 LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
+F 30.00  0.0000E+00 roughWall,EROUGH,ZZERO
+0.20 0.60 FACNAP,FACFLX
+F 0.00 LTRANSIENT,BTIME
+T F F LEVM,LASM,LLES
+F F F LSGDH,LGGDH,LAFM
+ 1 TurbModel
+ 1.0000E+01  0.0000E+00  0.0000E+00  3.7500E-01  1.8455E+01  0.0000E+00  0.0000E+00  0.0000E+00 UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
+F F F F T F F LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
+1.00 1.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 (GDS(I),I=1,NPHI), MUSCL velocity, CDS other
+0.60 0.60 0.60 0.40 0.50 0.50 0.30 0.60 0.60 0.90 (URF(I),I=1,NPHI)
+ 1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-06 (SOR(I),I=1,NPHI)
+ 20  20  20  80   5   5   5   5   5   5 (NSW(I),I=1,NPHI)
+ 1000  1.00E+20  1000    1 NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+F T F F lstsq, lstsq_qr, lstsq_dm, gauss
+1 1 NPCOR, NIGRAD
+T F  BDF,CN
+T F F 1 SIMPLE,PISO,PIMPLE,ncorr
+F      const_mflux
+F 1.0000E+00     CoNumFix, CoNumFixValue
+---cut here-----------------------------------------------------------------------------
+ 
+ 
+  Mesh data: 
+ 
+  Number of nodes, numNodes =    25012
+ 
+  Number of cells, numCells =    12225
+ 
+  Number of cell-faces, numFaces =    49180
+ 
+  Number of inner cell-faces, numInnerFaces =    24170
+ 
+  Number of nonzero coefficients, nnz (= 2*numInnerFaces + numCells)  =    60565
+ 
+  Boundary information:
+ 
+  Number of cell-faces on boundary, numBoundaryFaces =    25010
+ 
+  Number of inlet faces  =       30
+ 
+  Number of outlet faces  =       57
+ 
+  Number of symmetry faces  =    24450
+ 
+  Number of wall faces  =      473
+ 
+  Cell data: 
+ 
+  First 10 elements of cell volumes array:
+ 
+         1  0.49604416E-09
+         2  0.47622556E-09
+         3  0.45719877E-09
+         4  0.43893216E-09
+         5  0.42139537E-09
+         6  0.40455923E-09
+         7  0.38839575E-09
+         8  0.37287805E-09
+         9  0.35798034E-09
+        10  0.34367784E-09
+ 
+  First 10 elements of cell x-centers array:
+ 
+         1  -.19808582E-01
+         2  -.18257364E-01
+         3  -.16768124E-01
+         4  -.15338383E-01
+         5  -.13965765E-01
+         6  -.12647988E-01
+         7  -.11382860E-01
+         8  -.10168278E-01
+         9  -.90022232E-02
+        10  -.78827559E-02
+ 
+  First 10 elements of cell y-centers array:
+ 
+         1  0.15669465E-03
+         2  0.15669465E-03
+         3  0.15669465E-03
+         4  0.15669465E-03
+         5  0.15669465E-03
+         6  0.15669465E-03
+         7  0.15669465E-03
+         8  0.15669465E-03
+         9  0.15669465E-03
+        10  0.15669465E-03
+ 
+  First 10 elements of cell z-centers array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  Face data: 
+ 
+  First 10 lines of owner and neighbour arrays:
+ 
+         1:     1       2
+         2:     1      19
+         3:     2       3
+         4:     2      20
+         5:     3       4
+         6:     3      21
+         7:     4       5
+         8:     4      22
+         9:     5       6
+        10:     5      23
+ 
+  First 10 elements of Arx array:
+ 
+         1  0.31338931E-06
+         2   0.0000000    
+         3  0.31338931E-06
+         4   0.0000000    
+         5  0.31338931E-06
+         6   0.0000000    
+         7  0.31338931E-06
+         8   0.0000000    
+         9  0.31338931E-06
+        10   0.0000000    
+ 
+  First 10 elements of Ary array:
+ 
+         1   0.0000000    
+         2  0.15828369E-05
+         3   0.0000000    
+         4  0.15195973E-05
+         5   0.0000000    
+         6  0.14588844E-05
+         7   0.0000000    
+         8  0.14005971E-05
+         9   0.0000000    
+        10  0.13446386E-05
+ 
+  First 10 elements of Arz array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  First 10 elements of xf array:
+ 
+         1  -.19017163E-01
+         2   0.0000000    
+         3  -.17497566E-01
+         4   0.0000000    
+         5  -.16038681E-01
+         6   0.0000000    
+         7  -.14638084E-01
+         8   0.0000000    
+         9  -.13293446E-01
+        10   0.0000000    
+ 
+  First 10 elements of yf array:
+ 
+         1   0.0000000    
+         2  0.31338931E-03
+         3   0.0000000    
+         4  0.31338931E-03
+         5   0.0000000    
+         6  0.31338931E-03
+         7   0.0000000    
+         8  0.31338931E-03
+         9   0.0000000    
+        10  0.31338931E-03
+ 
+  First 10 elements of zf array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  First 10 elements of interpolation factor (facint) array:
+ 
+         1  0.51019193    
+         2  0.47552846    
+         3  0.51019193    
+         4  0.47552846    
+         5  0.51019193    
+         6  0.47552846    
+         7  0.51019193    
+         8  0.47552846    
+         9  0.51019193    
+        10  0.47552846    
+ 
+  First 10 lines of Sorted IA and JA arrays:
+ 
+         1:     1       1
+         2:     1       2
+         3:     1      19
+         4:     2       1
+         5:     2       2
+         6:     2       3
+         7:     2      20
+         8:     3       2
+         9:     3       3
+        10:     3       4
+ 
+  First 20 lines of Diagonal adjacency vector:
+ 
+         1:             1
+         2:             5
+         3:             9
+         4:            13
+         5:            17
+         6:            21
+         7:            25
+         8:            29
+         9:            33
+        10:            37
+ 
+  First 10 lines of ioffset vector:
+ 
+         1:             1
+         2:             4
+         3:             8
+         4:            12
+         5:            16
+         6:            20
+         7:            24
+         8:            28
+         9:            32
+        10:            36
+ 
+  PCG(IC0):  Solving for p, Initial residual =  5.556E-05, Final residual =  4.763E-21, No Iterations 178
+ 
+  Start iteration!
+ 
+  Inlet boundary condition information:
+ 
+  Mass inflow: 0.254000E-03
+  Momentum inflow: 0.254000E-02
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.675E-04, Final residual =  6.560E-12, No Iterations 3
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  9.639E-06, Final residual =  4.108E-13, No Iterations 2
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  4.578E-06, Final residual =  1.909E-11, No Iterations 21
+  PCG(IC0):  Solving for p, Initial residual =  5.085E-04, Final residual =  4.520E-04, No Iterations 81
+  time step continuity errors : sum local =  6.701E-02, global = -5.080E-04, cumulative = -5.080E-04
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.703E-02, Final residual =  5.869E-10, No Iterations 2
+ 1.9747E-01<= TE <= 6.0157E-01
+  BiCGStab(ILU(0)):  Solving for epsilon, Initial residual =  2.890E+05, Final residual =  5.865E-08, No Iterations 1
+-1.2794E+05<= ED <= 1.3258E+08
+  ExecutionTime =  0.084 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  9.747E+15, Final residual =  7.565E+09, No Iterations 1
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.284E+16, Final residual =  1.157E+10, No Iterations 1
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  1.538E+15, Final residual =  1.446E+09, No Iterations 1
+  PCG(IC0):  Solving for p, Initial residual =  1.407E-01, Final residual =  7.031E-04, No Iterations 81
+  time step continuity errors : sum local =  8.414E-02, global = -5.080E-04, cumulative = -1.016E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.684E+17, Final residual =  1.088E+09, No Iterations 1
+ 5.2311E-02<= TE <= 9.5995E+04
+  BiCGStab(ILU(0)):  Solving for epsilon, Initial residual =  6.116E+22, Final residual =  2.651E+14, No Iterations 1
+-6.0139E+05<= ED <= 5.4879E+05
+  ExecutionTime =  0.064 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.289E+25, Final residual =  1.258E+25, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.984E+27, Final residual =  1.161E+27, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  4.546E+27, Final residual =  1.986E+27, No Iterations 21
+  PCG(IC0):  Solving for p, Initial residual =  1.930E+07, Final residual =  7.755E+05, No Iterations 81
+  time step continuity errors : sum local =  2.888E+07, global = -5.080E-04, cumulative = -1.524E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  6.785E+33, Final residual =  1.625E+30, No Iterations 6
+-1.0702E+14<= TE <= 1.3266E+21
+  BiCGStab(ILU(0)):  Solving for epsilon, Initial residual =  5.882E+40, Final residual =  6.744E+40, No Iterations 6
+-1.3143E+33<= ED <= 3.1795E+32
+  ExecutionTime =  0.115 s
+
+
+
+          *** Program terminated -  iterations diverge ***

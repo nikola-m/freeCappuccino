@@ -6,7 +6,8 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 !      Calculates cell-centered gradients using UNWEIGHTED Least-Squares approach.
 !
 !      Description:
-!      Approach taken from PhD thesis of Bojan Niceno, TU Delft, 2000.
+!      Approach taken from PhD thesis of Bojan Niceno, TU Delft, 2000.,
+!      also in Muzaferija and Gossman JCP paper from 1995.
 !
 !      Arguments:
 !
@@ -20,7 +21,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 !      XC,YC,ZC - coordinates of cell centers    
 !
 !      Example call:
-!      CALL GRADFI_LSQ(U,DUDX,DUDY,DUDZ,2,D)
+!      CALL GRADFI_LSQ(U,DUDXI,2,D)
 !
 !***********************************************************************
 !
@@ -40,21 +41,18 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   !
   integer :: i,ijp,ijn,inp,iface
 
-  ! real(dp) :: d11,d12,d13,d21,d22,d23,d31,d32,d33
-  ! real(dp) :: tmp
-
   real(dp), dimension(numCells) :: b1,b2,b3 
 
   ! For LAPACK DGESV routine
   integer :: INFO
-  integer :: IPIV( 3 )
+  ! integer :: IPIV( 3 )
   real(dp) :: A( 3, 3 ), B( 3, 1 )
 !
 !***********************************************************************
 !
 
   ! Initialize dmat matrix:
-  dmat(:,:) = 0.0d0
+  dmat(:,:) = 0.0_dp
 
   if(istage.eq.1) then
   ! Coefficient matrix - should be calculated only once 
@@ -126,9 +124,9 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   elseif(istage.eq.2) then
 
   ! Initialize rhs vector
-  b1(:) = 0.0d0
-  b2(:) = 0.0d0
-  b3(:) = 0.0d0
+  b1(:) = 0.0_dp
+  b2(:) = 0.0_dp
+  b3(:) = 0.0_dp
 
   ! Inner faces:
 
@@ -175,60 +173,39 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
         b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
   end do
 
-  ! Calculate gradient
 
-  ! Cell loop
+  !
+  ! Solve the system A*X = B.
+  !
+
   do inp=1,numCells 
 
-        ! ! Copy from Coefficient matrix 
-        ! d11 = Dmat(1,inp)
-        ! d12 = Dmat(2,inp)
-        ! d13 = Dmat(3,inp)
+    A(1,1) = Dmat(1,inp)
+    A(1,2) = Dmat(2,inp)
+    A(1,3) = Dmat(3,inp)
+    A(2,2) = Dmat(4,inp)
+    A(2,3) = Dmat(5,inp)
+    A(3,3) = Dmat(6,inp)
+    ! A(2,1) = A(1,2)
+    ! A(3,1) = A(1,3)
+    ! A(3,2) = A(2,3)
 
-        ! d22 = Dmat(4,inp)
-        ! d23 = Dmat(5,inp)
-        ! d33 = Dmat(6,inp)
 
-        ! ! Symmetric part
-        ! d21 = d12
-        ! d31 = d13
-        ! d32 = d23
+    B(1,1) = b1(inp)
+    B(2,1) = b2(inp)
+    B(3,1) = b3(inp)
 
-        ! ! Solve system 
-        
-        ! tmp = 1.0_dp/(d11*d22*d33 - d12*d23*d32 - d12*d21*d33 + d12*d23*d31 + d13*d21*d32 - d13*d22*d31)
+    ! CALL DGESV( 3, 1, A, 3, IPIV, B, 3, INFO )
+    CALL DPOSV( 'Upper', 3, 1, A, 3, B, 3, INFO )
 
-        ! dFidxi(1,inp) = ( (b1(inp)*(d22*d33 - d23*d32)) - (b2(inp)*(d21*d33 - d23*d31)) + (b3(inp)*(d21*d32 - d22*d31)) ) * tmp
-        ! dFidxi(2,inp) = ( (b2(inp)*(d11*d33 - d13*d31)) - (b1(inp)*(d12*d33 - d13*d32)) - (b3(inp)*(d11*d32 - d12*d31)) ) * tmp
-        ! dFidxi(3,inp) = ( (b1(inp)*(d12*d23 - d13*d22)) - (b2(inp)*(d11*d23 - d13*d21)) + (b3(inp)*(d11*d22 - d12*d21)) ) * tmp
-
-!
-!     Solve the system A*X = B.
-!
-      A(1,1) = Dmat(1,inp)
-      A(1,2) = Dmat(2,inp)
-      A(1,3) = Dmat(3,inp)
-      A(2,1) = A(1,2)
-      A(2,2) = Dmat(4,inp)
-      A(2,3) = Dmat(5,inp)
-      A(3,1) = A(1,3)
-      A(3,2) = A(2,3)
-      A(3,3) = Dmat(6,inp)
-
-      B(1,1) = b1(inp)
-      B(2,1) = b2(inp)
-      B(3,1) = b3(inp)
-
-      CALL DGESV( 3, 1, A, 3, IPIV, B, 3, INFO )
-
-      dFidxi(1,inp) = B(1,1)
-      dFidxi(2,inp) = B(2,1)
-      dFidxi(3,inp) = B(3,1)
+    dFidxi(1,inp) = B(1,1)
+    dFidxi(2,inp) = B(2,1)
+    dFidxi(3,inp) = B(3,1)
 
   enddo
    
 
-  endif 
+endif 
   
 end subroutine
 

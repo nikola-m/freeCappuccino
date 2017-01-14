@@ -32,7 +32,7 @@ subroutine iccg(fi,ifi)
   real(dp) :: rsm, resmax, res0, resl
   real(dp) :: s0, sk, alf, bet, pkapk
 
-! max no. of iterations
+! residual tolerance
   resmax = sor(ifi)
 !
 ! Initalize working arrays

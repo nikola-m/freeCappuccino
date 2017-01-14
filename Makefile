@@ -3,8 +3,13 @@
 #
 
 # Compiler flags:
-LFLAGS = -llapack 
-F90FLAGS = -Wall -O2 
+LFLAGS = -llapack
+F90FLAGS = -Wall -O2
+
+L95FLAGS = -fopenmp -llis -llapack
+F95FLAGS = -Wall -O2 -cpp
+
+LIS_DIR = /usr/local/include 
 
 # Compiler:
 F90 = gfortran
@@ -15,9 +20,11 @@ MOD_FILES=\
     matrix.f90 \
     mesh_geometry_and_topology.f90 \
     sparse_matrix.f90 \
+    LIS_linear_solver_library.f90 \
     gradients.f90 \
     output.f90 \
-    allocate.f90
+    interpolation.f90
+
 
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
@@ -30,6 +37,7 @@ TURBULENCE_FILES=\
     k_epsilon_std.f90
 
 SRCS=\
+    allocate.f90 \
     asm_stress_terms.f90 \
     asm_heatflux_terms.f90 \
     adjustMassFlow.f90 \
@@ -69,28 +77,37 @@ RK4FILES=\
     fluxuvw-explicit.f90 \
     main_rk4Projection.f90 
 
+POISSONFILES=\
+    fvm_laplacian.f90 \
+    poisson.f90
+
 #
 # How to create object files:
 # 
 MODS = ${MOD_FILES:.f90=.o}
 TURBULENCE = ${TURBULENCE_FILES:.f90=.o}
 LINEAR_SOLVERS = ${LINEAR_SOLVER_FILES:.f90=.o}
-F90OBJS = ${SRCS:.f90=.o}
-OBJS = ${RK4FILES:.f90=.o}
+CAFFAOBJS = ${SRCS:.f90=.o}
+RK4OBJS = ${RK4FILES:.f90=.o}
+POISSONOBJS = ${POISSONFILES:.f90=.o}
 
 ##################################################################
 # Targets for make.
 ##################################################################
 
-all: caffa3d #rk4ProjectionCaffa
+all: caffa3d poisson #rk4ProjectionCaffa
 
-caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${F90OBJS}
+caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${CAFFAOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${F90OBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o caffa3d 
+	${F90} ${CAFFAOBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS}${INCS} -o caffa3d 
 
-rk4ProjectionCaffa: ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
+rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 	@echo  "Linking" $@ "... "
-	${F90} ${F90OBJS} ${RK4OBJS} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o rk4ProjectionChannel 
+	${F90} ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o rk4ProjectionChannel 
+
+poisson: ${MODS} ${LINEAR_SOLVERS} ${POISSONOBJS}
+	@echo  "Linking" $@ "... "
+	${F90} ${POISSONOBJS} ${MODS} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o poisson 
 
 .PHONY: clean
 clean:
@@ -100,7 +117,10 @@ clean:
 # Generic rules
 ##################################################################
 
-.SUFFIXES : .f90 
+.SUFFIXES : .f90 .f95
 
 .f90.o:
 	${F90} ${F90FLAGS} -c ${INCS}  ${@:.o=.f90}
+
+.f95.o:
+	${F90} ${F95FLAGS} -I${LIS_DIR} -c ${INCS}  ${@:.o=.f95}

@@ -121,24 +121,35 @@ subroutine fvm_laplacian(mu,phi)
 
   ! Contribution from symmetry boundaries
   do i=1,nsym
-    ijp = owner(iSymmetryFacesStart+i)
+    iface = iSymmetryFacesStart
+    ijp = owner(iface)
     ijb = iSymmetryStart+i
 
     k=diag(ijp)
 
-    a(k) = a(k) - mu(ijp)*srds(i)  
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+
+    a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
+
+    ! a(k) = a(k) - mu(ijp)*srds(i)  
     su(ijp) = su(ijp) + a(k)*phi(ijb)
 
   end do
 
   ! Contribution from wall boundaries
   do i=1,nwal
-    ijp = owner(iWallFacesStart+i)
+    iface = iWallFacesStart+i
+    ijp = owner(iface)
     ijb = iWallStart+i
 
     k=diag(ijp)
 
-    a(k) = a(k) - mu(ijp)*srdw(i)  
+    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+
+    a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
+    ! a(k) = a(k) - mu(ijp)*srdw(i)  
     su(ijp) = su(ijp) + a(k)*phi(ijb)
     
   end do
@@ -177,8 +188,8 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
   ! Local variables
   real(dp) :: fxn, fxp
   real(dp) :: are
-  real(dp) :: xpn,ypn,zpn,smdpn,sfdpnr
-  real(dp) :: nxx,nyy,nzz
+  real(dp) :: xpn,ypn,zpn,dpn,smdpn
+  ! real(dp) :: nxx,nyy,nzz
 
   ! Face interpolation factor
   fxn=lambda 
@@ -189,16 +200,19 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
   ypn=yc(ijn)-yc(ijp)
   zpn=zc(ijn)-zc(ijp)
 
+  ! distance from p to p_j
+  dpn = sqrt(xpn**2+ypn**2+zpn**2)
+
   ! cell face area
   are=sqrt(arx**2+ary**2+arz**2)
 
   ! Unit vectors of the normal
-  nxx=arx/are
-  nyy=ary/are
-  nzz=arz/are
+  ! nxx=arx/are
+  ! nyy=ary/are
+  ! nzz=arz/are
 
-  sfdpnr=1./(arx*xpn*nxx+ary*ypn*nyy+arz*zpn*nzz)
-  smdpn = (arx*arx+ary*ary+arz*arz)*sfdpnr
+  ! smdpn = (arx*arx+ary*ary+arz*arz)/(arx*xpn*nxx+ary*ypn*nyy+arz*zpn*nzz)
+  smdpn = are/dpn
 
   ! Coefficients of discretized Laplace equation
   cap = (fxp*mu(ijp)+fxn*mu(ijn))*smdpn

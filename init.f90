@@ -28,6 +28,7 @@ subroutine init
   use k_epsilon_std, only: te,ed,dTEdxi,dEDdxi,allocate_k_epsilon_std
   use temperature, only: t,utt,vtt,wtt,pranl
   use utils, only: timestamp, show_logo, i4vec_print2
+  use LIS_linear_solver_library
 
   implicit none
 !
@@ -51,78 +52,78 @@ subroutine init
 ! 
 ! 0)  Print code logo and timestamp in monitor file
 !
-      call show_logo
+  call show_logo
 
 !
 ! 1)  Open & Read Input File
 !
 
-!.....OPEN & READ INPUT FILE...................................................
-      OPEN(UNIT=5,FILE=input_file)
-      REWIND 5
+!.OPEN & READ INPUT FILE...................................................
+  OPEN(UNIT=5,FILE=input_file)
+  REWIND 5
 
-      READ(5,'(a70)') TITLE 
-      READ(5,*) LREAD,LWRITE,LTEST
-      READ(5,*) (LCAL(I),I=1,NPHI)
-      READ(5,*) monCell,pRefCell,MPoints
-      READ(5,*) SLARGE,SORMAX
-      READ(5,*) DENSIT,VISCOS
-      READ(5,*) PRANL,TREF,BETA
-      READ(5,*) LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
-      READ(5,*) roughWall,EROUGH,ZZERO
-      READ(5,*) FACNAP,FACFLX
-      READ(5,*) LTRANSIENT,BTIME
-      READ(5,*) LEVM,LASM,LLES
-      READ(5,*) LSGDH,LGGDH,LAFM
-      READ(5,*) TurbModel
-      READ(5,*) UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
-      READ(5,*) LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
-      READ(5,*) (GDS(I),I=1,NPHI)
-      READ(5,*) (URF(I),I=1,NPHI)
-      READ(5,*) (SOR(I),I=1,NPHI)
-      READ(5,*) (NSW(I),I=1,NPHI)
-      READ(5,*) NUMSTEP,TIMESTEP,NZAPIS,MAXIT
-      READ(5,*) lstsq, lstsq_qr, lstsq_dm, gauss
-      READ(5,*) NPCOR, NIGRAD
-      READ(5,*) BDF,CN
-      READ(5,*) SIMPLE,PISO,PIMPLE,ncorr
-      READ(5,*) const_mflux
-      READ(5,*) CoNumFix, CoNumFixValue
-!.....END: READ INPUT FILE.............................................!
-      CLOSE (5)
+  READ(5,'(a70)') TITLE 
+  READ(5,*) LREAD,LWRITE,LTEST
+  READ(5,*) (LCAL(I),I=1,NPHI)
+  READ(5,*) monCell,pRefCell,MPoints
+  READ(5,*) SLARGE,SORMAX
+  READ(5,*) DENSIT,VISCOS
+  READ(5,*) PRANL,TREF,BETA
+  READ(5,*) LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
+  READ(5,*) roughWall,EROUGH,ZZERO
+  READ(5,*) FACNAP,FACFLX
+  READ(5,*) LTRANSIENT,BTIME
+  READ(5,*) LEVM,LASM,LLES
+  READ(5,*) LSGDH,LGGDH,LAFM
+  READ(5,*) TurbModel
+  READ(5,*) UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
+  READ(5,*) LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
+  READ(5,*) (GDS(I),I=1,NPHI)
+  READ(5,*) (URF(I),I=1,NPHI)
+  READ(5,*) (SOR(I),I=1,NPHI)
+  READ(5,*) (NSW(I),I=1,NPHI)
+  READ(5,*) NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+  READ(5,*) lstsq, lstsq_qr, lstsq_dm, gauss
+  READ(5,*) NPCOR, NIGRAD
+  READ(5,*) BDF,CN
+  READ(5,*) SIMPLE,PISO,PIMPLE,ncorr
+  READ(5,*) const_mflux
+  READ(5,*) CoNumFix, CoNumFixValue
+!.END: READ INPUT FILE.............................................!
+  CLOSE (5)
 
-!.....Create an input file reading log:
-      WRITE(6,'(a)') '  Input file log: '
-      WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
-      WRITE(6,'(a70)') TITLE
-      WRITE(6,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
-      WRITE(6,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10'
-      WRITE(6,'(3(i3,1x),5x,a)') monCell,pRefCell,MPoints,'monCell,pRefCell,MPoints'
-      WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
-      WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
-      WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
-      WRITE(6,'(L1,1x,3f6.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
-      WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
-      WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
-      WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
-      WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
-      WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
-      WRITE(6,'(i2,1x,a)') TurbModel, 'TurbModel'
-      WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
-      WRITE(6,'(7(L1,1x),a)') LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA,'LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA'
-      WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI), MUSCL velocity, CDS other'
-      WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
-      WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
-      WRITE(6,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
-      WRITE(6,'(i5,1x,es9.2,1x,i5,1x,i4,1x,a)') NUMSTEP,TIMESTEP,NZAPIS,MAXIT,'NUMSTEP,TIMESTEP,NZAPIS,MAXIT'
-      WRITE(6,'(4(L1,1x),a)') lstsq, lstsq_qr, lstsq_dm, gauss,'lstsq, lstsq_qr, lstsq_dm, gauss'
-      WRITE(6,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
-      WRITE(6,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
-      WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
-      WRITE(6,'(1(L1,1x),5x,a)') const_mflux,'const_mflux'
-      WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
-      WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
-      WRITE(6,'(a)') ' '
+!.Create an input file reading log:
+  WRITE(6,'(a)') '  Input file log: '
+  WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
+  WRITE(6,'(a70)') TITLE
+  WRITE(6,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
+  WRITE(6,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10'
+  WRITE(6,'(3(i3,1x),5x,a)') monCell,pRefCell,MPoints,'monCell,pRefCell,MPoints'
+  WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
+  WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
+  WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
+  WRITE(6,'(L1,1x,3f6.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
+  WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
+  WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
+  WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
+  WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
+  WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
+  WRITE(6,'(i2,1x,a)') TurbModel, 'TurbModel'
+  WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
+  WRITE(6,'(7(L1,1x),a)') LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA,'LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA'
+  WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI), MUSCL velocity, CDS other'
+  WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
+  WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
+  WRITE(6,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
+  WRITE(6,'(i5,1x,es9.2,1x,i5,1x,i4,1x,a)') NUMSTEP,TIMESTEP,NZAPIS,MAXIT,'NUMSTEP,TIMESTEP,NZAPIS,MAXIT'
+  WRITE(6,'(4(L1,1x),a)') lstsq, lstsq_qr, lstsq_dm, gauss,'lstsq, lstsq_qr, lstsq_dm, gauss'
+  WRITE(6,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
+  WRITE(6,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
+  WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
+  WRITE(6,'(1(L1,1x),5x,a)') const_mflux,'const_mflux'
+  WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
+  WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
+  WRITE(6,'(a)') ' '
 
 
 !
@@ -169,7 +170,7 @@ subroutine init
 ! 5.0)  Parameter Initialisation
 
   ! Initial time
-  if(.not.lread) time = 0.0d0
+  if(.not.lread) time = 0.0_dp
 
   ! Set to zero cumulative error in continuity
   cumulativeContErr = 0.0_dp
@@ -184,7 +185,7 @@ subroutine init
   do inp = 1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp) = uin
+  u(inp) = uin ! xc(inp)+yc(inp)+zc(inp) 
   v(inp) = vin
   w(inp) = win
   te(inp) = tein
@@ -209,22 +210,19 @@ subroutine init
   ! u(ijp) = xf(iface)+yf(iface)+zf(iface)
   ! enddo
 
-  ! ! Inlet - will be defined in 'bcin'
-  ! do i=1,ninl
-  ! iface = iInletFacesStart + i
-  ! ijp = iInletStart + i
-  ! u(ijp) = uin
-  ! enddo
+  ! Inlet - will be defined in 'bcin'
 
-  ! ! Outlet - zero gradient
-  ! do i=1,nout
-  ! iface = iOutletFacesStart + i
-  ! ijp = owner(iface)
-  ! ijo = iOutletStart+i
-  ! u(ijo) = u(ijp)
-  ! v(ijo) = v(ijp)
-  ! w(ijo) = w(ijp)
-  ! enddo
+  ! Outlet - zero gradient
+  do i=1,nout
+  iface = iOutletFacesStart + i
+  ijp = owner(iface)
+  ijo = iOutletStart+i
+  u(ijo) = u(ijp)
+  v(ijo) = v(ijp)
+  w(ijo) = w(ijp)
+  te(ijo) = te(ijp)
+  ed(ijo) = ed(ijp)
+  enddo
 
   ! Symmetry
   do i=1,nsym
@@ -234,6 +232,8 @@ subroutine init
   u(ijs) = u(ijp)
   v(ijs) = v(ijp)
   w(ijs) = w(ijp)
+  te(ijs) = te(ijp)
+  ed(ijs) = ed(ijp)
   enddo
 
   ! Wall
@@ -243,6 +243,8 @@ subroutine init
   u(ijw) = 0.0_dp
   v(ijw) = 0.0_dp
   w(ijw) = 0.0_dp
+  te(ijw) = tein
+  ed(ijw) = edin
   enddo
 
   ! Moving Wall
@@ -351,12 +353,15 @@ subroutine init
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
+  
 
 ! print*,'gradijenti:'
 ! do i=1,numCells
-!   print*,i,':',dudxi(1,i)!abs(1.0d0-dudxi(1,i))!
+!   print*,i,':',dudxi(1,i)
 ! enddo
-
+! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
+! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
+! stop
 
 !
 ! 8) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
@@ -380,6 +385,8 @@ subroutine init
 
     ! Cell face area divided by distance to the cell center
     srdw(i) = are/dnw(i)
+
+    visw(i) = viscos
   enddo
 
   ! Loop over symmetry boundaries to calculate normal distance from cell center dns.
@@ -414,15 +421,15 @@ subroutine init
 
     ! Source term
     su = 0.0_dp
-    su(1:numCells) = Vol(1:numCells)
+    su(1:numCells) = -8*pi**2*sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells))*Vol(1:numCells)
 
     ! Initialize solution
-    p(1:numCells) = 0.0_dp
+    p(1:numTotal) = 0.0_dp
 
     do i=1,numBoundaryFaces
       iface = numInnerFaces+i
       ijp = numCells+i
-      p(ijp) = sqrt( arx(iface)**2 + ary(iface)**2 + arz(iface)**2)
+      p(ijp) = 0.0_dp
     enddo
 
     ! Wall
@@ -432,7 +439,7 @@ subroutine init
       p(ijp) = 0.0_dp
     enddo
 
-    !  Coefficient array for Laplaciann
+    !  Coefficient array for Laplacian
     sv = 1.0_dp       
 
     ! Laplacian operator and BCs         
@@ -441,11 +448,22 @@ subroutine init
     sor_backup = sor(ip)
     nsw_backup = nsw(ip)
 
-    sor(ip) = 1e-13
-    nsw(ip) = 100
+    sor(ip) = 1e-16
+    nsw(ip) = 1000
 
     ! Solve system
+    write(*,'(a)') ' '
     call iccg(p,ip) 
+    ! call gaussSeidel(p,ip) 
+    ! call bicgstab(p,ip) 
+    ! call dpcg(p,ip)
+    ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
+
+  ! do i=1,numCells
+  !   write(6,'(es11.4)') p(i)
+  ! enddo 
+  ! write(*,'(a)') ' '
+  ! write(*,'(a,es11.4)') 'L_inf error norm: ', maxval( abs( p(1:numCells)-sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells)) ) )
 
     sor(ip) = sor_backup
     nsw(ip) = nsw_backup
@@ -462,5 +480,10 @@ subroutine init
     sv = 0.0_dp 
     p = 0.0_dp
     dPdxi = 0.0_dp
-     
+  
+  ! write(*,'(a)') ' '
+  ! do i=1,numCells
+  !   write(6,'(es11.4)') wallDistance(i)
+  ! enddo   
+
 end subroutine

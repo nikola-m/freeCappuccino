@@ -30,9 +30,9 @@ subroutine calcp
   su = 0.0d0
 
   ! Tentative (!) velocity gradients used for velocity interpolation: 
-  call grad(U,dUdxi)
-  call grad(V,dVdxi)
-  call grad(W,dWdxi)
+  ! call grad(U,dUdxi)
+  ! call grad(V,dVdxi)
+  ! call grad(W,dWdxi)
 
   ! > Assemble off diagonal entries of system matrix and find mass flux at faces using Rhie-Chow interpolation
 
@@ -205,11 +205,11 @@ subroutine calcp
         su(ijn)=su(ijn)+fmcor
       end do
     
-      ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
-                          ipcorr,'. nonorthogonal pass:', &
-                                        ' sum  =',sum(su(:)),    &
-                                        '|sum| =',abs(sum(su(:)))
+      ! ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
+      ! write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
+      !                     ipcorr,'. nonorthogonal pass:', &
+      !                                   ' sum  =',sum(su(:)),    &
+      !                                   '|sum| =',abs(sum(su(:)))
                                                                                                  
     !.......................................................................................................!
     elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
@@ -218,20 +218,20 @@ subroutine calcp
     ! Why not!
     !
 
-      ! Correct mass fluxes at inner cv-faces with second corr.                                                      
-      do i=1,numInnerFaces                                                      
-        ijp = owner(i)
-        ijn = neighbour(i)
-        call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-        flmass(i) = flmass(i)+fmcor                                                                                              
-      enddo                                                             
+      ! ! Correct mass fluxes at inner cv-faces with second corr.                                                      
+      ! do i=1,numInnerFaces                                                      
+      !   ijp = owner(i)
+      !   ijn = neighbour(i)
+      !   call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+      !   flmass(i) = flmass(i)+fmcor                                                                                              
+      ! enddo                                                             
                                                             
-       ! Faces along O-C grid cuts
-      do i=1,noc
-        iface = iOCFacesStart+i
-        call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-        fmoc(i)=fmoc(i)+fmcor
-      end do
+      !  ! Faces along O-C grid cuts
+      ! do i=1,noc
+      !   iface = iOCFacesStart+i
+      !   call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+      !   fmoc(i)=fmoc(i)+fmcor
+      ! end do
 
     endif                                                             
     !.......................................................................................................!

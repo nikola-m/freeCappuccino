@@ -25,24 +25,19 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
 ! Local variables
   real(dp) :: are
-  real(dp) :: onethird, twothirds
   real(dp) :: xpn,ypn,zpn
   real(dp) :: nxx,nyy,nzz
   real(dp) :: ixi1,ixi2,ixi3
   real(dp) :: dpn,costheta,costn
   real(dp) :: xi,yi,zi
-  real(dp) :: Cp,Ce
-
+  real(dp) :: cp,ce
   real(dp) :: duxi,duyi,duzi, &
-                dvxi,dvyi,dvzi, &
-                dwxi,dwyi,dwzi
-
+              dvxi,dvyi,dvzi, &
+              dwxi,dwyi,dwzi
   real(dp) :: duxii,dvxii,dwxii, &
-                duyii,dvyii,dwyii, &
-                duzii,dvzii,dwzii
-
+              duyii,dvyii,dwyii, &
+              duzii,dvzii,dwzii
   real(dp) :: d2x,d2y,d2z,d1x,d1y,d1z
-
   real(dp) :: de, vole, game
   real(dp) :: fxp,fxn
   real(dp) :: fuuds,fvuds,fwuds,fuhigh,fvhigh,fwhigh
@@ -51,9 +46,6 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   real(dp) :: r1,r2,r3,r4,r5,r6
   real(dp) :: psie1,psie2,psie3,psiw1,psiw2,psiw3
 !----------------------------------------------------------------------
-
-  onethird = 1.0_dp/3.0_dp
-  twothirds = 2.0_dp/3.0_dp
 
 
   ! > Geometry:
@@ -89,11 +81,11 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
   ! Relaxation factor for higher-order cell face gradient
   ! Minimal correction: nrelax = +1 :
-  !costn = costheta
+  ! costn = costheta
   ! Orthogonal correction: nrelax =  0 : 
   costn = 1.0_dp
   ! Over-relaxed approach: nrelax = -1 :
-  !costn = 1./costheta
+  ! costn = 1./costheta
   ! In general, nrelax can be any signed integer from some 
   ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
   !costn = costheta**nrelax
@@ -114,40 +106,35 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   ! > Equation coefficients:
 
   ! Cell face viscosity
-  game=(vis(ijp)*fxp+vis(ijn)*fxn)
+  game = vis(ijp)*fxp+vis(ijn)*fxn
 
   ! Difusion coefficient
   de = game*are/dpn
 
 
-  ! Equation coefficients - implicit diffusion and convection
-  Ce=Min(flomass,Zero) 
-  Cp=Max(flomass,Zero)
+  ! > Equation coefficients - implicit diffusion and convection
+  ce = min(flomass,zero) 
+  cp = max(flomass,zero)
 
   can = -de + min(flomass,zero)
   cap = -de - max(flomass,zero)
 
 
 
-
-  ! > Face velocity components and Explicit diffusion: 
+  ! > Explicit diffusion: 
 
   ! Coordinates of point j'
-  xi=xc(ijp)*fxp+xc(ijn)*fxn
-  yi=yc(ijp)*fxp+yc(ijn)*fxn
-  zi=zc(ijp)*fxp+zc(ijn)*fxn
+  xi = xc(ijp)*fxp+xc(ijn)*fxn
+  yi = yc(ijp)*fxp+yc(ijn)*fxn
+  zi = zc(ijp)*fxp+zc(ijn)*fxn
 
 
-  !.....interpolate gradients defined at cv centers to faces
+  ! Interpolate gradients defined at cv centers to faces
   duxi = dUdxi(1,ijp)*fxp+dUdxi(1,ijn)*fxn
   duyi = dUdxi(2,ijp)*fxp+dUdxi(2,ijn)*fxn
   duzi = dUdxi(3,ijp)*fxp+dUdxi(3,ijn)*fxn
 
-  !  |________uj'_________|_______________ucorr___________________|
-  ue=u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
-
-  !.....du/dx_i interpolated at cell face:
+  ! du/dx_i interpolated at cell face:
   duxii = duxi*d1x + arx/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
   duyii = duyi*d1y + ary/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
   duzii = duzi*d1z + arz/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
@@ -156,11 +143,7 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   dvyi = dVdxi(2,ijp)*fxp+dVdxi(2,ijn)*fxn
   dvzi = dVdxi(3,ijp)*fxp+dVdxi(3,ijn)*fxn
 
-  !  |________vj'_________|_______________vcorr___________________|
-  ve=v(ijp)*fxp+v(ijn)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
-  ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
-
-  !.....dv/dx_i interpolated at cell face:
+  ! dv/dx_i interpolated at cell face:
   dvxii = dvxi*d1x + arx/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
   dvyii = dvyi*d1y + ary/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
   dvzii = dvzi*d1z + arz/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
@@ -169,55 +152,63 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   dwyi = dWdxi(2,ijp)*fxp+dWdxi(2,ijn)*fxn
   dwzi = dWdxi(3,ijp)*fxp+dWdxi(3,ijn)*fxn
 
-  !  |________wj'_________|_______________wcorr___________________|
-  we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
-  ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
-
-  !.....dw/dx_i interpolated at cell face:
+  ! dw/dx_i interpolated at cell face:
   dwxii = dwxi*d1x + arx/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
   dwyii = dwyi*d1y + ary/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
   dwzii = dwzi*d1z + arz/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
 
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!     we calculate explicit and implicit diffsion fde and fdi,
-!     later se put their difference (fde-fdi) to rhs vector
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+!---------------------------------------------------------------------------------------
+!     We calculate explicit and implicit diffsion fde and fdi,
+!     later se put their difference (fde-fdi) to rhs vector:
+!     su = su + (fdue-fdui)
+!     sv = sv + (fdve-fdvi)
+!     sw = sw + (fdwe-fdwi)
+!---------------------------------------------------------------------------------------
 
-  ! explicit diffussion 
-  fdue = (duxii+duxii)*arx + (duyii+dvxii)*ary + (duzii+dwxii)*arz
-  fdve = (duyii+dvxii)*arx + (dvyii+dvyii)*ary + (dvzii+dwyii)*arz
-  fdwe = (duzii+dwxii)*arx + (dwyii+dvzii)*ary + (dwzii+dwzii)*arz
+  ! Explicit diffussion: 
+  fdue = game*( (duxii+duxii)*arx + (duyii+dvxii)*ary + (duzii+dwxii)*arz )
+  fdve = game*( (duyii+dvxii)*arx + (dvyii+dvyii)*ary + (dvzii+dwyii)*arz )
+  fdwe = game*( (duzii+dwxii)*arx + (dwyii+dvzii)*ary + (dwzii+dwzii)*arz )
 
-  fdue = game*fdue
-  fdve = game*fdve
-  fdwe = game*fdwe
-
-  ! implicit diffussion 
+  ! Implicit diffussion:
   fdui = game*are/dpn*(duxi*xpn+duyi*ypn+duzi*zpn)
   fdvi = game*are/dpn*(dvxi*xpn+dvyi*ypn+dvzi*zpn)
   fdwi = game*are/dpn*(dwxi*xpn+dwyi*ypn+dwzi*zpn)
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-!++++end: velocities at cell face center and explicit diffusion fluxes+++++++
 
 
 
   ! > Explicit convection: 
 
   ! Explicit convective fluxes for UDS
-  fuuds=max(flomass,zero)*u(ijp)+min(flomass,zero)*u(ijn)
-  fvuds=max(flomass,zero)*v(ijp)+min(flomass,zero)*v(ijn)
-  fwuds=max(flomass,zero)*w(ijp)+min(flomass,zero)*w(ijn)
+  fuuds = max(flomass,zero)*u(ijp)+min(flomass,zero)*u(ijn)
+  fvuds = max(flomass,zero)*v(ijp)+min(flomass,zero)*v(ijn)
+  fwuds = max(flomass,zero)*w(ijp)+min(flomass,zero)*w(ijn)
 
-  fuhigh=0.0_dp
-  fvhigh=0.0_dp
-  fwhigh=0.0_dp
+  ! Initialize explicit convective fluxes for higher-order schemes
+  fuhigh = 0.0_dp
+  fvhigh = 0.0_dp
+  fwhigh = 0.0_dp
 
   ! Explicit convective fluxes for CDS
   if(lcds) then
+
+    ! > Velocities at cell face center
+
+    !  |________uj'_________|_______________ucorr___________________|
+    ue=u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+    !  |________vj'_________|_______________vcorr___________________|
+    ve=v(ijp)*fxp+v(ijn)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
+    !  |________wj'_________|_______________wcorr___________________|
+    we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
+
+    ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
+    ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
+    ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
+
     fuhigh=flomass*ue
     fvhigh=flomass*ve
     fwhigh=flomass*we
+
   end if
 
 !--------------------------------------------------------------------------------------------
@@ -234,6 +225,7 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   r4 = (2*dUdxi(1,ijn)*xpn + 2*dUdxi(2,ijn)*ypn + 2*dUdxi(3,ijn)*zpn)/(u(ijp)-u(ijn)) - 1.0_dp 
   r5 = (2*dVdxi(1,ijn)*xpn + 2*dVdxi(2,ijn)*ypn + 2*dVdxi(3,ijn)*zpn)/(v(ijp)-v(ijn)) - 1.0_dp 
   r6 = (2*dWdxi(1,ijn)*xpn + 2*dWdxi(2,ijn)*ypn + 2*dWdxi(3,ijn)*zpn)/(w(ijp)-w(ijn)) - 1.0_dp  
+
 
   !=====smart scheme================================
   if(lsmart) then
@@ -274,56 +266,6 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   psie1 = max(0., min(2.*r4, 0.5*r4+0.5, 2.))
   psie2 = max(0., min(2.*r5, 0.5*r5+0.5, 2.))
   psie3 = max(0., min(2.*r6, 0.5*r6+0.5, 2.))
-
-  !.....psi for koren scheme:
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
-  !      psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
-  !      psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
-  !      psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
-  !      psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
-
-  !.....psi for gpl-1/3-alpha-3/2 scheme:  !!!!new scheme>>>koren i ova schema su jako slicne
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(1.5*r1, twothirds*r1+onethird, 2.))
-  !      psiw2 = max(0., min(1.5*r2, twothirds*r2+onethird, 2.))
-  !      psiw3 = max(0., min(1.5*r3, twothirds*r3+onethird, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(1.5*r4, twothirds*r4+onethird, 2.))
-  !      psie2 = max(0., min(1.5*r5, twothirds*r5+onethird, 2.))
-  !      psie3 = max(0., min(1.5*r6, twothirds*r6+onethird, 2.))
-
-  !.....psi for smarter; charm notable; isnas
-  !.....if flow goes from p to e
-  !      psiw1 = (r1+abs(r1))*(3*r1+1.)/(2*(r1+1.)**2)
-  !      psiw2 = (r2+abs(r2))*(3*r2+1.)/(2*(r2+1.)**2)
-  !      psiw3 = (r3+abs(r3))*(3*r3+1.)/(2*(r3+1.)**2)
-  !.....if flow goes from e to p
-  !      psie1 = (r4+abs(r4))*(3*r4+1.)/(2*(r4+1.)**2)
-  !      psie2 = (r5+abs(r5))*(3*r5+1.)/(2*(r5+1.)**2)
-  !      psie3 = (r6+abs(r6))*(3*r6+1.)/(2*(r6+1.)**2)
-
-  !.....psi for ospre
-  !.....if flow goes from p to e
-  !      psiw1 = 1.5*r1*(r1+1.)/(r1**2+r1+1.)
-  !      psiw2 = 1.5*r2*(r2+1.)/(r2**2+r2+1.)
-  !      psiw3 = 1.5*r3*(r3+1.)/(r3**2+r3+1.)
-  !.....if flow goes from e to p
-  !      psie1 = 1.5*r4*(r4+1.)/(r4**2+r4+1.)
-  !      psie2 = 1.5*r5*(r5+1.)/(r5**2+r5+1.)
-  !      psie3 = 1.5*r6*(r6+1.)/(r6**2+r6+1.)
-
-  !.....psi for bsou-blui-chakravarthy-osher scheme:
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(2.*r1,1.))
-  !      psiw2 = max(0., min(2.*r2,1.))
-  !      psiw3 = max(0., min(2.*r3,1.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4,1.))
-  !      psie2 = max(0., min(2.*r5,1.))
-  !     psie3 = max(0., min(2.*r6,1.))
   !=====end muscl scheme=============================
  
 
@@ -339,21 +281,6 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   psie2 = max(0., min(2.*r5, 0.75*r5+0.25, 0.25*r5+0.75, 2.))
   psie3 = max(0., min(2.*r6, 0.75*r6+0.25, 0.25*r6+0.75, 2.))
   !=====end umist scheme=============================
-
-
-  !=====spl-3/5 scheme===============================
-  !     if(lumist.eq.1) then
-  !.....psi for spl-3/5 scheme (new scheme derived from waterson&deconinck's symmetric piecewise-linear scheme):
-  !.....if flow goes from p to e
-  !     psiw1 = max(0., min(2.*r1, 0.8*r1+0.2, 0.2*r1+0.8, 2.))
-  !      psiw2 = max(0., min(2.*r2, 0.8*r2+0.2, 0.2*r2+0.8, 2.))
-  !      psiw3 = max(0., min(2.*r3, 0.8*r3+0.2, 0.2*r3+0.8, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4, 0.8*r4+0.2, 0.2*r4+0.8, 2.))
-  !      psie2 = max(0., min(2.*r5, 0.8*r5+0.2, 0.2*r5+0.8, 2.))
-  !      psie3 = max(0., min(2.*r6, 0.8*r6+0.2, 0.2*r6+0.8, 2.))
-  !=====end umist scheme=============================
-  !      endif
 
   !=====gamma scheme================================
   elseif(lgamma) then
@@ -407,12 +334,79 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   END IF 
 
 
-! Explicit part of diffusion fluxes and sources due to deffered correction,
-! for all schemes!
+! > Explicit part of diffusion fluxes and sources due to deffered correction.
 
   sup = -gam*(fuhigh-fuuds)+fdue-fdui
   svp = -gam*(fvhigh-fvuds)+fdve-fdvi
   swp = -gam*(fwhigh-fwuds)+fdwe-fdwi
 
-  return
 end subroutine
+
+
+
+
+! Some other higher order schemes:
+ 
+  !.....psi for koren scheme:
+  !.....if flow goes from p to e
+  !      psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
+  !      psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
+  !      psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
+  !.....if flow goes from e to p
+  !      psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
+  !      psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
+  !      psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
+
+  !.....psi for gpl-1/3-alpha-3/2 scheme:  !!!!new scheme>>>koren i ova schema su jako slicne
+  !.....if flow goes from p to e
+  !      psiw1 = max(0., min(1.5*r1, twothirds*r1+onethird, 2.))
+  !      psiw2 = max(0., min(1.5*r2, twothirds*r2+onethird, 2.))
+  !      psiw3 = max(0., min(1.5*r3, twothirds*r3+onethird, 2.))
+  !.....if flow goes from e to p
+  !      psie1 = max(0., min(1.5*r4, twothirds*r4+onethird, 2.))
+  !      psie2 = max(0., min(1.5*r5, twothirds*r5+onethird, 2.))
+  !      psie3 = max(0., min(1.5*r6, twothirds*r6+onethird, 2.))
+
+  !.....psi for smarter; charm notable; isnas
+  !.....if flow goes from p to e
+  !      psiw1 = (r1+abs(r1))*(3*r1+1.)/(2*(r1+1.)**2)
+  !      psiw2 = (r2+abs(r2))*(3*r2+1.)/(2*(r2+1.)**2)
+  !      psiw3 = (r3+abs(r3))*(3*r3+1.)/(2*(r3+1.)**2)
+  !.....if flow goes from e to p
+  !      psie1 = (r4+abs(r4))*(3*r4+1.)/(2*(r4+1.)**2)
+  !      psie2 = (r5+abs(r5))*(3*r5+1.)/(2*(r5+1.)**2)
+  !      psie3 = (r6+abs(r6))*(3*r6+1.)/(2*(r6+1.)**2)
+
+  !.....psi for ospre
+  !.....if flow goes from p to e
+  !      psiw1 = 1.5*r1*(r1+1.)/(r1**2+r1+1.)
+  !      psiw2 = 1.5*r2*(r2+1.)/(r2**2+r2+1.)
+  !      psiw3 = 1.5*r3*(r3+1.)/(r3**2+r3+1.)
+  !.....if flow goes from e to p
+  !      psie1 = 1.5*r4*(r4+1.)/(r4**2+r4+1.)
+  !      psie2 = 1.5*r5*(r5+1.)/(r5**2+r5+1.)
+  !      psie3 = 1.5*r6*(r6+1.)/(r6**2+r6+1.)
+
+  !.....psi for bsou-blui-chakravarthy-osher scheme:
+  !.....if flow goes from p to e
+  !      psiw1 = max(0., min(2.*r1,1.))
+  !      psiw2 = max(0., min(2.*r2,1.))
+  !      psiw3 = max(0., min(2.*r3,1.))
+  !.....if flow goes from e to p
+  !      psie1 = max(0., min(2.*r4,1.))
+  !      psie2 = max(0., min(2.*r5,1.))
+  !     psie3 = max(0., min(2.*r6,1.))
+
+  !=====spl-3/5 scheme===============================
+  !     if(lumist.eq.1) then
+  !.....psi for spl-3/5 scheme (new scheme derived from waterson&deconinck's symmetric piecewise-linear scheme):
+  !.....if flow goes from p to e
+  !     psiw1 = max(0., min(2.*r1, 0.8*r1+0.2, 0.2*r1+0.8, 2.))
+  !      psiw2 = max(0., min(2.*r2, 0.8*r2+0.2, 0.2*r2+0.8, 2.))
+  !      psiw3 = max(0., min(2.*r3, 0.8*r3+0.2, 0.2*r3+0.8, 2.))
+  !.....if flow goes from e to p
+  !      psie1 = max(0., min(2.*r4, 0.8*r4+0.2, 0.2*r4+0.8, 2.))
+  !      psie2 = max(0., min(2.*r5, 0.8*r5+0.2, 0.2*r5+0.8, 2.))
+  !      psie3 = max(0., min(2.*r6, 0.8*r6+0.2, 0.2*r6+0.8, 2.))
+  !=====end umist scheme=============================
+  !      endif

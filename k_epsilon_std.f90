@@ -114,6 +114,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use sparse_matrix
   use gradients
   use temperature, only: t,utt,vtt,wtt
+  use title_mod
+
   implicit none
 
   integer, intent(in) :: ifi
@@ -133,10 +135,12 @@ subroutine calcsc(Fi,dFidxi,ifi)
   real(dp) :: off_diagonal_terms
   real(dp) :: are,nxf,nyf,nzf,vnp,xtp,ytp,ztp,ut2,tau
   real(dp) :: viss
+  real(dp) :: fimax,fimin
 
 
   ! Variable specific coefficients:
   gam=gds(ifi)
+
   if(ifi.eq.ite) prtr=1.0d0/sigma_k
   if(ifi.eq.ite) prtr=1.0d0/sigma_epsilon
 
@@ -144,8 +148,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   call grad(fi,dfidxi)
 
 ! Initialize source arrays
-  su(:)=0.0d0
-  sp(:)=0.0d0
+  su = 0.0_dp
+  sp = 0.0_dp
 
 !
 ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME
@@ -155,8 +159,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
 ! STANDARD PRODUCTION
 !=========================================================
   do inp=1,numCells
-        magStrainSq=magStrain(inp)*magStrain(inp)
-        gen(inp)=abs(vis(inp)-viscos)*magStrainSq
+    magStrainSq=magStrain(inp)*magStrain(inp)
+    gen(inp)=abs(vis(inp)-viscos)*magStrainSq
   enddo
 
 
@@ -215,7 +219,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
         !=====================================
         if(bdf) then
           apotime=den(inp)*vol(inp)/timestep
-          sut=apotime*((1+btime)*teo(inp)-0.5*btime*teoo(inp))
+          sut=apotime*((1+btime)*teo(inp))
+          if (btime > 0.99) then ! bdf2 scheme btime=1.
+            sut = sut - apotime*(0.5*btime*teoo(inp))
+          endif
           su(inp)=su(inp)+sut
           sp(inp)=sp(inp)+apotime*(1+0.5*btime)
         endif
@@ -278,7 +285,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
         !    in case that BTIME=0. --> Implicit Euler
         !
           apotime=den(inp)*vol(inp)/timestep
-          sut=apotime*((1+btime)*edo(inp)-0.5*btime*edoo(inp))
+          sut=apotime*((1+btime)*edo(inp))
+          if (btime > 0.99) then ! bdf2 scheme btime=1.
+            sut = sut - apotime*(0.5*btime*edoo(inp))
+          endif
           su(inp)=su(inp)+sut
           sp(inp)=sp(inp)+apotime*(1+0.5*btime)
         endif
@@ -354,8 +364,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    ! dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
-
     call boundary_facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
      Fi, dFidxi, prtr, cap, can, suadd)
 
@@ -369,8 +377,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-
-    ! dFidxi(:,ijb)=dFidxi(:,ijp) ! (constant gradient bc)
 
     call boundary_facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
      FI, dFidxi, prtr, cap, can, suadd)
@@ -389,7 +395,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
       ijp=owner(iface)
       ijb=iWallStart+i
 
-      su(ijp)=su(ijp)-gen(ijp)*vol(ijp) ! oduzmi produkciju iz wall ajdecent celije
+      su(ijp)=su(ijp)-gen(ijp)*vol(ijp) ! take out standard production from wall ajdecent cell.
       viss=viscos
       if(ypl(i).gt.ctrans) viss=visw(i)
 
@@ -468,7 +474,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
         enddo
         do ijp=1,numCells
             apotime=den(ijp)*vol(ijp)/timestep
-            off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) !- a(diag(ijp))
+            off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) - a(diag(ijp))
             su(ijp) = su(ijp) + (apotime + off_diagonal_terms)*teo(ijp)
             sp(ijp) = sp(ijp)+apotime
         enddo
@@ -485,7 +491,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
         enddo
         do ijp=1,numCells
             apotime=den(ijp)*vol(ijp)/timestep
-            off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) !- a(diag(ijp))
+            off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) - a(diag(ijp))
             su(ijp) = su(ijp) + (apotime + off_diagonal_terms)*edo(ijp)
             sp(ijp) = sp(ijp)+apotime
         enddo
@@ -501,7 +507,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
         ! Main diagonal term assembly:
         ! Sum all coefs in a row of a sparse matrix, but since we also included diagonal element 
         ! we substract it from the sum, to eliminate it from the sum.
-        off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) !- a(diag(ijp)) because = 0
+        off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(ijp)) 
         a(diag(inp)) = sp(inp) - off_diagonal_terms
 
         ! Underelaxation:
@@ -532,10 +538,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
     fi(ijb)=fi(ijp)
   end do
 
+! Report range of scalar values and clip if negative
+  fimin = minval(fi)
+  fimax = maxval(fi)
+  write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+
 ! These field values cannot be negative
-  if(ifi.eq.ite.or.ifi.eq.ied) then
-    fi(:)=max(fi(:),small)
-  endif
+  if(fimin.lt.0.0_dp) fi = max(fi,small)
 
 end subroutine calcsc
 
@@ -574,13 +583,9 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
   real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
-
   real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
-
   real(dp) :: d1x,d1y,d1z
-
   real(dp) :: de, vole, game, viste
-
   real(dp) :: fxp,fxn
   real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
   real(dp) :: nablaFIxdnnp,nablaFIxdppp
@@ -590,9 +595,9 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
   real(dp) :: psie,psiw
 !----------------------------------------------------------------------
 
-  dfixi = 0.0d0
-  dfiyi = 0.0d0
-  dfizi = 0.0d0
+  dfixi = 0.0_dp
+  dfiyi = 0.0_dp
+  dfizi = 0.0_dp
 
   ! > Geometry:
 
@@ -709,11 +714,11 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, lambda, gam, 
     !---------------------------------------------
     ! Interpolate variable FI defined at CV centers to face using corrected CDS:
     !   |________Ue'___________|_______________Ucorr_____________________|
-    !@fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
+    fii=fi(ijp)*fxp+fi(ijn)*fxn!+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
     !fii = face_interpolated(fi,dfidxi,inp,idew,idns,idtb,fxp,fxn)
 
     ! Explicit second order convection 
-    !@fcfie=fm*fii
+    fcfie=fm*fii
   else
     !---------------------------------------------
     ! Darwish-Moukalled TVD schemes for unstructured grids, IJHMT, 2003. 
@@ -940,26 +945,26 @@ subroutine boundary_facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
   real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
   real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
-  real(dp) :: fii,fm
+  real(dp) :: fm!,fii
 
-  real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
+  real(dp) :: fdfie,fdfii!,fcfie,fcfii,ffic
 
   real(dp) :: d1x,d1y,d1z,d2x,d2y,d2z
 
   real(dp) :: de, vole, game, viste
 
   real(dp) :: fxp,fxn
-  real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  real(dp) :: nablaFIxdnnp,nablaFIxdppp
+  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
+  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
-  real(dp) :: r1,r2
-  real(dp) :: psie,psiw
+  ! real(dp) :: r1,r2
+  ! real(dp) :: psie,psiw
 !----------------------------------------------------------------------
 
-  dfixi = 0.0d0
-  dfiyi = 0.0d0
-  dfizi = 0.0d0
+  dfixi = 0.0_dp
+  dfiyi = 0.0_dp
+  dfizi = 0.0_dp
 
   ! > Geometry:
 

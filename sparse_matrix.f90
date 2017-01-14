@@ -47,7 +47,7 @@ subroutine create_CSR_matrix_from_mesh_data
 !  > Populate sparsity arrays for CSR format
 !
 
-  ! Tis will be postions of diagonal elements, but later we'll sort ia,ja.
+  ! This will be postions of diagonal elements, but later we'll sort ia,ja.
   do icell = 1,numCells
     ia(icell) = icell
     ja(icell) = icell
@@ -87,9 +87,8 @@ subroutine create_CSR_matrix_from_mesh_data
  do icell = 1,numCells
    call find_index_position(icell, istart, iend, ia,  nnz, ioffset(icell))
    istart = ioffset(icell)+1
-   iend = istart + 24 ! assumed max no of faces 
+   iend = nnz
  enddo
-
  ioffset(numCells+1) = nnz+1 ! poslednji element
 
  call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
@@ -113,9 +112,9 @@ subroutine create_CSR_matrix_from_mesh_data
 
 ! > Sources for main diagonal
 !
-  allocate(spu(numCells) )  
-  allocate(spv(numCells) ) 
-  allocate(sp(numCells) ) 
+  allocate( spu(numCells) )  
+  allocate( spv(numCells) ) 
+  allocate( sp(numCells) ) 
 
 !
 ! > Residual vector

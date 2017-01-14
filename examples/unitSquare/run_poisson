@@ -1,0 +1,22 @@
+touch poisson_grid_convergence
+mv polyMesh-40x40 polyMesh
+poisson
+tail -n 1 log_poisson >> poisson_grid_convergence
+mv polyMesh polyMesh-40x40
+mv polyMesh-80x80 polyMesh
+poisson
+tail -n 1 log_poisson >> poisson_grid_convergence
+mv polyMesh polyMesh-80x80
+mv polyMesh-160x160 polyMesh
+poisson
+tail -n 1 log_poisson >> poisson_grid_convergence
+mv polyMesh polyMesh-160x160
+mv polyMesh-320x320 polyMesh
+poisson
+tail -n 1 log_poisson >> poisson_grid_convergence
+mv polyMesh polyMesh-320x320
+gnuplot plotConvergence
+ps2pdf convergence.ps
+rm -rf convergence.ps
+
+

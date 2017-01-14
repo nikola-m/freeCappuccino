@@ -27,7 +27,7 @@ subroutine bicgstab(fi,ifi)
   real(dp) :: rsm, resmax, res0, resl
   real(dp) :: alf, beto, gam, bet, om, ukreso
 
-! max no. of iterations
+! residual tolerance
   resmax = sor(ifi)
 
 !
@@ -52,7 +52,11 @@ subroutine bicgstab(fi,ifi)
 
   ! L^1-norm of residual
   res0=sum(abs(res(:)))
-
+    if(res0.lt.small) then
+      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
+      ', Initial residual = ',RES0,', Final residual = ',RES0,', No Iterations ',0
+      return
+    endif
 !
 ! If ltest=true, print the norm 
 !
@@ -74,23 +78,6 @@ subroutine bicgstab(fi,ifi)
     d(i) = 1.0_dp / d(i)
   enddo 
 
- 
-! !
-! !.....CALCULATE ELEMENTS OF PRECONDITIONING MATRIX DIAGONAL
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             D(IJK)=1./(AP(IJK) - AW(IJK)*D(IJK-NJ)*AE(IJK-NJ) &
-!                    - AS(IJK)*D(IJK-1)*AN(IJK-1)               &
-!                    - AB(IJK)*D(IJK-NIJ)*AT(IJK-NIJ)) 
-!           END DO
-!         END DO
-!       END DO
-
-
-
 !
 ! Initialize working arrays and constants
 !
@@ -111,21 +98,6 @@ subroutine bicgstab(fi,ifi)
   ns=nsw(ifi)
   do l=1,ns
 
-! !
-! !..... CALCULATE BETA AND OMEGA
-! !
-!       BET=0.0_dp
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             BET=BET+RES(IJK)*RESO(IJK)
-!           END DO
-!         END DO
-!       END DO
-!       OM=BET*GAM/(ALF*BETO+SMALL)
-!       BETO=BET
-
 !
 ! Calculate beta and omega
 !
@@ -133,46 +105,11 @@ subroutine bicgstab(fi,ifi)
   om = bet*gam/(alf*beto+small)
   beto = bet
 
-
-! !
-! !..... CALCULATE PK
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             PK(IJK)=RES(IJK)+OM*(PK(IJK)-ALF*UK(IJK))
-!           END DO
-!         END DO
-!       END DO
-
 !
 ! Calculate pk
 !
   pk = res + om*(pk -alf*uk)
 
-! !
-! !.....SOLVE (M ZK = PK) - FORWARD SUBSTITUTION
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=(PK(IJK)-AW(IJK)*ZK(IJK-NJ)  &
-!                             -AS(IJK)*ZK(IJK-1)   &
-!                             -AB(IJK)*ZK(IJK-NIJ))*D(IJK)
-!           END DO
-!         END DO
-!       END DO
-
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=ZK(IJK)/(D(IJK)+SMALL)
-!           END DO
-!         END DO
-!       END DO
 
 !
 ! Solve (M ZK = PK) - forward substitution
@@ -187,19 +124,6 @@ subroutine bicgstab(fi,ifi)
 
   zk = zk/(d+small)
 
-! !
-! !..... BACKWARD SUBSTITUTION
-! !
-!       DO K=NKM,2,-1
-!         DO I=NIM,2,-1
-!           DO J=NJM,2,-1
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=(ZK(IJK)-AE(IJK)*ZK(IJK+NJ)  &
-!                             -AN(IJK)*ZK(IJK+1)   &
-!                             -AT(IJK)*ZK(IJK+NIJ))*D(IJK)
-!           END DO
-!         END DO
-!       END DO
 
 !
 ! Backward substitution
@@ -212,20 +136,6 @@ subroutine bicgstab(fi,ifi)
   enddo
 
 
-! !
-! !.....CALCULATE UK = A.PK
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             UK(IJK)=AP(IJK)*ZK(IJK)+AE(IJK)*ZK(IJK+NJ) +AW(IJK)*ZK(IJK-NJ) &
-!                                    +AN(IJK)*ZK(IJK+1)  +AS(IJK)*ZK(IJK-1)  &
-!                                    +AT(IJK)*ZK(IJK+NIJ)+AB(IJK)*ZK(IJK-NIJ)
-!           END DO
-!         END DO
-!       END DO
-
 !
 ! Matvec 1: Uk = A*pk
 !
@@ -236,19 +146,6 @@ subroutine bicgstab(fi,ifi)
     enddo
   enddo
 
-! !
-! !..... CALCULATE SCALAR PRODUCT UK.RESO AND GAMMA
-! !
-!       UKRESO=0.0_dp
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             UKRESO=UKRESO+UK(IJK)*RESO(IJK)
-!           END DO
-!         END DO
-!       END DO
-!       GAM=BET/UKRESO
 
 !
 ! Calculate scalar product uk*reso, and gamma
@@ -256,18 +153,6 @@ subroutine bicgstab(fi,ifi)
   ukreso = sum(uk(:)*reso(:))
   gam = bet/ukreso
 
-! !
-! !.....UPDATE (FI) AND CALCULATE W (OVERWRITE RES - IT IS RES-UPDATE)
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             FI(IJK)=FI(IJK)+GAM*ZK(IJK)   
-!             RES(IJK)=RES(IJK)-GAM*UK(IJK) !W
-!           END DO
-!         END DO
-!       END DO
 
 !
 ! Update 'fi' and calculate 'w' (overwrite 'res; - it is res-update)
@@ -275,28 +160,6 @@ subroutine bicgstab(fi,ifi)
   fi(1:numCells) = fi(1:numCells) + gam*zk
   res            = res            - gam*uk   ! <- W
 
-! !
-! !.....SOLVE (M Y = W); Y OVERWRITES ZK; FORWARD SUBSTITUTION
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=(RES(IJK)-AW(IJK)*ZK(IJK-NJ) &
-!                              -AS(IJK)*ZK(IJK-1)  &
-!                              -AB(IJK)*ZK(IJK-NIJ))*D(IJK)
-!            END DO
-!          END DO
-!       END DO
-
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=ZK(IJK)/(D(IJK)+SMALL)
-!           END DO
-!         END DO
-!       END DO
 
 !
 ! Solve (M Y = W); Y overwrites zk; forward substitution
@@ -311,20 +174,6 @@ subroutine bicgstab(fi,ifi)
 
   zk = zk/(d+small)
 
-! !
-! !.....BACKWARD SUBSTITUTION
-! !
-!       DO K=NKM,2,-1
-!         DO I=NIM,2,-1
-!           DO J=NJM,2,-1
-!             IJK=LK(K)+LI(I)+J
-!             ZK(IJK)=(ZK(IJK)-AE(IJK)*ZK(IJK+NJ)  &
-!                             -AN(IJK)*ZK(IJK+1)   &
-!                             -AT(IJK)*ZK(IJK+NIJ))*D(IJK)
-!           END DO
-!         END DO
-!       END DO
-
 !
 ! Backward substitution
 !
@@ -334,21 +183,6 @@ subroutine bicgstab(fi,ifi)
     end do
     zk(i) = zk(i)*d(i)
   enddo
-
-! !
-! !.....CALCULATE V = A.Y (VK = A.ZK)
-! !
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             VK(IJK)=AP(IJK)*ZK(IJK)   +AE(IJK)*ZK(IJK+NJ)+  &
-!                     AW(IJK)*ZK(IJK-NJ)+AN(IJK)*ZK(IJK+1)+   &
-!                     AS(IJK)*ZK(IJK-1) +AT(IJK)*ZK(IJK+NIJ)+ &
-!                     AB(IJK)*ZK(IJK-NIJ)
-!           END DO
-!         END DO
-!       END DO
 
 !
 ! Matvec 2: v = A*y (vk = A*zk); vk = csrMatVec(a,zk)
@@ -360,41 +194,10 @@ subroutine bicgstab(fi,ifi)
     enddo
   enddo  
 
-! !
-! !..... CALCULATE ALPHA (ALF)
-! !
-!       VRES=0.0_dp
-!       VV=0.0_dp
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             VRES=VRES+VK(IJK)*RES(IJK)
-!             VV=VV+VK(IJK)*VK(IJK)
-!           END DO
-!         END DO
-!       END DO
-
-!       ALF=VRES/(VV+SMALL)
 !
 ! Calculate alpha (alf)
 !
   alf = sum(vk*res) / (sum(vk*vk)+small)
-
-! !
-! !.....UPDATE VARIABLE (FI) AND RESIDUAL (RES) VECTORS
-! !
-!       RESL=0.0_dp
-!       DO K=2,NKM
-!         DO I=2,NIM
-!           DO J=2,NJM
-!             IJK=LK(K)+LI(I)+J
-!             FI(IJK)=FI(IJK)+ALF*ZK(IJK)
-!             RES(IJK)=RES(IJK)-ALF*VK(IJK)
-!             RESL=RESL+ABS(RES(IJK))
-!           END DO
-!         END DO
-!       END DO
 
   ! Update solution vector
   fi(1:numCells) = fi(1:numCells) + alf*zk

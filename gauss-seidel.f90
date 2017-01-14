@@ -31,7 +31,7 @@ subroutine GaussSeidel(fi,ifi)
   real(dp) :: rsm, resmax, res0, resl
 
 
-! max no. of iterations
+! residual tolerance
   resmax = sor(ifi)
 
 !
@@ -48,7 +48,7 @@ subroutine GaussSeidel(fi,ifi)
     do k = ioffset(i),ioffset(i+1)-1
       res(i) = res(i) -  a(k) * fi(ja(k)) 
     enddo
-    fi(i) = fi(i) + res(i)/a(diag(i))   
+    fi(i) = fi(i) + res(i)/(a(diag(i))+small)   
   enddo
 
   do i=1,noc
@@ -57,7 +57,10 @@ subroutine GaussSeidel(fi,ifi)
   end do
 
 ! L^1-norm of residual
-  if(l.eq.1)  res0=sum(abs(res))
+  if(l.eq.1)  then
+    res0=sum(abs(res))
+    ! if( res0.lt.sor(ifi) ) exit
+  endif
 
 !
 ! If ltest=true, print the norm 

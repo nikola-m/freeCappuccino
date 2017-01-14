@@ -1,0 +1,9 @@
+set logscale 
+plot "poisson_grid_convergence" with linespoints
+set size 1.0, 0.6
+set terminal postscript portrait enhanced mono dashed lw 1 "Helvetica" 14
+set output "convergence.ps"
+replot
+set terminal x11
+set size 1,1
+exit

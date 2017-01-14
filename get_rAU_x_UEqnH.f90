@@ -26,7 +26,7 @@ subroutine get_rAU_x_UEqnH()
 
 ! Local variables
   integer :: i, k, ijp, ijn, inp
-  real(dp) :: apotime
+  real(dp) :: apotime,sut,svt,swt
   real(dp) :: heat
   real(dp) :: off_diagonal_terms
 
@@ -65,10 +65,26 @@ subroutine get_rAU_x_UEqnH()
         !    Three Level Implicit Time Integration Method:
         !    in case that BTIME=0. --> Implicit Euler
         !----------------------------------------------
-          apotime = den(inp)*vol(inp)/timestep
-          su(inp) = su(inp)+apotime*((1+btime)*uo(inp)-0.5*btime*uoo(inp))
-          sv(inp) = sv(inp)+apotime*((1+btime)*vo(inp)-0.5*btime*voo(inp))
-          sw(inp) = sw(inp)+apotime*((1+btime)*wo(inp)-0.5*btime*woo(inp))
+              apotime=den(inp)*vol(inp)/timestep
+
+              sut = apotime*((1+btime)*uo(inp))
+              svt = apotime*((1+btime)*vo(inp))
+              swt = apotime*((1+btime)*wo(inp))
+            
+              if (btime > 0.99) then ! bdf2 scheme btime=1.
+                sut = sut - apotime*(0.5*btime*uoo(inp))
+                svt = svt - apotime*(0.5*btime*voo(inp))
+                swt = swt - apotime*(0.5*btime*woo(inp))
+              endif
+
+              su(inp) = su(inp) + sut
+              sv(inp) = sv(inp) + svt
+              sw(inp) = sw(inp) + swt
+
+              ! spu(inp) = spu(inp) + apotime*(1+0.5*btime)
+              ! spv(inp) = spv(inp) + apotime*(1+0.5*btime)
+              ! sp(inp)  = sp(inp)  + apotime*(1+0.5*btime)
+
         endif
 
   end do

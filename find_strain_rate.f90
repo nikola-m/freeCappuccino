@@ -17,7 +17,7 @@ subroutine find_strain_rate
   real(dp) :: s11,s12,s13,s21,s22,s23,s31,s32,s33,w12,w13,w23
 
 
-  !.....Velocity gradients: 
+  ! Velocity gradients: 
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)

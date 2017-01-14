@@ -128,11 +128,11 @@ contains
       gradfidr=gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp) &
               +gradfi_n_x*(xf-xcn)+gradfi_n_y*(yf-ycn)+gradfi_n_z*(zf-zcn)
 
-      face_value = nr*( phi_p + phi_n + gradfidr)
+      face_value_central = nr*( phi_p + phi_n + gradfidr)
 
       end function
 
-      double precision function face_value_2nd_upwind(inp,inn, xf, yf, zf, fi, gradfi)
+      double precision function face_value_2nd_upwind(inp, xf, yf, zf, fi, gradfi)
 !=======================================================================
 !     Calculates face value using values of variables and their gradients
 !     at neighbours cell-centers.
@@ -146,18 +146,15 @@ contains
       implicit none
 
 !     Input
-      integer :: inp, inn
+      integer :: inp
       real(dp) :: xf, yf, zf
       real(dp), dimension(numTotal) :: fi
       real(dp), dimension(3,numCells) :: gradfi
 
 !     Locals
       real(dp) ::  phi_p
-      ! real(dp) ::  phi_n
       real(dp) :: xcp,ycp,zcp
-      ! real(dp) :: xcn,ycn,zcn
       real(dp) :: gradfi_p_x,gradfi_p_y,gradfi_p_z
-      ! real(dp) :: gradfi_n_x,gradfi_n_y,gradfi_n_z
       real(dp) :: gradfidr
 
 
@@ -165,29 +162,19 @@ contains
 !.....Values at cell center's of neighbouring cells:
       phi_p = fi(inp)
 
-      ! phi_n = fi(inn)
-
       xcp = xc(inp)
       ycp = yc(inp)
       zcp = zc(inp)
-
-      ! xcn = xc(inn)
-      ! ycn = yc(inn)
-      ! zcn = zc(inn)
 
       gradfi_p_x = gradfi(1,inp)
       gradfi_p_y = gradfi(2,inp)
       gradfi_p_z = gradfi(3,inp)
 
-      ! gradfi_n_x = gradfi(1,inn)
-      ! gradfi_n_y = gradfi(2,inn)
-      ! gradfi_n_z = gradfi(3,inn)
-
 
 !.....gradfixdr = (sum(gradphi_nb(i,:)*r_nb2f(i,:)), i=1,n)
       gradfidr = gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp)
 
-      face_value = phi_p + gradfidr
+      face_value_2nd_upwind = phi_p + gradfidr
 
       end function
 
@@ -250,7 +237,7 @@ contains
                       +gradfi_n_x*(xf-xcn)+gradfi_n_y*(yf-ycn)+gradfi_n_z*(zf-zcn)
 
       face_value_2nd_upwind = ( phi_p + gradfidr_2nd_upwind )
-      face_value_central = 0.5_dp*( phi_p + phi_n + gradfidr)
+      face_value_central = 0.5_dp*( phi_p + phi_n + gradfidr_central)
 
       face_value_muscl = theta*face_value_central + (1.0_dp-theta)*face_value_2nd_upwind
       

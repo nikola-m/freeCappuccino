@@ -23,9 +23,9 @@ subroutine calcuvw
   real(dp) :: urfrs, urfms, apotime, heat
   real(dp) :: sut, svt, swt 
   real(dp) :: sup, svp, swp
-  real(dp) :: off_diagonal_terms
+  real(dp) :: sum_off_diagonal_terms
 
-  ! logical :: ScndOrderWallBC_Model
+  logical :: ScndOrderWallBC_Model
   integer :: ijb            ! Boundary field value indexes
   real(dp) :: cp, cb        ! Temp. for eq. coeficients
   real(dp) :: cap, can      ! Temp. for eq. coeficients
@@ -36,34 +36,35 @@ subroutine calcuvw
   real(dp) :: dpb           ! distance cell center to face center at boundary
   real(dp) :: vsol          ! Diffusion coefficient (II)
   real(dp) :: fdne          ! Diffusive flux auxiliary
-  ! real(dp) :: FdUi,FdVi,FdWi! Diffusive flux auxiliary
+  real(dp) :: FdUi,FdVi,FdWi! Diffusive flux auxiliary
   real(dp) :: Upb, Vpb, Wpb ! Velocity difference
   real(dp) :: Utp, Vtp, Wtp
   real(dp) :: Vnp
   real(dp) :: viss
   
+  ScndOrderWallBC_Model = .false.
+
   ! Velocity gradients: 
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
 
-  ! ! Pressure gradient
-  ! do istage=1,nipgrad
-  !   ! Pressure at boundaries (for correct calculation of press. gradient)
-  !   call bpres(p,istage)
-  !   ! Calculate pressure gradient.
-  !   call grad(p,dPdxi)
-  ! end do
+  ! Pressure gradient
+  do istage=1,nipgrad
+    ! Pressure at boundaries (for correct calculation of press. gradient)
+    call bpres(p,istage)
+    ! Calculate pressure gradient.
+    call grad(p,dPdxi)
+  end do
 
 
   ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME
   do inp=1,numCells
 
-    !.....for u  sp => spu; for v  sp => spv; for w  sp => sp
-    !.....sum source terms
+    ! For u  sp => spu; for v  sp => spv; for w  sp => sp 
     spu(inp) = 0.0_dp
     spv(inp) = 0.0_dp
-    sp(inp) = 0.0_dp
+    sp(inp)  = 0.0_dp
 
     !=======================================================================
     ! Pressure source terms
@@ -107,12 +108,8 @@ subroutine calcuvw
     !-----------------------------------------------------------------------
       apotime=den(inp)*vol(inp)/timestep
 
-      ! sut=apotime*((1+btime)*uo(inp)-0.5*btime*uoo(inp))
-      ! svt=apotime*((1+btime)*vo(inp)-0.5*btime*voo(inp))
-      ! swt=apotime*((1+btime)*wo(inp)-0.5*btime*woo(inp))
-
       sut = apotime*((1+btime)*uo(inp))
-      svt = apotime*((1+btime)*vo(inp))
+      svt = apotime*((1+btime)*vo(inp)) 
       swt = apotime*((1+btime)*wo(inp))
     
       if (btime > 0.99) then ! bdf2 scheme btime=1.
@@ -135,14 +132,13 @@ subroutine calcuvw
 
 
   !=======================================================================
-  ! Additional asm terms:
+  ! Calculate Reynols stresses explicitly additional asm terms:
   !=======================================================================
-  if(lturb.and.lasm) then
+  if(lturb) then
 
-    ! Calculate Reynols stresses explicitly
     call calcstress
 
-    call Additional_algebraic_stress_terms
+    if (lasm) call Additional_algebraic_stress_terms
     
   end if
       
@@ -168,7 +164,7 @@ subroutine calcuvw
     k = jcell_icell_csr_value_index(i)
     a(k) = cap
 
-    ! > Elements on main diagonal:
+    ! ! > Elements on main diagonal:
 
     ! ! (icell,icell) main diagonal element
     ! k = diag(ijp)
@@ -189,7 +185,6 @@ subroutine calcuvw
     sw(ijn) = sw(ijn) - swp
 
   end do
-
 
   ! O- and C-grid cuts (these are not boundaries!)
   do i=1,noc
@@ -214,6 +209,7 @@ subroutine calcuvw
       
   ! Implement boundary conditions
 
+
   ! Inlet (constant gradient bc)
 
   ! Loop Inlet faces
@@ -221,10 +217,6 @@ subroutine calcuvw
     iface = iInletFacesStart+i
     ijp = owner(iface)
     ijb = iInletStart+i
-
-    ! dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
-    ! dVdxi(:,ijb) = dVdxi(:,ijp)
-    ! dWdxi(:,ijb) = dWdxi(:,ijp)
 
     CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
       cp, cb, sup, svp, swp)
@@ -239,6 +231,7 @@ subroutine calcuvw
   
   end do
 
+
   ! Outlet
 
   ! Loop Outlet faces
@@ -246,10 +239,6 @@ subroutine calcuvw
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-
-    ! dUdxi(:,ijb) = dUdxi(:,ijp) ! Adjust gradient at inlet to be equal to that in cell center (constant gradient bc)
-    ! dVdxi(:,ijb) = dVdxi(:,ijp)
-    ! dWdxi(:,ijb) = dWdxi(:,ijp)
 
     CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
       cp, cb, sup, svp, swp)  
@@ -263,6 +252,7 @@ subroutine calcuvw
     sw(ijp) = sw(ijp) - cb*w(ijb)
 
   end do
+
 
   ! Symmetry
   do i=1,nsym
@@ -293,7 +283,7 @@ subroutine calcuvw
     vpb = v(ijp)-v(ijb)
     wpb = w(ijp)-w(ijb)
 
-    fdne = 2._dp*cf*( upb*nxf + vpb*nyf + wpb*nzf )
+    fdne = 2*cf*( upb*nxf + vpb*nyf + wpb*nzf )
 
     spu(ijp) = spu(ijp) + vsol
     spv(ijp) = spv(ijp) + vsol
@@ -303,7 +293,15 @@ subroutine calcuvw
     sv(ijp) = sv(ijp)+vsol*v(ijp)-fdne*nyf
     sw(ijp) = sw(ijp)+vsol*w(ijp)-fdne*nzf
 
+        ! SPU(IJP) = SPU(IJP) + CF*NXF**2
+        ! SPV(IJP) = SPV(IJP) + CF*NYF**2
+        ! SP(IJP)  = SP(IJP)  + CF*NZF**2
+
+        ! SU(IJP)=SU(IJP)-CF*(U(IJP)*NXF**2    + V(IJP)*2*NXF*NYF + W(IJP)*2*NXF*NZF)
+        ! SV(IJP)=SV(IJP)-CF*(U(IJP)*2*NXF*NYF + V(IJP)*NYF**2    + W(IJP)*2*NYF*NZF)
+        ! SW(IJP)=SW(IJP)-CF*(U(IJP)*2*NXF*NZF + V(IJP)*2*NYF*NZF + W(IJP)*2*NZF**2)
   end do
+
 
   do i=1,nwal
     iface = iWallFacesStart+i
@@ -341,26 +339,28 @@ subroutine calcuvw
     vtp = vpb-vnp*nyf
     wtp = wpb-vnp*nzf
 
-    ! if (ScndOrderWallBC_Model) then
+    if (ScndOrderWallBC_Model) then
 
-    !   ! Eksplicitna difuzija
-    !   FdUi=viss*((dUdxi(1,ijp)+dUdxi(1,ijp))*nxf+(dUdxi(2,ijp)+dVdxi(1,ijp))*nyf+(dUdxi(3,ijp)+dWdxi(1,ijp))*nzf)
-    !   FdVi=viss*((dVdxi(1,ijp)+dUdxi(2,ijp))*nxf+(dVdxi(2,ijp)+dVdxi(2,ijp))*nyf+(dVdxi(3,ijp)+dWdxi(2,ijp))*nzf)
-    !   FdWi=viss*((dWdxi(1,ijp)+dUdxi(3,ijp))*nxf+(dWdxi(2,ijp)+dVdxi(3,ijp))*nyf+(dWdxi(3,ijp)+dWdxi(3,ijp))*nzf)
-    !   ! Projektujes eksplicitnu difuziju na nomalu
-    !   FdNe = FdUi*nxf + FdVi*nyf + FdWi*nzf
-    !   ! oduzmes od eksplicitne difuzije onu komponentu duz normale
-    !   FdUi = FdUi-FdNe*nxf
-    !   FdVi = FdVi-FdNe*nyf
-    !   FdWi = FdWi-FdNe*nzf
+      ! Eksplicitna difuzija
+      FdUi=viss*((dUdxi(1,ijp)+dUdxi(1,ijp))*nxf+(dUdxi(2,ijp)+dVdxi(1,ijp))*nyf+(dUdxi(3,ijp)+dWdxi(1,ijp))*nzf)
+      FdVi=viss*((dVdxi(1,ijp)+dUdxi(2,ijp))*nxf+(dVdxi(2,ijp)+dVdxi(2,ijp))*nyf+(dVdxi(3,ijp)+dWdxi(2,ijp))*nzf)
+      FdWi=viss*((dWdxi(1,ijp)+dUdxi(3,ijp))*nxf+(dWdxi(2,ijp)+dVdxi(3,ijp))*nyf+(dWdxi(3,ijp)+dWdxi(3,ijp))*nzf)
+      ! Projektujes eksplicitnu difuziju na nomalu
+      FdNe = FdUi*nxf + FdVi*nyf + FdWi*nzf
+      ! oduzmes od eksplicitne difuzije onu komponentu duz normale
+      FdUi = FdUi-FdNe*nxf
+      FdVi = FdVi-FdNe*nyf
+      FdWi = FdWi-FdNe*nzf
 
-    !   Ap(ijp) = Ap(ijp)+Vsol
+      spu(ijp) = spu(ijp) + vsol
+      spv(ijp) = spv(ijp) + vsol
+      sp(ijp)  = sp(ijp)  + vsol
 
-    !   Su(ijp) = Su(ijp)+Vsol*U(ijp)-(2*cf*Utp+FdUi*Are)
-    !   Sv(ijp) = Sv(ijp)+Vsol*V(ijp)-(2*cf*Vtp+FdVi*Are)
-    !   Sw(ijp) = Sw(ijp)+Vsol*W(ijp)-(2*cf*Wtp+FdWi*Are)
+      Su(ijp) = Su(ijp)+Vsol*U(ijp)-(2*cf*Utp+FdUi*Are)
+      Sv(ijp) = Sv(ijp)+Vsol*V(ijp)-(2*cf*Vtp+FdVi*Are)
+      Sw(ijp) = Sw(ijp)+Vsol*W(ijp)-(2*cf*Wtp+FdWi*Are)
 
-    ! else
+    else
 
       spu(ijp) = spu(ijp) + vsol
       spv(ijp) = spv(ijp) + vsol
@@ -370,11 +370,17 @@ subroutine calcuvw
       sv(ijp) = sv(ijp) + vsol*v(ijp) - cf*vtp
       sw(ijp) = sw(ijp) + vsol*w(ijp) - cf*wtp
 
-    ! endif
+    endif
+
+        ! SPU(IJP) = SPU(IJP) + CF*NXF**2
+        ! SPV(IJP) = SPV(IJP) + CF*NYF**2
+        ! SP(IJP)  = SP(IJP)  + CF*NZF**2
+
+        ! SU(IJP) = SU(IJP)+CF*(U(IJB)*NXF**2-(V(IJP)-V(IJB))*NYF*NXF-(W(IJP)-W(IJB))*NZF*NXF)
+        ! SV(IJP) = SV(IJP)+CF*(V(IJB)*NYF**2-(U(IJP)-U(IJB))*NXF*NYF-(W(IJP)-W(IJB))*NZF*NYF)
+        ! SW(IJP) = SW(IJP)+CF*(W(IJB)*NZF**2-(U(IJP)-U(IJB))*NXF*NZF-(V(IJP)-V(IJB))*NYF*NZF)
 
   enddo
-
-
 
 
   ! Modify coefficients for Crank-Nicolson
@@ -403,8 +409,8 @@ subroutine calcuvw
 
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
-        off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) !- a(diag(ijp))
-        su(ijp) = su(ijp) + (apotime + off_diagonal_terms)*uo(ijp)
+        sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
+        su(ijp) = su(ijp) + (apotime + sum_off_diagonal_terms)*uo(ijp)
         spu(ijp) = spu(ijp) + apotime
     enddo
 
@@ -419,22 +425,25 @@ subroutine calcuvw
     ! Sum all coefs in a row of a sparse matrix, but since we also included diagonal element 
     ! we substract it from the sum, to eliminate it from the sum.
     ! We could also write sum( a(ioffset(inp)) : a(ioffset(inp+1)-1) ) because all diagonal terms are zero.
-    off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) !- a(diag(inp)) 
-    a(diag(inp)) = spu(inp) - off_diagonal_terms
+    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    ! a(diag(inp)) = spu(inp) - sum_off_diagonal_terms
+
+    a(diag(inp)) = spu(inp) 
+    do k = ioffset(inp),ioffset(inp+1)-1
+      if (k.eq.diag(inp)) cycle
+      a(diag(inp)) = a(diag(inp)) -  a(k)
+    enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs
     su(inp) = su(inp) + urfms*a(diag(inp))*u(inp)
 
-    apu(inp) = 1./(a(diag(inp))+small) ! SIMPLE,PISO
+    apu(inp) = 1./(a(diag(inp))+small)
 
   enddo
 
   ! Solve fvm equations
-  call bicgstab(u,iu) 
-
-
-
+  call bicgstab(u,iu)
 
   !
   !.....Assemble and solve system for V component of velocity
@@ -456,8 +465,8 @@ subroutine calcuvw
 
     do ijp=1,numCells
         apotime=den(ijp)*vol(ijp)/timestep
-        off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) !- a(diag(ijp))
-        sv(ijp) = sv(ijp) + (apotime + off_diagonal_terms)*vo(ijp)
+        sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
+        sv(ijp) = sv(ijp) + (apotime + sum_off_diagonal_terms)*vo(ijp)
         spv(ijp) = spv(ijp)+apotime
     enddo
 
@@ -466,23 +475,32 @@ subroutine calcuvw
   urfrs=urfr(iv)
   urfms=urfm(iv)
   
+  do inp=1,numCells
+    a(diag(inp)) = 0.0_dp
+    su(inp) = 0.0_dp
+  enddo
+
   do inp = 1,numCells
 
     ! Main diagonal term assembly:
-    off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) !- a(diag(inp)) 
-    a(diag(inp)) = spu(inp) - off_diagonal_terms
+    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    ! a(diag(inp)) = spv(inp) - sum_off_diagonal_terms
+
+    a(diag(inp)) = spv(inp) 
+    do k = ioffset(inp),ioffset(inp+1)-1
+      if (k.eq.diag(inp)) cycle
+      a(diag(inp)) = a(diag(inp)) -  a(k)
+    enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs
-    sv(inp) = sv(inp) + urfms*a(diag(inp))*v(inp)
+    su(inp) = sv(inp) + urfms*a(diag(inp))*v(inp)
 
-    apv(inp) = 1./(a(diag(inp))+small) ! SIMPLE,PISO
+    apv(inp) = 1./(a(diag(inp))+small)
   enddo
 
   ! Solve fvm equations
   call bicgstab(v,iv)
-
-
 
 
  
@@ -506,8 +524,8 @@ subroutine calcuvw
 
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
-        off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) !- a(diag(ijp))
-        sw(ijp) = sw(ijp) + (apotime + off_diagonal_terms)*wo(ijp)
+        sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
+        sw(ijp) = sw(ijp) + (apotime + sum_off_diagonal_terms)*wo(ijp)
         sp(ijp) = sp(ijp) + apotime
     enddo
 
@@ -515,23 +533,33 @@ subroutine calcuvw
 
   urfrs=urfr(iw)
   urfms=urfm(iw)
+
+  do inp=1,numCells
+    a(diag(inp)) = 0.0_dp
+    su(inp) = 0.0_dp
+  enddo
     
   do inp = 1,numCells
 
     ! Main diagonal term assembly:
-    off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) !- a(diag(inp)) 
-    a(diag(inp)) = sp(inp) - off_diagonal_terms
+    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    ! a(diag(inp)) = sp(inp) - sum_off_diagonal_terms
+
+    a(diag(inp)) = sp(inp) 
+    do k = ioffset(inp),ioffset(inp+1)-1
+      if (k.eq.diag(inp)) cycle
+      a(diag(inp)) = a(diag(inp)) -  a(k)
+    enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs
-    sw(inp) = sw(inp) + urfms*a(diag(inp))*w(inp)
+    su(inp) = sw(inp) + urfms*a(diag(inp))*w(inp)
 
-    apw(inp) = 1./(a(diag(inp))+small) ! SIMPLE,PISO
+    apw(inp) = 1./(a(diag(inp))+small)
 
   enddo
 
   ! Solve fvm equations
   call bicgstab(w,iw)
-
 
 end subroutine

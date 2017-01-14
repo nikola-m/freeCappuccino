@@ -32,7 +32,7 @@ subroutine dpcg(fi,ifi)
   real(dp) :: rsm, resmax, res0, resl
   real(dp) :: s0, sk, alf, bet, pkapk
 
-! max no. of iterations
+! residual tolerance
   resmax = sor(ifi)
 
 !
@@ -62,7 +62,7 @@ subroutine dpcg(fi,ifi)
 
   ! L^1-norm of residual
   res0=sum(abs(res))
-
+    if( res0.lt.sor(ifi) ) return
 !
 ! If ltest=true, print the norm 
 !

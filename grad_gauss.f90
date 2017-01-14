@@ -67,12 +67,51 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
     end do
 
     ! Contribution from boundaries
-    do i=1,numBoundaryFaces
-      iface = numInnerFaces + i
+    ! do i=1,numBoundaryFaces
+    !   iface = numInnerFaces + i
+    !   ijp = owner(iface)
+    !   ijb = numCells+i
+    !   call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
+    !         if(ijp.eq.17) write(*,*) ijp,ijb,u(ijb), dudx(ijp), dudy(ijp), dudz(ijp)
+    ! end do 
+
+    ! Contribution from boundaries
+    do i = 1,ninl
+      iface = iInletFacesStart+i
       ijp = owner(iface)
-      ijb = numCells+i
+      ijb = iInletStart + i
       call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
-    end do 
+    enddo
+
+    do i = 1,nout
+      iface = iOutletFacesStart+i
+      ijp = owner(iface)
+      ijb = iOutletStart + i
+      call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
+    enddo
+
+    do i = 1,nsym
+      iface = iSymmetryFacesStart+i
+      ijp = owner(iface)
+      ijb = iSymmetryStart+i
+      call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
+    enddo
+
+    do i = 1,nwal
+      iface = iWallFacesStart+i
+      ijp = owner(iface)
+      ijb = iWallStart+i
+      call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
+    enddo
+
+    do i=1,npru
+      iface = iPressOutletFacesStart + i
+      ijp = owner(iface)
+      ijb = iPressOutletStart + i
+      call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
+    enddo
+
+
 
     ! Calculate gradient components at cv-centers
     do ijp=1,numCells

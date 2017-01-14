@@ -92,18 +92,18 @@ program caffa3d
     uoo = uo 
     voo = vo 
     woo = wo 
-    ! too = to 
     teoo = teo 
-    edoo = edo 
+    edoo = edo
+    ! too = to 
     ! vartoo = varto 
     ! conoo = cono 
   endif
     uo = u 
     vo = v 
     wo = w 
-    ! to = t 
     teo = te 
-    edo = ed         
+    edo = ed 
+    ! to = t         
     ! varto = vart 
     ! cono = con 
 !
@@ -138,15 +138,14 @@ program caffa3d
 
 !.....Calculate velocities.
       call calcuvw 
-
+      
 !.....Pressure-velocity coupling. Two options: SIMPLE and PISO
       if(SIMPLE)   call CALCP
       if(PISO)     call PISO_multiple_correction
       if(PIMPLE)   call PIMPLE_multiple_correction
 
 !.....Turbulence
-      ! call correct_turbulence()
-
+      if(lturb)    call correct_turbulence()
 
 ! !.....Scalars: Temperature , temperature variance, and concentration eqs.
 !       if(lcal(ien))   call calcsc(t,   dTdxi     ,ien)
@@ -169,10 +168,10 @@ program caffa3d
 
 
 !.....Proveri kako stojimo sa rezidualom
-      source=max(resor(iu),resor(iv),resor(iw),resor(ip),resor(ien),resor(icon)) 
+      source=max(resor(iu),resor(iv),resor(iw),resor(ip)) 
       if(source.gt.slarge) then
           write(6,"(//,10x,a)") "*** Program terminated -  iterations diverge ***" 
-          stop ! zavrsi program
+          stop
       endif
 !
 !==========================================================
@@ -184,8 +183,8 @@ program caffa3d
 
       if(ltransient) then 
 
-         ! Konverigao u okviru timestep-a ili potrosio sve iteracije:
-         if(source.lt.sormax.or.iter.ge.maxit) then 
+          ! Konverigao u okviru timestep-a ili potrosio sve iteracije:
+          if(source.lt.sormax.or.iter.ge.maxit) then 
 
             if(const_mflux) then
               !# Correct driving force for a constant mass flow rate.
@@ -202,18 +201,9 @@ program caffa3d
                include 'create_and_save_frame.f90'
             endif
 
-
-            ! # Add fluctations by random perturbations to maintain turbulence in channel
-            ! if(mod(itime,nzapis).eq.0) then
-            !   call add_random_noise_to_field(u,5)
-            !   call add_random_noise_to_field(v,5)
-            !   call add_random_noise_to_field(w,5)
-            !   write(6,'(a)') "Added random noise to velocity field!"
-            ! endif
-
             cycle time_loop ! idi na pocetak 'time_loop'-a sa sledecom vrednosti indeksa
          
-         endif
+          endif
 
       end if 
 
