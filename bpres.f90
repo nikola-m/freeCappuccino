@@ -31,7 +31,7 @@ subroutine bpres(p,istage)
   integer, intent(in) :: istage
 
   ! Locals:
-  integer :: i, ijp, ijb
+  integer :: i, ijp, ijb, iface
   real(dp) :: xpb, ypb, zpb
 
   if ( istage.eq.1 ) then
@@ -101,14 +101,14 @@ subroutine bpres(p,istage)
 
     ! Inlet faces
     do i=1,ninl
-
-      ijp = owner(iInletFacesStart+i)
+      iface = iInletFacesStart+i
+      ijp = owner(iface)
       ijb = iInletStart+i
 
       ! Distance vector
-      xpb = xf(i)-xc(ijp) 
-      ypb = yf(i)-yc(ijp)
-      zpb = zf(i)-zc(ijp)
+      xpb = xf(iface)-xc(ijp) 
+      ypb = yf(iface)-yc(ijp)
+      zpb = zf(iface)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
@@ -127,14 +127,14 @@ subroutine bpres(p,istage)
 
     ! Outlet faces
     do i=1,nout
-
-      ijp = owner(iOutletFacesStart+i)
+      iface = iOutletFacesStart+i
+      ijp = owner(iface)
       ijb = iOutletStart+i
 
       ! Distance vector
-      xpb = xf(i)-xc(ijp) 
-      ypb = yf(i)-yc(ijp)
-      zpb = zf(i)-zc(ijp)
+      xpb = xf(iface)-xc(ijp) 
+      ypb = yf(iface)-yc(ijp)
+      zpb = zf(iface)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb 
@@ -143,14 +143,14 @@ subroutine bpres(p,istage)
 
     ! Symmetry faces
     do i=1,nsym
-
-      ijp = owner(iSymmetryFacesStart+i)
+      iface = iSymmetryFacesStart+i
+      ijp = owner(iface)
       ijb = iSymmetryStart+i
 
       ! Distance vector
-      xpb = xf(i)-xc(ijp) 
-      ypb = yf(i)-yc(ijp)
-      zpb = zf(i)-zc(ijp)
+      xpb = xf(iface)-xc(ijp) 
+      ypb = yf(iface)-yc(ijp)
+      zpb = zf(iface)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
@@ -159,13 +159,14 @@ subroutine bpres(p,istage)
 
     ! Wall faces
     do i=1,nwal
-      ijp = owner(iWallFacesStart+i)
+      iface = iWallFacesStart+i
+      ijp = owner(iface)
       ijb = iWallStart+i
 
       ! Distance vector
-      xpb = xf(i)-xc(ijp) 
-      ypb = yf(i)-yc(ijp)
-      zpb = zf(i)-zc(ijp)
+      xpb = xf(iface)-xc(ijp) 
+      ypb = yf(iface)-yc(ijp)
+      zpb = zf(iface)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
@@ -174,13 +175,14 @@ subroutine bpres(p,istage)
 
     ! Pressure outlet faces
     do i=1,npru
-      ijp = owner(iPressOutletFacesStart+i)
+      iface = iPressOutletFacesStart+i
+      ijp = owner(iface)
       ijb = iPressOutletStart+i
 
       ! Distance vector
-      xpb = xf(i)-xc(ijp) 
-      ypb = yf(i)-yc(ijp)
-      zpb = zf(i)-zc(ijp)
+      xpb = xf(iface)-xc(ijp) 
+      ypb = yf(iface)-yc(ijp)
+      zpb = zf(iface)-zc(ijp)
 
       ! Linear extrapolation
       p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
@@ -189,7 +191,8 @@ subroutine bpres(p,istage)
 
     ! O-C grid cuts
     do i=1,noc
-      ijp = owner(iOCFacesStart+i)
+      iface = iOCFacesStart+i
+      ijp = owner(iface)
       ijb = iOCStart+i
 
       ! Distance vector

@@ -18,7 +18,7 @@ f f f f t f f      LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
 0.6 0.6 0.6 0.4 0.5 0.5 0.3 1. 0.6 0.9      (URF(I),I=1,NPHI)
 10*1e-8     (SOR(I),I=1,NPHI)
 20 20 20 50 5 5 5 5 5 50    (NSW(I),I=1,NPHI)
-1000 1e+20 1000 1      NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+1000 1e+20 1001 1      NUMSTEP,TIMESTEP,NZAPIS,MAXIT
 f f f t      lstsq, lstsq_qr, lstsq_dm, gauss
 1 1      NPCOR, NIGRAD
 t f      BDF,CN

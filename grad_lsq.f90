@@ -163,15 +163,61 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   end do
 
   ! Boundary faces:
-  do i=1,numBoundaryFaces
-    iface = numInnerFaces + i
-    ijp = owner(iface)
-    ijn = numCells+i
+  ! do i=1,numBoundaryFaces
+  !   iface = numInnerFaces + i
+  !   ijp = owner(iface)
+  !   ijn = numCells+i
 
+  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
+  ! end do
+
+  ! Contribution from boundaries
+  do i = 1,ninl
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
+    ijn = iInletStart + i
         b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
         b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
         b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
-  end do
+  enddo
+
+  do i = 1,nout
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
+    ijn = iOutletStart + i
+        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
+  enddo
+
+  do i = 1,nsym
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
+    ijn = iSymmetryStart+i
+        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
+  enddo
+
+  do i = 1,nwal
+    iface = iWallFacesStart+i
+    ijp = owner(iface)
+    ijn = iWallStart+i
+        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
+  enddo
+
+  do i=1,npru
+    iface = iPressOutletFacesStart + i
+    ijp = owner(iface)
+    ijn = iPressOutletStart + i
+        b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
+        b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
+        b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
+  enddo
 
 
   !

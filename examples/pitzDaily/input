@@ -14,12 +14,12 @@ f f f      LSGDH,LGGDH,LAFM
 1      TurbModel
 10. 0. 0. 0.375 18.455 0. 0. 0.      UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
 f f f f t f f      LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
-1. 1. 1. 0. 0. 0. 0. 0. 0. 0.  (GDS(I),I=1,NPHI)
+1. 1. 1. 0. 1. 1. 0. 0. 0. 0.  (GDS(I),I=1,NPHI)
 0.6 0.6 0.6 0.4 0.5 0.5 0.3 0.6 0.6 0.9      (URF(I),I=1,NPHI)
 10*1e-6     (SOR(I),I=1,NPHI)
 20 20 20 80 5 5 5 5 5 5    (NSW(I),I=1,NPHI)
-1000 1e+20 1000 1      NUMSTEP,TIMESTEP,NZAPIS,MAXIT
-f t f f      lstsq, lstsq_qr, lstsq_dm, gauss
+1 1e+20 1001 1      NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+f f f t      lstsq, lstsq_qr, lstsq_dm, gauss
 1 1      NPCOR, NIGRAD
 t f      BDF,CN
 t f f 1      SIMPLE,PISO,PIMPLE,ncorr

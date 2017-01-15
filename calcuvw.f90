@@ -561,5 +561,6 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(w,iw)
-
+! call writefiles
+! stop
 end subroutine

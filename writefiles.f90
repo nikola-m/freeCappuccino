@@ -10,6 +10,7 @@ subroutine writefiles
   use variables
   use statistics
   use sparse_matrix
+  use k_epsilon_std, only: te,ed
 
   implicit none
 !

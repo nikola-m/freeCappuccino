@@ -30,9 +30,9 @@ subroutine calcp
   su = 0.0d0
 
   ! Tentative (!) velocity gradients used for velocity interpolation: 
-  ! call grad(U,dUdxi)
-  ! call grad(V,dVdxi)
-  ! call grad(W,dWdxi)
+  call grad(U,dUdxi)
+  call grad(V,dVdxi)
+  call grad(W,dWdxi)
 
   ! > Assemble off diagonal entries of system matrix and find mass flux at faces using Rhie-Chow interpolation
 
