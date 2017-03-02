@@ -10,7 +10,6 @@ subroutine calcuvw
   use sparse_matrix
   use variables
   use gradients, only:grad
-  use temperature, only: t
 
   implicit none
 !

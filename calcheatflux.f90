@@ -3,7 +3,15 @@
 subroutine calcheatflux
 !***********************************************************************
 !
-! Turbulent heat flux calculations  
+! Turbulent heat flux calculations.
+!
+! Three approaches are enabled:
+! 1) Simple Gradient Diffusion Hypothesis (lsgdh=.true.)
+! 2) Generalized Gradient Diffusion Hypothesis (lggdh=.true.)
+! 3) Algebraic Flux Model (lafm=.true.)
+!
+! We need to set phit (default phit=0.2) in input file for GGDH and AFM
+! For all three we need to set underrelaxation factor facflx.
 !
 !***********************************************************************
 !
@@ -13,22 +21,25 @@ subroutine calcheatflux
   use sparse_matrix
   use variables
   use gradients, only: grad
-  use temperature, only: t,vart,dTdxi,utt,vtt,wtt
 
   implicit none 
 !
 !***********************************************************************
 !
-  integer :: inp
-  real(dp) :: volr, vist, &
-                tedi, &                                ! k/eps
-                dtdx, dtdy, dtdz, &                    ! temperature gradient vector components
-                dudx, dudy, dudz, &                    ! velocity gradient
-                dvdx, dvdy, dvdz, & 
-                dwdx, dwdy, dwdz , &
-                ut1, ut2, ut3, ut4, ut5, ut6, ut7, &   ! needed for afm approach
-                vt1, vt2, vt3, vt4, vt5, vt6, vt7, &
-                wt1, wt2, wt3, wt4, wt5, wt6, wt7
+  integer  :: inp
+
+  real(dp) :: dtdx, dtdy, dtdz                    ! Temperature gradient vector components
+
+  real(dp) ::  dudx, dudy, dudz, &                ! Velocity gradient
+               dvdx, dvdy, dvdz, & 
+               dwdx, dwdy, dwdz
+
+  real(dp) :: volr, vist
+  real(dp) :: tedi                                ! k/eps
+
+  real(dp) ::  ut1, ut2, ut3, ut4, ut5, ut6, ut7
+  real(dp) ::  vt1, vt2, vt3, vt4, vt5, vt6, vt7
+  real(dp) ::  wt1, wt2, wt3, wt4, wt5, wt6, wt7
                           
   real(dp) :: uttold, vttold, wttold                
 
@@ -43,13 +54,13 @@ subroutine calcheatflux
 
   do inp = 1,numCells
 
-        volr=1.0_dp/vol(inp)
-        vist=(vis(inp)-viscos)/densit
-        tedi=te(inp)/(ed(inp)+small)
+        volr = 1.0_dp/vol(inp)
+        vist = (vis(inp)-viscos)/densit
+        tedi = te(inp)/(ed(inp)+small)
 
-        uttold=utt(inp)
-        vttold=vtt(inp)
-        wttold=wtt(inp)
+        uttold = utt(inp)
+        vttold = vtt(inp)
+        wttold = wtt(inp)
 
         dTdx = dTdxi(1,inp)
         dTdy = dTdxi(2,inp)
@@ -59,7 +70,8 @@ subroutine calcheatflux
     !==========================================
     !---[SGDH approach: ]
     !==========================================
-        if(lsgdh) then
+    if(lsgdh) then
+
         utt(inp)=-(vist*prt1)*dtdx
         vtt(inp)=-(vist*prt1)*dtdy
         wtt(inp)=-(vist*prt1)*dtdz
@@ -67,7 +79,8 @@ subroutine calcheatflux
     !==========================================
     !---[GGDH approach: ]
     !==========================================
-        else if(lggdh) then
+    else if(lggdh) then
+
         ut1=uu(inp)*dtdx
         ut2=uv(inp)*dtdy
         ut3=uw(inp)*dtdz
@@ -85,9 +98,10 @@ subroutine calcheatflux
         wtt(inp)=-phit*tedi*(wt1+wt2+wt3)
     !
     !=======================================================
-    !.....[AFM: include all]
+    !.....[Algebraic Flux Model:]
     !=======================================================
-          else if(lafm) then
+    else if(lafm) then
+
     !--------------------------------
     !      [velocity gradients: ]
     !--------------------------------
@@ -113,7 +127,7 @@ subroutine calcheatflux
         ut5=sksi*vtt(inp)*dudy
         ut6=sksi*wtt(inp)*dudz
         ut7=gravx*eta*vart(inp)*beta
-        if(boussinesq.eq.0)ut7=gravx*eta*vart(inp)/(t(inp)+273.0d0)
+        if(boussinesq.eq.0) ut7 = gravx*eta*vart(inp)/(t(inp)+273.0d0)
 
         vt1=uv(inp)*dtdx
         vt2=vv(inp)*dtdy
@@ -122,7 +136,7 @@ subroutine calcheatflux
         vt5=sksi*vtt(inp)*dvdy
         vt6=sksi*wtt(inp)*dvdz
         vt7=gravy*eta*vart(inp)*beta
-        if(boussinesq.eq.0)vt7=gravy*eta*vart(inp)/(t(inp)+273.0d0)
+        if(boussinesq.eq.0) vt7 = gravy*eta*vart(inp)/(t(inp)+273.0d0)
 
         wt1=uw(inp)*dtdx
         wt2=vw(inp)*dtdy
@@ -131,18 +145,22 @@ subroutine calcheatflux
         wt5=sksi*vtt(inp)*dwdy
         wt6=sksi*wtt(inp)*dwdz
         wt7=gravz*eta*vart(inp)*beta
-        if(boussinesq.eq.0)wt7=gravz*eta*vart(inp)/(t(inp)+273.0d0)
+        if(boussinesq.eq.0) wt7 = gravz*eta*vart(inp)/(t(inp)+273.0d0)
 
-        utt(inp)=-phit*tedi*(ut1+ut2+ut3+ut4+ut5+ut6+ut7)
-        vtt(inp)=-phit*tedi*(vt1+vt2+vt3+vt4+vt5+vt6+vt7)
-        wtt(inp)=-phit*tedi*(wt1+wt2+wt3+wt4+wt5+wt6+wt7)
+        utt(inp) = -phit*tedi*(ut1+ut2+ut3+ut4+ut5+ut6+ut7)
+        vtt(inp) = -phit*tedi*(vt1+vt2+vt3+vt4+vt5+vt6+vt7)
+        wtt(inp) = -phit*tedi*(wt1+wt2+wt3+wt4+wt5+wt6+wt7)
 
-        end if !! [conditional for SGDH,GGDH,AFM]
-    !-------------------------------------------------------
+    !----------------------------------------------------------------
     !
-        utt(inp)=facflx*utt(inp)+(1.0d0-facflx)*uttold
-        vtt(inp)=facflx*vtt(inp)+(1.0d0-facflx)*vttold
-        wtt(inp)=facflx*wtt(inp)+(1.0d0-facflx)*wttold
+
+    end if !! [conditional for SGDH,GGDH,AFM]
+
+
+    ! Under-relaxation:
+    utt(inp)=facflx*utt(inp)+(1.0d0-facflx)*uttold
+    vtt(inp)=facflx*vtt(inp)+(1.0d0-facflx)*vttold
+    wtt(inp)=facflx*wtt(inp)+(1.0d0-facflx)*wttold
 
   end do ! cell-loop
 

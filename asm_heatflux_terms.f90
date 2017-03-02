@@ -4,15 +4,14 @@ subroutine Additional_algebraic_heatflux_terms
 !
 !***********************************************************************
 !     Calculates the additional agebraic heatflux terms for temperature eq.
-!     and ads them to SU rhs. vector.
+!     and adds them to the rhs vector.
 !
 !***********************************************************************
   use types, only: dp
   use parameters, only: viscos
   use geometry, only: numInnerFaces,facint,arx,ary,arz,owner,neighbour
   use sparse_matrix, only: su
-  use variables, only: vis,den
-  use temperature, only: dTdxi, utt,vtt,wtt
+  use variables, only: vis,den, dTdxi, utt,vtt,wtt
 
   implicit none
 !

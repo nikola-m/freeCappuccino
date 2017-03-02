@@ -26,8 +26,7 @@ subroutine init
   use gradients
   use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
   ! use k_epsilon_std
-  use k_eqn_eddy
-  use temperature, only: t,utt,vtt,wtt,pranl
+  ! use k_eqn_eddy
   use utils, only: timestamp, show_logo, i4vec_print2
   use LIS_linear_solver_library
 

@@ -17,7 +17,6 @@ subroutine get_rAU_x_UEqnH()
   use sparse_matrix
   use gradients
   use hcoef, only: h
-  use temperature, only: t
 
   implicit none
 !

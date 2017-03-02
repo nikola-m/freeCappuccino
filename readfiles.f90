@@ -10,7 +10,6 @@ subroutine readfiles
   use variables
   use title_mod
   use statistics 
-  use temperature, only: t
 
   implicit none  
 !
@@ -59,22 +58,24 @@ subroutine readfiles
   
   close (3)
 
-  if (ltransient) then
   !------------------------------------------------
   !     [read statistics after first collection: ]
   !------------------------------------------------
-  !      open(unit=85,file=trim(out_folder_path)//'/statistics1')   ! <- n_sample is here, statistics restart file 1
-  !      open(unit=86,file=trim(out_folder_path)//'/statistics2')   ! <- u_aver, v_aver,... are here, statistics restart file 2
-  !      rewind 85
-  !      rewind 86
+  if (ltransient) then
 
-  !      read(85,*) n_sample
-  !      read(86,*) u_aver,v_aver,w_aver, &
-  !                 uu_aver,vv_aver,ww_aver, &
-  !                 uv_aver,uw_aver,vw_aver, &
-  !                 te_aver
-  !      close (85)
-  !      close (86)
+    open(unit=85,file=trim(out_folder_path)//'/statistics1')   ! <- n_sample is here, statistics restart file 1
+    open(unit=86,file=trim(out_folder_path)//'/statistics2')   ! <- u_aver, v_aver,... are here, statistics restart file 2
+    rewind 85
+    rewind 86
+
+    read(85,*) n_sample
+    read(86,*)  u_aver,v_aver,w_aver, &
+                uu_aver,vv_aver,ww_aver, &
+                uv_aver,uw_aver,vw_aver, &
+                te_aver
+    close (85)
+    close (86)
+
   endif
 
 end subroutine

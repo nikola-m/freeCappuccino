@@ -11,7 +11,6 @@ subroutine calcstress
   use parameters
   use geometry, only: numCells, vol
   use variables
-  use OMEGA_Turb_Models, only: bij
 
   implicit none 
 !

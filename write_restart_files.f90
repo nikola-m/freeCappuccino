@@ -9,8 +9,6 @@ subroutine write_restart_files
   use geometry
   use variables
   use title_mod
-  use k_epsilon_std
-  use temperature, only: t
   use statistics
 
   implicit none

@@ -36,14 +36,13 @@ module parameters
   real(dp), parameter :: ctrans = 11.63
 
 
-  integer :: monCell  ! Monitoring point for values, usually for log file
-  integer :: pRefCell ! Pressure reference cell
-  integer :: mpoints  ! No. of monitoring points
+  integer :: monCell   ! Monitoring point for values, usually for log file
+  integer :: pRefCell  ! Pressure reference cell
+  integer :: mpoints   ! No. of monitoring points
 
-  real(dp) :: flomas  ! mass flow at inlet
-  real(dp) :: flomom  ! momentum of flow at inlet
-  real(dp) :: prm1   
-  real(dp) :: prt1  
+  real(dp) :: flomas   ! mass flow at inlet
+  real(dp) :: flomom   ! momentum of flow at inlet
+  real(dp) :: prt1     ! Used in calcheatflux, not set at the moment TODO!
   real(dp) :: densit   ! Fluid density
   real(dp) :: viscos   ! Molecular dynamic viscosity
   real(dp) :: sormax   ! Residual toleance for SIMPLE
@@ -52,22 +51,19 @@ module parameters
   real(dp) :: facflx   ! Underelaxation factor for turbulent heat fluxes
   real(dp) :: uin,vin,win,tein,edin,tin,vartin,conin ! Inlet values (assumed constant accross inlet)
 
-  logical :: lbuoy
-  integer :: boussinesq
-  real(dp) :: tref
-  real(dp) :: beta
-  real(dp) :: phit
-  real(dp) :: sksi
-  real(dp) :: eta 
-  real(dp) :: gravx,gravy,gravz
-  real(dp) :: facvis
+  real(dp) :: pranl     ! (= 0.7_dp for air, 7.0_dp for water, read it from input file.)
+  logical :: lbuoy      ! Bouyancy effects - are they included in momentum and turbulence eqns. If yes we calculate heat fluxes.
+  integer :: boussinesq ! Is Boussinesq hypothesis evoked yes=1/no=0, read from input file.
+  real(dp) :: tref      ! Reference temperature, read from input file
+  real(dp) :: beta      ! Thermal expansion coefficient, read from input file
+  real(dp) :: phit      ! Parameter used for GGDH and AFM in calcheatflux subroutine, read from input file.
+  real(dp) :: sksi      ! Parameter used in calcheatflux, read from input file
+  real(dp) :: eta       ! Parameter used in calcheatflux, read from input file
+  real(dp) :: gravx,gravy,gravz ! Components of gravity acceleration vector, read from input file
+  real(dp) :: facvis            ! Under-relaxation for viscosity
+  real(dp) :: erough            ! E parameter for rough wall
+  real(dp) :: zzero             ! z0 - wall roughness [m] for aerodynamically rough walls
 
-  real(dp) :: erough
-  real(dp) :: zzero 
-
-  real(dp) :: pfun
-  real(dp) :: hcoef
-  ! real(dp) :: t_hflx,psi,cu
 
   !
   ! Timesteping control
@@ -97,29 +93,18 @@ module parameters
   logical ::  const_mflux                          ! control for constant flow rate 
 
 
-  integer :: ncorr     ! PISO control parameter: no. of Piso corrections.
-  integer :: icorr     ! PISO iteration no.: icorr=1..ncorr
-  integer :: npcor     ! No. of pressure-corrections; non-orthogonality correctors
-  integer :: ipcorr    ! Iteration no.: ipcorr=1..npcor
-  integer :: nigrad    ! No. of iters. for iterative cell-centered gradient calculation
-  integer, parameter :: nipgrad = 2 ! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
+  integer :: ncorr                   ! PISO control parameter: no. of Piso corrections.
+  integer :: icorr                   ! PISO iteration no.: icorr=1..ncorr
+  integer :: npcor                   ! No. of pressure-corrections; non-orthogonality correctors
+  integer :: ipcorr                  ! Iteration no.: ipcorr=1..npcor
+  integer :: nigrad                  ! No. of iters. for iterative cell-centered gradient calculation
+  integer, parameter :: nipgrad = 2  ! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
 
-  ! Turbulence model case selector: 
-  ! 1-Std k-eps,
-  ! 2-k-eps with Durbin limiter,
-  ! 3-RNG-k-epsilon,
-  ! 4-Shih.et.al. Realizable k-epsilon,
-  ! 5-k-omega Wilcox
-  ! 6-k-omega Shear Stress Transport - Menter
-  ! 7-EARSM - Wallin-Johansson
-  ! 8-EARSM Wallin-Johansson modification by Menter
-  ! 9-Scale Adaptive Simulation-SAS based on SST model
-  ! 10-Seamless Alpha hybrid model based on standard k-eps model
-  integer :: TurbModel ! Turbulence model case selector-see comments above (if you used 'grep -nr "TurbModel" *.f90' command)
+  integer :: TurbModel ! Turbulence model case selector
 
-  logical :: roughWall            ! Is aerodynamically rough wall assumed
-  real(dp) :: magUbar, gradPcmf   ! Magnitude of the bulk velocity,and pressure grad that will drive the constant mass-flux flow (cmf)
-  real(dp) :: sumLocalContErr, globalContErr, cumulativeContErr    ! Continuity errors
+  logical :: roughWall                                            ! Is aerodynamically rough wall assumed
+  real(dp) :: magUbar, gradPcmf                                   ! Magnitude of the bulk velocity,and pressure grad that will drive the constant mass-flux flow (cmf)
+  real(dp) :: sumLocalContErr, globalContErr, cumulativeContErr   ! Continuity errors
 
   ! Those with nphi are related to each field that we calculate U,V,W,P,T,TKE,ED...
   logical,  dimension(nphi) :: lcal      ! Logical do we calculate that particular field
@@ -143,22 +128,6 @@ module hcoef
     real(dp), dimension(:), allocatable :: h
 end module hcoef
 
-module OMEGA_Turb_Models
-!%%%%%%%%%%%%%%
-! Needed for Menter SST model and WJ-EARSM-k-omega
-!%%%%%%%%%%%%%%
-  use types  
-    real(dp) :: sigmk1,sigmk2,sigmom1,sigmom2, & ! constants prescribed in MODINP routine
-                betai1,betai2,a1,alpha1,alpha2
-    real(dp) :: alpha,betta,bettast
-    real(dp), dimension(:), allocatable :: domega,alphasst,bettasst, &     ! Cross diffusion coed and SST coefs
-                                           qsas, &                         ! SAS model additional production term
-                                           prtinv_te,prtinv_ed, &          ! 1/sigma_k; 1/sigma_epsilon
-                                           cmueff                          ! size(NXYZ) ! CMUEFF the effective Cmu for EARSM
-    real(dp), dimension(:,:), allocatable :: bij                           ! size(5,NXYZ) Reynolds stress anisotropy, used in EARSM
-    real(dp), dimension(:), allocatable :: lvk                             ! the on Karman length scale for SAS model.
-end module OMEGA_Turb_Models
-
 
 
 module variables
@@ -166,53 +135,51 @@ module variables
   use types
 
     ! These are cellwise defined variables, that is - the fields
-    real(dp), dimension(:), allocatable :: u,v,w  ! Velocity components
-    real(dp), dimension(:), allocatable :: flmass ! Mass fluxes
-    real(dp), dimension(:), allocatable :: p,pp ! Pressure, Press. correction,  
-    real(dp), dimension(:), allocatable :: te,ed ! Turb. kin. energy, Dissipation,
-    ! real(dp), dimension(:), allocatable :: t ! Temperature
-    real(dp), dimension(:), allocatable :: vis ! Effective viscosity
-    real(dp), dimension(:), allocatable :: den ! Density
-    real(dp), dimension(:), allocatable :: gen ! turb. kin. energy generation
-    ! real(dp), dimension(:), allocatable :: vart
-    ! real(dp), dimension(:), allocatable :: edd
-    ! real(dp), dimension(:), allocatable :: utt,vtt,wtt
-    ! real(dp), dimension(:), allocatable :: ret
-    ! real(dp), dimension(:), allocatable :: con
-    real(dp), dimension(:), allocatable :: uu,vv,ww,uv,uw,vw
-    real(dp), dimension(:), allocatable :: fmi, fmo, fmoc ! Mass fluxes trough boundary faces
-    real(dp), dimension(:), allocatable :: visw,ypl       ! Effective visc. for boundary face, the y+ non-dimensional distance from wall
+    real(dp), dimension(:), allocatable :: u,v,w              ! Velocity components
+    real(dp), dimension(:), allocatable :: flmass             ! Mass fluxes
+    real(dp), dimension(:), allocatable :: p,pp               ! Pressure, Press. correction,  
+    real(dp), dimension(:), allocatable :: te,ed              ! Turb. kin. energy, Dissipation,
+    real(dp), dimension(:), allocatable :: vis                ! Effective viscosity
+    real(dp), dimension(:), allocatable :: den                ! Density
+    real(dp), dimension(:), allocatable :: gen                ! Turb. kin. energy generation
+    real(dp), dimension(:), allocatable :: t                  ! Temperature, given in Degree Celsius.
+    real(dp), dimension(:), allocatable :: vart               ! Temperature variance
+    ! real(dp), dimension(:), allocatable :: edd              ! Dissipation of temperature variance
+    real(dp), dimension(:), allocatable :: utt,vtt,wtt        ! Turbulent heat fluxes
+    ! real(dp), dimension(:), allocatable :: ret              ! Turbulent Re number
+    real(dp), dimension(:), allocatable :: con                ! Concentration
+    real(dp), dimension(:), allocatable :: uu,vv,ww,uv,uw,vw  ! Reynolds stress tensor components
+    real(dp), dimension(:,:), allocatable :: bij              ! Reynolds stress anisotropy tensor
+    real(dp), dimension(:), allocatable :: fmi, fmo, fmoc     ! Mass fluxes trough boundary faces
+    real(dp), dimension(:), allocatable :: visw,ypl           ! Effective visc. for boundary face, the y+ non-dimensional distance from wall
   
     ! values from n-1 timestep
     real(dp), dimension(:), allocatable :: uo, vo, wo
     real(dp), dimension(:), allocatable :: teo
     real(dp), dimension(:), allocatable :: edo
-    ! real(dp), dimension(:), allocatable :: to
-    ! real(dp), dimension(:), allocatable :: varto
-    ! real(dp), dimension(:), allocatable :: cono
+    real(dp), dimension(:), allocatable :: to
+    real(dp), dimension(:), allocatable :: varto
+    real(dp), dimension(:), allocatable :: cono
 
     ! values from n-2 time step
     real(dp), dimension(:), allocatable :: uoo,voo,woo
     real(dp), dimension(:), allocatable :: teoo
     real(dp), dimension(:), allocatable :: edoo
-    ! real(dp), dimension(:), allocatable :: too
-    ! real(dp), dimension(:), allocatable :: vartoo
-    ! real(dp), dimension(:), allocatable :: conoo 
+    real(dp), dimension(:), allocatable :: too
+    real(dp), dimension(:), allocatable :: vartoo
+    real(dp), dimension(:), allocatable :: conoo 
 
+    ! Gradients
     real(dp),dimension(:,:), allocatable :: dUdxi,dVdxi,dWdxi
     real(dp),dimension(:,:), allocatable :: dPdxi
     real(dp),dimension(:,:), allocatable :: dTEdxi
     real(dp),dimension(:,:), allocatable :: dEDdxi
-    ! real(dp),dimension(:,:), allocatable :: dTdxi
-    ! real(dp),dimension(:,:), allocatable :: dCondxi
-    ! real(dp),dimension(:,:), allocatable :: dVartdxi
+    real(dp),dimension(:,:), allocatable :: dTdxi
+    real(dp),dimension(:,:), allocatable :: dCondxi
+    real(dp),dimension(:,:), allocatable :: dVartdxi
 
-
-    ! Related to seamless-alpha turbulence model:
-    ! real(dp), dimension(:), allocatable :: alph,al_les,al_rans,diff    ! Related to seamless-alpha turbulence model
-    ! real(dp), dimension(:), allocatable :: Timelimit                   ! Durbin Time-scale limiter
-    real(dp), dimension(:), allocatable :: magStrain                   ! Strain magnitude
-    real(dp), dimension(:), allocatable :: Vorticity                   ! Vorticity magnitude
+    real(dp), dimension(:), allocatable :: magStrain          ! Strain magnitude
+    real(dp), dimension(:), allocatable :: Vorticity          ! Vorticity magnitude
 
 end module variables
 
@@ -220,9 +187,9 @@ module title_mod
 !%%%%%%%%%%%%
 
   character(len=70) :: title
-  character(len=4), dimension(10) ::  chvar = (/'  U ', '  V ', '  W ', '  P ', ' TE ', ' ED ', ' IEN', ' VIS', 'VART', ' CON' /)
-  character(len=7), dimension(10) ::  chvarSolver = (/'U      ', 'V      ', 'W      ', 'p      ', 'k      ', 'epsilon','Energy ',&
-                                                  &   'Visc   ', 'VarTemp', 'Conc   ' /)
+  character(len=4), dimension(10) ::  chvar = (/'  U ', '  V ', '  W ', '  P ', ' TE ', ' ED ', '  T ', ' VIS', 'VART', ' CON' /)
+  character(len=7), dimension(10) ::  chvarSolver = &
+  (/'U      ', 'V      ', 'W      ', 'p      ', 'k      ', 'epsilon', 'Temp   ', 'Visc   ', 'VarTemp', 'Conc   ' /)
   character(len=100):: input_file,inlet_file,grid_file,monitor_file,restart_file,out_folder_path
 end module title_mod
 
@@ -240,9 +207,9 @@ module statistics
     real(dp), dimension(:), allocatable :: u_aver,v_aver,w_aver
     real(dp), dimension(:), allocatable :: uu_aver,vv_aver,ww_aver, uv_aver,uw_aver,vw_aver
     real(dp), dimension(:), allocatable :: te_aver
-    ! real(dp), dimension(:), allocatable :: t_aver
-    ! real(dp), dimension(:), allocatable :: ut_aver,vt_aver,wt_aver
-    ! real(dp), dimension(:), allocatable :: tt_aver
+    real(dp), dimension(:), allocatable :: t_aver
+    real(dp), dimension(:), allocatable :: ut_aver,vt_aver,wt_aver
+    real(dp), dimension(:), allocatable :: tt_aver
                                              
 end module statistics
 

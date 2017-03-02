@@ -35,6 +35,7 @@ LINEAR_SOLVER_FILES=\
 
 TURBULENCE_FILES=\
     temperature.f90 \
+    concentration.f90 \
     k_epsilon_std.f90 \
     k_omega_sst.f90 \
     k_epsilon_rng.f90 \

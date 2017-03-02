@@ -517,7 +517,7 @@ subroutine facefluxsc_boundary(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
 !
   use types
   use parameters
-  use geometry, only: xc,yc,zc,numCells,numTotal
+  use geometry, only: xc,yc,zc,numTotal
   use variables, only: vis
 
   implicit none

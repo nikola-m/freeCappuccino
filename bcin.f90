@@ -5,7 +5,6 @@ subroutine bcin
   use geometry
   use variables
   use title_mod, only: inlet_file
-  use temperature, only: t
 
   implicit none
 

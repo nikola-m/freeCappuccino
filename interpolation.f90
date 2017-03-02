@@ -332,7 +332,7 @@ contains
       use types
       use parameters
       use sparse_matrix, only: ioffset,ja
-      use geometry, only: numTotal,numCells,xc,yc,zc,vol
+      use geometry, only: numTotal,numCells,xc,yc,zc
 
       implicit none
 

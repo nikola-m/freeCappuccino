@@ -69,7 +69,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use variables
   use sparse_matrix
   use gradients
-  use temperature, only: t,utt,vtt,wtt
   use title_mod
 
   implicit none
@@ -98,9 +97,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
   three_halfs = 3./2.0_dp
 
   ! Variable specific coefficients:
-  gam=gds(ifi)
+  gam = gds(ifi)
 
-  prtr=1.0_dp
+  prtr = 1.0_dp
 
 ! Calculate gradient: 
   call grad(fi,dfidxi)
@@ -173,20 +172,22 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
       end if
 
-      !
-      !=====================================
+
       ! UNSTEADY TERM
       ! Three Level Implicit Time Integration Method:
       ! in case that BTIME=0. --> Implicit Euler
-      !=====================================
       if(bdf) then
+
         apotime=den(inp)*vol(inp)/timestep
-        sut=apotime*((1+btime)*teo(inp))
+        sut=apotime*(1+btime)*teo(inp)
+
         if (btime > 0.99) then ! bdf2 scheme btime=1.
           sut = sut - apotime*(0.5*btime*teoo(inp))
         endif
+
         su(inp)=su(inp)+sut
         sp(inp)=sp(inp)+apotime*(1+0.5*btime)
+
       endif
 
   ! End of TKE volume source terms

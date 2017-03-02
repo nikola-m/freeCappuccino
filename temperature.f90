@@ -12,54 +12,29 @@ module temperature
 
   ! Constants
   real(dp), parameter :: sigt = 0.9_dp
-  real(dp) :: pranl ! (= 0.7_dp for air, 7.0_dp for water, read it from input file.)
-
-  ! Temperature
-  real(dp), dimension(:), allocatable :: t
-  real(dp), dimension(:), allocatable :: to
-  real(dp), dimension(:), allocatable :: too
-  real(dp), dimension(:,:), allocatable :: dTdxi
-
-  ! Temperature
-  real(dp), dimension(:), allocatable :: vart
-  real(dp), dimension(:), allocatable :: varto
-  real(dp), dimension(:), allocatable :: vartoo
-  real(dp), dimension(:,:), allocatable :: dVartdxi
-
-  ! Heat fluxes
-  real(dp), dimension(:), allocatable :: utt,vtt,wtt
-
 
 
   private 
 
-  public :: t, to, too, vart, varto, vartoo, utt, vtt, wtt, pranl, &
-            dTdxi, dVartdxi, &
-            calcsc
+  public :: calculate_temperature_field
+
 
 contains
 
 
-! subroutine allocate_temperature
-!   use parameters
-!   implicit none
+subroutine calculate_temperature_field()
+!
+! Main module routine to assemble and solve temperature field.
+!
+  use types
+  use parameters
+  use variables
+  use gradients
+  implicit none
 
-!     allocate( t(numTotal) )
-!     allocate( to(numTotal) )
+  call calcsc(T,dTdxi,ien) ! Assemble and solve temperature eq.
 
-!     if( bdf .and. btime.gt.0.5 ) then 
-!       allocate( too(numTotal) ) 
-!     endif 
-    
-!     ! Gradient
-!     allocate( dTdxi(3,numCells) )
-
-!     ! Turbulent heat fluxes
-!     allocate( utt(numCells) )
-!     allocate( vtt(numCells) )
-!     allocate( wtt(numCells) )
-
-! end subroutine allocate_temperature
+end subroutine
 
 
 
@@ -91,15 +66,15 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
 
   ! Variable specific coefficients:
-  gam=gds(ifi)
-  prtr=1.0d0/sigt
+  gam = gds(ifi)
+  prtr = 1.0d0/sigt
 
 ! Calculate gradient: 
   call grad(fi,dfidxi)
 
 ! Initialize source arrays
-  su=0.0d0
-  sp=0.0d0
+  su = 0.0d0
+  sp = 0.0d0
 
 !
 !=====================================

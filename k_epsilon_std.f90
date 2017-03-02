@@ -88,7 +88,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use variables
   use sparse_matrix
   use gradients
-  use temperature, only: t,utt,vtt,wtt
   use title_mod
 
   implicit none

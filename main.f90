@@ -1,7 +1,7 @@
 !
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 !
-program caffa3d
+program caffa3d_uns
 !
 !***********************************************************************
 !
@@ -20,26 +20,28 @@ program caffa3d
   use title_mod
   use fieldManipulation
   use sparse_matrix, only: su,apu
-  use temperature, only: t,to,too
+  use temperature
+  use concentration
 
   implicit none
 
   integer :: iter, i, ijp, ijn, inp
-  real(dp):: source
   integer :: narg
+  integer :: imon
   real(dp):: magUbarStar, rUAw, gragPplus, flowDirection
+  real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
   character(len=5) :: timechar
-  integer :: imon
-  !character(len=2) :: trpn
+  character(len=2) :: trpn
 !                                                                       
 !***********************************************************************
 !
 
 !  Check if any command line arguments are found
   narg=command_argument_count()
-  if (narg==0.or.narg<5) write(*,*) 'Usage: ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>'
+  if (narg==0.or.narg<5) write(*,*) &
+  'Usage: ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>'
   call get_command_argument(1,input_file)
   call get_command_argument(2,inlet_file)
   call get_command_argument(3,monitor_file)
@@ -60,15 +62,13 @@ program caffa3d
 !  Open files for data at monitoring points 
 !-----------------------------------------------
   if(ltransient) then
-  open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
-  !open(unit=91,file=trim(out_folder_path)//'/transient_monitoring_points_names')
-  rewind 89
-  !rewind 91
-   do imon=1,mpoints
-      !read(91, *) trpn
-      open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//'imon',access='append')
-      if(.not.lread) rewind(91+imon)
-   end do
+    open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
+    rewind 89
+      do imon=1,mpoints
+        write(trpn,'(i2)') imon
+        open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//trpn, access='append')
+        if(.not.lread) rewind(91+imon)
+      end do
   end if
 
 !
@@ -93,18 +93,18 @@ program caffa3d
     woo = wo 
     teoo = teo 
     edoo = edo
-    ! too = to 
-    ! vartoo = varto 
-    ! conoo = cono 
+    too = to 
+    vartoo = varto 
+    conoo = cono 
   endif
     uo = u 
     vo = v 
     wo = w 
     teo = te 
     edo = ed 
-    ! to = t         
-    ! varto = vart 
-    ! cono = con 
+    to = t         
+    varto = vart 
+    cono = con 
 !
 !===============================================
 !.....Set inlet boundary conditions at every timestep
@@ -146,10 +146,10 @@ program caffa3d
 !.....Turbulence
       if(lturb)    call correct_turbulence()
 
-! !.....Scalars: Temperature , temperature variance, and concentration eqs.
-!       if(lcal(ien))   call calcsc(t,   dTdxi     ,ien)
-!       if(lcal(ivart)) call calcsc(vart,dVartdxi  ,ivart)
-!       if(lcal(icon))  call calcsc(con, dCondxi   ,icon)
+!.....Scalars: Temperature , temperature variance, and concentration eqs.
+      if(lcal(ien))   call calculate_temperature_field()
+      ! if(lcal(ivart)) call calculate_temperature_variance_field()
+      if(lcal(icon))  call calculate_concentration_field()
 
 
       call cpu_time(finish)
@@ -157,7 +157,7 @@ program caffa3d
       write(6,*)
 
 
-!.....Residual normalization, convergence check  
+      ! ! Residual normalization, convergence check  
       ! do i=1,nphi
       !   resor(i)=resor(i)*rnor(i)
       ! end do
@@ -166,16 +166,14 @@ program caffa3d
       !include 'simpleMonitorResiduals.h'
 
 
-!.....Proveri kako stojimo sa rezidualom
+      ! Check residual
       source=max(resor(iu),resor(iv),resor(iw),resor(ip)) 
       if(source.gt.slarge) then
           write(6,"(//,10x,a)") "*** Program terminated -  iterations diverge ***" 
           stop
       endif
-!
-!==========================================================
-!.....False time steping: skoci na next line after the end of time loop
-!==========================================================
+
+      ! False time steping: skoci na next line after the end of time loop
       if(.not.ltransient) then
           if(source.lt.sormax) exit time_loop
       end if
@@ -200,7 +198,7 @@ program caffa3d
                include 'create_and_save_frame.f90'
             endif
 
-            cycle time_loop ! idi na pocetak 'time_loop'-a sa sledecom vrednosti indeksa
+            cycle time_loop
          
           endif
 
@@ -214,8 +212,8 @@ program caffa3d
 !===============================================
       if(.not.ltransient) then
         if(mod(itime,nzapis).eq.0) then
-         call writefiles
-         call write_restart_files
+          call writefiles
+          call write_restart_files
         endif
       endif
 
@@ -231,5 +229,4 @@ program caffa3d
       call write_restart_files
       
 
-end program caffa3d
-
+end program caffa3d_uns
