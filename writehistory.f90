@@ -9,8 +9,7 @@
 !***********************************************************************
 !
   use parameters, only: ltransient,time,mpoints
-  use variables, only: u,v,w
-  use k_epsilon_std, only:te,ed
+  use variables, only: u,v,w,te,ed
 
   implicit none
 !

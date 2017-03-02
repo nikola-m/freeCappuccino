@@ -8,5 +8,5 @@ plot "< cat monitor | grep 'Solving for U,' | cut -d' ' -f12 | tr -d ','" title 
      "< cat monitor | grep 'Solving for p' | cut -d' ' -f12 | tr -d ','" title 'p' with lines, \
      "< cat monitor | grep 'Solving for k' | cut -d' ' -f12 | tr -d ','" title 'k' with lines, \
      "< cat monitor | grep 'Solving for epsilon' | cut -d' ' -f12 | tr -d ','" title 'epsilon' with lines
-pause 5
+pause 50
 reread

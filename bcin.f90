@@ -5,7 +5,6 @@ subroutine bcin
   use geometry
   use variables
   use title_mod, only: inlet_file
-  use k_epsilon_std, only: te,ed ! mozda ovo drugacije, sta cemo kad je neki drugi model
   use temperature, only: t
 
   implicit none
@@ -115,7 +114,6 @@ subroutine bcin
   rnor(ip)    = 1.0_dp/(flomas+small)
   rnor(ite)   = 1.0_dp/(flowte+small)
   rnor(ied)   = 1.0_dp/(flowed+small)
-
 
 
   ! Correct turbulence at inlet for appropriate turbulence model

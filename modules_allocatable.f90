@@ -27,6 +27,8 @@ module parameters
   real(dp), parameter :: small = 1e-20
   real(dp), parameter :: great = 1e+20
   real(dp), parameter :: pi = 3.1415926535897932384626433832795_dp
+  real(dp), parameter :: twothirds = 2./3._dp
+  real(dp), parameter :: onethird = 1./3._dp
   
   ! Law of the wall parameters
   real(dp), parameter :: CAPPA = 0.41_dp 
@@ -100,7 +102,7 @@ module parameters
   integer :: npcor     ! No. of pressure-corrections; non-orthogonality correctors
   integer :: ipcorr    ! Iteration no.: ipcorr=1..npcor
   integer :: nigrad    ! No. of iters. for iterative cell-centered gradient calculation
-  integer, parameter :: nipgrad = 1 ! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
+  integer, parameter :: nipgrad = 2 ! No. of stages for 'pressure extrapolation at boundary + pressure gradient update' loop
 
   ! Turbulence model case selector: 
   ! 1-Std k-eps,
@@ -150,9 +152,9 @@ module OMEGA_Turb_Models
                 betai1,betai2,a1,alpha1,alpha2
     real(dp) :: alpha,betta,bettast
     real(dp), dimension(:), allocatable :: domega,alphasst,bettasst, &     ! Cross diffusion coed and SST coefs
-                                             qsas, &                       ! SAS model additional production term
-                                             prtinv_te,prtinv_ed, &        ! 1/sigma_k; 1/sigma_epsilon
-                                             cmueff                        ! size(NXYZ) ! CMUEFF the effective Cmu for EARSM
+                                           qsas, &                         ! SAS model additional production term
+                                           prtinv_te,prtinv_ed, &          ! 1/sigma_k; 1/sigma_epsilon
+                                           cmueff                          ! size(NXYZ) ! CMUEFF the effective Cmu for EARSM
     real(dp), dimension(:,:), allocatable :: bij                           ! size(5,NXYZ) Reynolds stress anisotropy, used in EARSM
     real(dp), dimension(:), allocatable :: lvk                             ! the on Karman length scale for SAS model.
 end module OMEGA_Turb_Models
@@ -167,7 +169,7 @@ module variables
     real(dp), dimension(:), allocatable :: u,v,w  ! Velocity components
     real(dp), dimension(:), allocatable :: flmass ! Mass fluxes
     real(dp), dimension(:), allocatable :: p,pp ! Pressure, Press. correction,  
-    ! real(dp), dimension(:), allocatable :: te,ed ! Turb. kin. energy, Dissipation,
+    real(dp), dimension(:), allocatable :: te,ed ! Turb. kin. energy, Dissipation,
     ! real(dp), dimension(:), allocatable :: t ! Temperature
     real(dp), dimension(:), allocatable :: vis ! Effective viscosity
     real(dp), dimension(:), allocatable :: den ! Density
@@ -183,24 +185,24 @@ module variables
   
     ! values from n-1 timestep
     real(dp), dimension(:), allocatable :: uo, vo, wo
+    real(dp), dimension(:), allocatable :: teo
+    real(dp), dimension(:), allocatable :: edo
     ! real(dp), dimension(:), allocatable :: to
-    ! real(dp), dimension(:), allocatable :: teo
-    ! real(dp), dimension(:), allocatable :: edo
     ! real(dp), dimension(:), allocatable :: varto
     ! real(dp), dimension(:), allocatable :: cono
 
     ! values from n-2 time step
     real(dp), dimension(:), allocatable :: uoo,voo,woo
+    real(dp), dimension(:), allocatable :: teoo
+    real(dp), dimension(:), allocatable :: edoo
     ! real(dp), dimension(:), allocatable :: too
-    ! real(dp), dimension(:), allocatable :: teoo
-    ! real(dp), dimension(:), allocatable :: edoo
     ! real(dp), dimension(:), allocatable :: vartoo
     ! real(dp), dimension(:), allocatable :: conoo 
 
     real(dp),dimension(:,:), allocatable :: dUdxi,dVdxi,dWdxi
     real(dp),dimension(:,:), allocatable :: dPdxi
-    ! real(dp),dimension(:,:), allocatable :: dTEdxi
-    ! real(dp),dimension(:,:), allocatable :: dEDdxi
+    real(dp),dimension(:,:), allocatable :: dTEdxi
+    real(dp),dimension(:,:), allocatable :: dEDdxi
     ! real(dp),dimension(:,:), allocatable :: dTdxi
     ! real(dp),dimension(:,:), allocatable :: dCondxi
     ! real(dp),dimension(:,:), allocatable :: dVartdxi

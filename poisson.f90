@@ -55,7 +55,7 @@ program poisson
   call create_CSR_matrix_from_mesh_data
 
 !
-! > Discretisation and solution of the tet problem
+! > Discretisation and solution of the problem
 !
 
   ! Source term

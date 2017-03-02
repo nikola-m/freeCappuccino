@@ -106,7 +106,7 @@ use parameters
 implicit none
 
   real(dp), dimension(numTotal), intent(in) :: U,V,W
-  real(dp), dimension(3,numTotal), intent(inout) :: dUdxi,dVdxi,dWdxi
+  real(dp), dimension(3,numCells), intent(inout) :: dUdxi,dVdxi,dWdxi
 
   dUdxi=0.0_dp
   dVdxi=0.0_dp

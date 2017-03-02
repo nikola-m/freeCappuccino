@@ -42,9 +42,9 @@
 
   sumLocalContErr = sum( abs( res ) ) 
 
-   globalContErr = sum( res )
+  globalContErr = sum( res )
 
-   cumulativeContErr = cumulativeContErr + globalContErr
+  cumulativeContErr = cumulativeContErr + globalContErr
 
 
   write(6,'(3(a,es10.3))') "  time step continuity errors : sum local = ", sumLocalContErr, &

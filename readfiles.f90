@@ -9,8 +9,7 @@ subroutine readfiles
   use geometry
   use variables
   use title_mod
-  use statistics
-  use k_epsilon_std, only: te,ed,teo,edo 
+  use statistics 
   use temperature, only: t
 
   implicit none  

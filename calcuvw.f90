@@ -48,6 +48,7 @@ subroutine calcuvw
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
+  ! call grad(U,V,W,dUdxi,dVdxi,dWdxi)
 
   ! Pressure gradient
   do istage=1,nipgrad
@@ -163,16 +164,6 @@ subroutine calcuvw
     ! (jcell,icell) matrix element:
     k = jcell_icell_csr_value_index(i)
     a(k) = cap
-
-    ! ! > Elements on main diagonal:
-
-    ! ! (icell,icell) main diagonal element
-    ! k = diag(ijp)
-    ! a(k) = a(k) - can
-
-    ! ! (jcell,jcell) main diagonal element
-    ! k = diag(ijn)
-    ! a(k) = a(k) - cap
 
     ! > Sources: 
 
@@ -293,13 +284,6 @@ subroutine calcuvw
     sv(ijp) = sv(ijp)+vsol*v(ijp)-fdne*nyf
     sw(ijp) = sw(ijp)+vsol*w(ijp)-fdne*nzf
 
-        ! SPU(IJP) = SPU(IJP) + CF*NXF**2
-        ! SPV(IJP) = SPV(IJP) + CF*NYF**2
-        ! SP(IJP)  = SP(IJP)  + CF*NZF**2
-
-        ! SU(IJP)=SU(IJP)-CF*(U(IJP)*NXF**2    + V(IJP)*2*NXF*NYF + W(IJP)*2*NXF*NZF)
-        ! SV(IJP)=SV(IJP)-CF*(U(IJP)*2*NXF*NYF + V(IJP)*NYF**2    + W(IJP)*2*NYF*NZF)
-        ! SW(IJP)=SW(IJP)-CF*(U(IJP)*2*NXF*NZF + V(IJP)*2*NYF*NZF + W(IJP)*2*NZF**2)
   end do
 
 
@@ -372,20 +356,12 @@ subroutine calcuvw
 
     endif
 
-        ! SPU(IJP) = SPU(IJP) + CF*NXF**2
-        ! SPV(IJP) = SPV(IJP) + CF*NYF**2
-        ! SP(IJP)  = SP(IJP)  + CF*NZF**2
-
-        ! SU(IJP) = SU(IJP)+CF*(U(IJB)*NXF**2-(V(IJP)-V(IJB))*NYF*NXF-(W(IJP)-W(IJB))*NZF*NXF)
-        ! SV(IJP) = SV(IJP)+CF*(V(IJB)*NYF**2-(U(IJP)-U(IJB))*NXF*NYF-(W(IJP)-W(IJB))*NZF*NYF)
-        ! SW(IJP) = SW(IJP)+CF*(W(IJB)*NZF**2-(U(IJP)-U(IJB))*NXF*NZF-(V(IJP)-V(IJB))*NYF*NZF)
-
   enddo
 
 
   ! Modify coefficients for Crank-Nicolson
   if (cn) then
-    a(:) = 0.5_dp*a(:) ! Doesn't affect the main diagonal because it's still zero.
+    a = 0.5_dp*a ! Doesn't affect the main diagonal because it's still zero.
   endif
 
 
@@ -466,7 +442,7 @@ subroutine calcuvw
     do ijp=1,numCells
         apotime=den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
-        sv(ijp) = sv(ijp) + (apotime + sum_off_diagonal_terms)*vo(ijp)
+        su(ijp) = sv(ijp) + (apotime + sum_off_diagonal_terms)*vo(ijp)
         spv(ijp) = spv(ijp)+apotime
     enddo
 
@@ -525,7 +501,7 @@ subroutine calcuvw
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
-        sw(ijp) = sw(ijp) + (apotime + sum_off_diagonal_terms)*wo(ijp)
+        su(ijp) = sw(ijp) + (apotime + sum_off_diagonal_terms)*wo(ijp)
         sp(ijp) = sp(ijp) + apotime
     enddo
 
@@ -561,6 +537,5 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(w,iw)
-! call writefiles
-! stop
+
 end subroutine

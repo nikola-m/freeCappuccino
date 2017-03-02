@@ -25,7 +25,6 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
 
 ! Local variables
   real(dp) :: are
-  real(dp) :: onethird, twothirds
   real(dp) :: xpn,ypn,zpn
   real(dp) :: nxx,nyy,nzz
   real(dp) :: ixi1,ixi2,ixi3
@@ -50,9 +49,6 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   real(dp) :: r1,r2,r3,r4,r5,r6
   real(dp) :: psie1,psie2,psie3,psiw1,psiw2,psiw3
 !----------------------------------------------------------------------
-
-  onethird = 1.0_dp/3.0_dp
-  twothirds = 2.0_dp/3.0_dp
 
 
   ! > Geometry:
@@ -221,15 +217,12 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
 
     !  |________uj'_________|_______________ucorr___________________|
     ue=u(ijp)*fxp+u(ijb)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-    ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
 
     !  |________vj'_________|_______________vcorr___________________|
     ve=v(ijp)*fxp+v(ijb)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
-    ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
     !  |________wj'_________|_______________wcorr___________________|
     we=w(ijp)*fxp+w(ijb)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
-    ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
-
+    
     fuhigh=flomass*ue
     fvhigh=flomass*ve
     fwhigh=flomass*we
@@ -289,56 +282,6 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   psie1 = max(0., min(2.*r4, 0.5*r4+0.5, 2.))
   psie2 = max(0., min(2.*r5, 0.5*r5+0.5, 2.))
   psie3 = max(0., min(2.*r6, 0.5*r6+0.5, 2.))
-
-  !.....psi for koren scheme:
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
-  !      psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
-  !      psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
-  !      psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
-  !      psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
-
-  !.....psi for gpl-1/3-alpha-3/2 scheme:  !!!!new scheme>>>koren i ova schema su jako slicne
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(1.5*r1, twothirds*r1+onethird, 2.))
-  !      psiw2 = max(0., min(1.5*r2, twothirds*r2+onethird, 2.))
-  !      psiw3 = max(0., min(1.5*r3, twothirds*r3+onethird, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(1.5*r4, twothirds*r4+onethird, 2.))
-  !      psie2 = max(0., min(1.5*r5, twothirds*r5+onethird, 2.))
-  !      psie3 = max(0., min(1.5*r6, twothirds*r6+onethird, 2.))
-
-  !.....psi for smarter; charm notable; isnas
-  !.....if flow goes from p to e
-  !      psiw1 = (r1+abs(r1))*(3*r1+1.)/(2*(r1+1.)**2)
-  !      psiw2 = (r2+abs(r2))*(3*r2+1.)/(2*(r2+1.)**2)
-  !      psiw3 = (r3+abs(r3))*(3*r3+1.)/(2*(r3+1.)**2)
-  !.....if flow goes from e to p
-  !      psie1 = (r4+abs(r4))*(3*r4+1.)/(2*(r4+1.)**2)
-  !      psie2 = (r5+abs(r5))*(3*r5+1.)/(2*(r5+1.)**2)
-  !      psie3 = (r6+abs(r6))*(3*r6+1.)/(2*(r6+1.)**2)
-
-  !.....psi for ospre
-  !.....if flow goes from p to e
-  !      psiw1 = 1.5*r1*(r1+1.)/(r1**2+r1+1.)
-  !      psiw2 = 1.5*r2*(r2+1.)/(r2**2+r2+1.)
-  !      psiw3 = 1.5*r3*(r3+1.)/(r3**2+r3+1.)
-  !.....if flow goes from e to p
-  !      psie1 = 1.5*r4*(r4+1.)/(r4**2+r4+1.)
-  !      psie2 = 1.5*r5*(r5+1.)/(r5**2+r5+1.)
-  !      psie3 = 1.5*r6*(r6+1.)/(r6**2+r6+1.)
-
-  !.....psi for bsou-blui-chakravarthy-osher scheme:
-  !.....if flow goes from p to e
-  !      psiw1 = max(0., min(2.*r1,1.))
-  !      psiw2 = max(0., min(2.*r2,1.))
-  !      psiw3 = max(0., min(2.*r3,1.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4,1.))
-  !      psie2 = max(0., min(2.*r5,1.))
-  !     psie3 = max(0., min(2.*r6,1.))
   !=====end muscl scheme=============================
  
 
@@ -355,20 +298,6 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   psie3 = max(0., min(2.*r6, 0.75*r6+0.25, 0.25*r6+0.75, 2.))
   !=====end umist scheme=============================
 
-
-  !=====spl-3/5 scheme===============================
-  !     if(lumist.eq.1) then
-  !.....psi for spl-3/5 scheme (new scheme derived from waterson&deconinck's symmetric piecewise-linear scheme):
-  !.....if flow goes from p to e
-  !     psiw1 = max(0., min(2.*r1, 0.8*r1+0.2, 0.2*r1+0.8, 2.))
-  !      psiw2 = max(0., min(2.*r2, 0.8*r2+0.2, 0.2*r2+0.8, 2.))
-  !      psiw3 = max(0., min(2.*r3, 0.8*r3+0.2, 0.2*r3+0.8, 2.))
-  !.....if flow goes from e to p
-  !      psie1 = max(0., min(2.*r4, 0.8*r4+0.2, 0.2*r4+0.8, 2.))
-  !      psie2 = max(0., min(2.*r5, 0.8*r5+0.2, 0.2*r5+0.8, 2.))
-  !      psie3 = max(0., min(2.*r6, 0.8*r6+0.2, 0.2*r6+0.8, 2.))
-  !=====end umist scheme=============================
-  !      endif
 
   !=====gamma scheme================================
   elseif(lgamma) then

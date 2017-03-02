@@ -1,12 +1,55 @@
 module interpolation
 
-public
+
+! private 
+
+! public :: face_value
 
 contains
 
+
+! function face_value(ijp,ijn,xf,yf,zf,lambda,phi,dPhidxi,phimax,phimin) result(ue)
+
+! use types
+! use parameters
+
+! implicit none
+
+!   real(dp), dimension(numTotal), intent(in) :: phi
+!   real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
+
+  
+!   if () then 
+!     ue = face_interpolated(ijp,ijn,xf,yf,zf,lambda,u,dUdxi)
+!     ve = face_interpolated(ijp,ijn,xf,yf,zf,lambda,v,dVdxi)
+!     we = face_interpolated(ijp,ijn,xf,yf,zf,lambda,w,dWdxi)
+!   elseif () then 
+!     ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
+!     ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
+!     we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
+!   elseif () then 
+!     ue = face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)
+!     ve = face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)
+!     we = face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)
+!   elseif () then
+!     ue = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)
+!     ve = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)
+!     we = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)
+!   elseif () then
+!     ue = face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)
+!     ve = face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)
+!     we = face_value_muscl(ijp, ijn, xf, yf, zf, w, dWdxi)
+!   else
+!     write(*,*) 'Interpolation scheme not chosen!'
+!     stop
+!   endif 
+
+! end function
+
+
 !***********************************************************************
 !
-      pure function face_interpolated(u,dUdxi,inp,inn,xf,yf,zf,lambda) result(ue)
+      function face_interpolated(inp,inn,xf,yf,zf,lambda,u,dUdxi) result(face_value)
 !
 !***********************************************************************
 !
@@ -27,13 +70,15 @@ contains
 !
 
 !.....Result
-      real(dp) :: ue
+      real(dp) :: face_value
+
 !.....Arguments
       integer, intent(in) :: inp, inn
-      real(dp), dimension(numTotal), intent(in) :: u
-      real(dp), dimension(3,numCells), intent(in) :: dUdxi
       real(dp), intent(in) :: xf,yf,zf
       real(dp), intent(in) :: lambda
+      real(dp), dimension(numTotal), intent(in) :: u
+      real(dp), dimension(3,numCells), intent(in) :: dUdxi
+
 !.....Locals
       real(dp) :: xpn,ypn,zpn,xi,yi,zi,fxp,fxn
 
@@ -53,7 +98,7 @@ contains
       Yi=Yc(Inp)*Fxp+Yc(Inn)*Fxn
       Zi=Zc(Inp)*Fxp+Zc(Inn)*Fxn
 
-      Ue = 0.5*( (U(Inp)+U(Inn)) +                        &
+      face_value = 0.5*( (U(Inp)+U(Inn)) +                &
                  (                                        &
                    (dUdxi(1,Inp)+dUdxi(1,Inn))*(Xf-Xi) +  &
                    (dUdxi(2,Inp)+dUdxi(2,Inn))*(Yf-Yi) +  &
@@ -71,19 +116,27 @@ contains
                   )                                       &
                )
 
-      return
       end function
 
-      double precision function face_value_central(inp,inn, xf, yf, zf, fi, gradfi)
-!=======================================================================
+
+!***********************************************************************
+!
+      function face_value_central(inp,inn, xf, yf, zf, fi, gradfi) result(face_value)
+!
+!***********************************************************************
+!
 !     Calculates face value using values of variables and their gradients
 !     at neighbours cell-centers.
-!=======================================================================
+!
+!***********************************************************************
       use types
       use parameters
       use geometry, only: numTotal,numCells,xc,yc,zc
 
       implicit none
+
+!.....Result
+      real(dp) :: face_value
 
 !     Input
       integer :: inp, inn
@@ -128,22 +181,32 @@ contains
       gradfidr=gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp) &
               +gradfi_n_x*(xf-xcn)+gradfi_n_y*(yf-ycn)+gradfi_n_z*(zf-zcn)
 
-      face_value_central = nr*( phi_p + phi_n + gradfidr)
+      face_value = nr*( phi_p + phi_n + gradfidr)
 
       end function
 
-      double precision function face_value_2nd_upwind(inp, xf, yf, zf, fi, gradfi)
-!=======================================================================
+
+!***********************************************************************
+!
+      function face_value_2nd_upwind(inp, xf, yf, zf, fi, gradfi) result(face_value)
+!
+!***********************************************************************
+!
 !     Calculates face value using values of variables and their gradients
 !     at neighbours cell-centers.
 !     Corresponds to unlimited second order upwind scheme as 
 !     used in ANSYS FLUENT.
-!=======================================================================
+!
+!***********************************************************************
+!
       use types
       use parameters
       use geometry, only: numTotal,numCells,xc,yc,zc
 
       implicit none
+
+!.....Result
+      real(dp) :: face_value
 
 !     Input
       integer :: inp
@@ -171,25 +234,33 @@ contains
       gradfi_p_z = gradfi(3,inp)
 
 
-!.....gradfixdr = (sum(gradphi_nb(i,:)*r_nb2f(i,:)), i=1,n)
       gradfidr = gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp)
 
-      face_value_2nd_upwind = phi_p + gradfidr
+      face_value = phi_p + gradfidr
 
       end function
 
 
-      double precision function face_value_muscl(inp,inn, xf, yf, zf, fi, gradfi)
-!=======================================================================
+!***********************************************************************
+!
+      function face_value_muscl(inp,inn, xf, yf, zf, fi, gradfi) result(face_value)
+!
+!***********************************************************************
+!
 !     Calculates face value using values of variables and their gradients
-!     at multiple neighbours cell-centers,
-!     in least-squares sense.
-!=======================================================================
+!     at neighbours cell-centers.
+!     Corresponds to MUSCL scheme as used in ANSYS FLUENT.
+!
+!***********************************************************************
+!
       use types
       use parameters
       use geometry, only: numTotal,numCells,xc,yc,zc
 
       implicit none
+
+!.....Result
+      real(dp) :: face_value
 
 !     Input
       integer :: inp, inn
@@ -239,13 +310,16 @@ contains
       face_value_2nd_upwind = ( phi_p + gradfidr_2nd_upwind )
       face_value_central = 0.5_dp*( phi_p + phi_n + gradfidr_central)
 
-      face_value_muscl = theta*face_value_central + (1.0_dp-theta)*face_value_2nd_upwind
+      face_value = theta*face_value_central + (1.0_dp-theta)*face_value_2nd_upwind
       
       end function
 
-
-      double precision function slope_limited_face_value(inp, xf, yf, zf, fi, gradfi, fimax,fimin) result(face_value)
-!=======================================================================
+!***********************************************************************
+!
+      function face_value_2nd_upwind_slope_limited(inp, xf, yf, zf, fi, gradfi, fimax,fimin) result(face_value)
+!
+!***********************************************************************
+!
 !     Calculates face value using values of variables and their gradients
 !     at cell-center
 !     Cell-centered gradient limited using slope limiter:
@@ -253,13 +327,17 @@ contains
 !     Ref.: Z. J. Wang. "A Fast Nested Multi-grid Viscous Flow Solver for Adaptive Cartesian/Quad Grids",
 !     International Journal for Numerical Methods in Fluids. 33. 657–680. 2000.
 !     The same slope limiter is used in Fluent.
-!=======================================================================
+!***********************************************************************
+!
       use types
       use parameters
-      use sparse_matrix
-      use geometry, only: numTotal,numCells,xc,yc,zc
+      use sparse_matrix, only: ioffset,ja
+      use geometry, only: numTotal,numCells,xc,yc,zc,vol
 
       implicit none
+
+!     Result
+      real(dp) :: face_value
 
 !     Input
       integer :: inp
@@ -269,7 +347,7 @@ contains
       real(dp) :: fimax,fimin! NOTE: fimax i fimin, su globalni max i min u polju.
 
 !     Locals
-      integer :: i
+      integer :: k
       real(dp) :: phi_p
       real(dp) :: gradfiXdr,slopelimit
       real(dp) :: deltam,deltap,epsi
@@ -290,12 +368,10 @@ contains
       phi_max = fi(ja( ioffset(inp) ))
       phi_min = fi(ja( ioffset(inp) ))
 
-      do i=ioffset(inp)+1, ioffset(inp+1)-1
-        phi_max = max( phi_max, fi(ja(i)) )
-        phi_min = min( phi_max, fi(ja(i)) )      
+      do k=ioffset(inp)+1, ioffset(inp+1)-1
+        phi_max = max( phi_max, fi(ja(k)) )
+        phi_min = min( phi_max, fi(ja(k)) )      
       enddo
-      ! phi_max = max( fi(ja(ioffset(inp))) : fi(ja(ioffset(inp+1)-1)) ) ! NOTE: Mora loop jer nisu contiguous u memoriji!!!!
-      ! phi_min = min( fi(ja(ioffset(inp))) : fi(ja(ioffset(inp+1)-1)) )
 
       deltam = face_value - phi_p
       if (deltam .gt. 0.0d0) then
@@ -305,7 +381,7 @@ contains
       endif
 
 !.....Original Venkatakrishnan K=[0,?], we take fixed K=0.05
-!      epsi = (0.05*vol(inp))**3 
+     ! epsi = (0.05*vol(inp))**3 
   
 !.....Wang proposition for epsilon
       epsi = (0.05*( fimax-fimin ))**2 
@@ -317,7 +393,5 @@ contains
       face_value =  phi_p + slopelimit*gradfiXdr 
 
       end function
-
-
 
 end module

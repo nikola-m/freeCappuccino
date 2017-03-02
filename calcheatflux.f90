@@ -13,7 +13,6 @@ subroutine calcheatflux
   use sparse_matrix
   use variables
   use gradients, only: grad
-  use k_epsilon_std, only: te,ed
   use temperature, only: t,vart,dTdxi,utt,vtt,wtt
 
   implicit none 

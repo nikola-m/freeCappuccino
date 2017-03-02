@@ -20,7 +20,6 @@ program caffa3d
   use title_mod
   use fieldManipulation
   use sparse_matrix, only: su,apu
-  use k_epsilon_std, only: te,teo,teoo,ed,edo,edoo
   use temperature, only: t,to,too
 
   implicit none
@@ -110,7 +109,7 @@ program caffa3d
 !===============================================
 !.....Set inlet boundary conditions at every timestep
 !===============================================
-      if(itime.eq.1) call bcin ! here called only once at the beginning
+      if(itime.eq.1) call bcin
 !
 !===============================================
 !.....ITERATION CONTROL MONITOR
@@ -138,7 +137,7 @@ program caffa3d
 
 !.....Calculate velocities.
       call calcuvw 
-      
+    
 !.....Pressure-velocity coupling. Two options: SIMPLE and PISO
       if(SIMPLE)   call CALCP
       if(PISO)     call PISO_multiple_correction
@@ -159,9 +158,9 @@ program caffa3d
 
 
 !.....Residual normalization, convergence check  
-      do i=1,nphi
-        resor(i)=resor(i)*rnor(i)
-      end do
+      ! do i=1,nphi
+      !   resor(i)=resor(i)*rnor(i)
+      ! end do
 
       ! Write to monitor file - Old style
       !include 'simpleMonitorResiduals.h'
@@ -192,12 +191,12 @@ program caffa3d
             endif
 
             if(mod(itime,nzapis).eq.0) call writefiles
-            ! call writehistory !<- write monitoring points
+            call writehistory !<- write monitoring points
             call calc_statistics 
 
 
             ! # Create and save a frame for animation
-            if(mod(itime,100).eq.0) then 
+            if(mod(itime,nzapis).eq.1000) then 
                include 'create_and_save_frame.f90'
             endif
 

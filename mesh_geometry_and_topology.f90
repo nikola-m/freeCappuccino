@@ -337,7 +337,7 @@ subroutine mesh_geometry
   implicit none
 
 ! Locals
-  integer :: i,j,k,l
+  integer :: i,j,k,l,ioc
   integer :: iface
 
   integer :: inp,inn
@@ -350,6 +350,7 @@ subroutine mesh_geometry
   integer :: nnodes                ! no. of nodes in face
 
   integer :: numBoundaries,bctype,nfaces,startFace
+  integer :: ifaceFriend, startFaceFriend
 
   real(dp), parameter :: half = 0.5_dp
   real(dp), parameter :: one_third = 1._dp/3._dp
@@ -410,7 +411,7 @@ subroutine mesh_geometry
   nwalf = 0
 
   read(boundary_file,'(a)') line_string
-  read(boundary_file,'(i1)') numBoundaries
+  read(boundary_file,*) numBoundaries
 
   do i=1,numBoundaries
   read(boundary_file,*) bctype,nfaces,startFace
@@ -615,7 +616,7 @@ if (native_mesh_files)  then
     endif
     if( nwala.gt.0 ) then
       write ( *, '(a)' ) ' '
-      write ( *, '(4x,a,i8)' ) 'umber of adiabatic wall faces  = ', nwala
+      write ( *, '(4x,a,i8)' ) 'Number of adiabatic wall faces  = ', nwala
     endif
     if( nwalf.gt.0 ) then
       write ( *, '(a)' ) ' '
@@ -629,6 +630,8 @@ if (native_mesh_files)  then
   endif
     
   if( noc.gt.0 ) then
+    ! Make one correction - divide noc by two because we had read bot 'left' and 'right' faces.
+    noc = noc/2
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
   endif
@@ -724,6 +727,43 @@ if (native_mesh_files)  then
   endif
 
   !
+  ! Rewind boundary file for one more sweep - to read cyclic boundaries
+  !
+  if(noc.gt.0) then
+
+    write ( *, '(a)' ) ' '
+    write ( *, '(a)' ) '  Defining O-C- and cyclic boundary face pairs.'
+
+    rewind( boundary_file )
+
+    read(boundary_file,'(a)') line_string
+    read(boundary_file,'(i1)') numBoundaries
+
+    ioc = 1
+
+    bc_loop: do i=1,numBoundaries
+      read(boundary_file,*) bctype,nfaces,startFace
+
+      if (bctype.eq.6) then ! we have what we call a o-c- boundary, maybe inner domain boundary maybe cyclic boundary
+
+      ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same.)
+      read(boundary_file,*) bctype,nfaces,startFaceFriend
+
+        do k=1,nfaces
+          iface = startFace+k
+          ifaceFriend = startFaceFriend + k
+          ijl(ioc) = owner(iface)
+          ijr(ioc) = owner(ifaceFriend)
+          ioc = ioc+1
+        enddo
+      else
+        cycle bc_loop
+      endif
+    
+    enddo bc_loop
+  endif
+
+  !
   ! > Cell volumes, cell face centers
   !
 
@@ -756,7 +796,7 @@ if (native_mesh_files)  then
       qz = z(node(i+2))-z(node(1))
 
       call triangular_face_area_components_polymesh( px,py,pz, qx,qy,qz, nx,ny,nz )
-
+ 
       !
       ! > Cell-face area vector components (Area vector lies in direction of face normal)
       ! 
@@ -787,8 +827,8 @@ if (native_mesh_files)  then
 
       vol(inp) = vol(inp) + cell_volume_part_polymesh( cx, cy, cz, nx, ny, nz ) 
       if ( iface <= numInnerFaces ) then 
-      inn = neighbour(iface)
-      vol(inn) = vol(inn) + cell_volume_part_polymesh( cx, cy, cz, -nx, -ny, -nz )
+        inn = neighbour(iface)
+        vol(inn) = vol(inn) + cell_volume_part_polymesh( cx, cy, cz, -nx, -ny, -nz )
       endif
 
     enddo
@@ -798,7 +838,7 @@ if (native_mesh_files)  then
         xf(iface) = xf(iface) / (ax+1e-30)
         yf(iface) = yf(iface) / (ay+1e-30)
         zf(iface) = zf(iface) / (az+1e-30)
-    else
+    else       
         xf(iface) = x(node(1))+x(node(2))+x(node(3))
         yf(iface) = y(node(1))+y(node(2))+y(node(3))
         zf(iface) = z(node(1))+z(node(2))+z(node(3))
@@ -926,6 +966,16 @@ if (native_mesh_files)  then
     facint(iface) = djn/dpn
     
   enddo
+
+  ! !
+  ! ! > Interpolation factor > O-C boundaries
+  ! !
+
+  ! do i=1,noc
+  !   iface = iOCFacesStart + i
+  !   inp = ijl(i)
+  !   inn = ijr(i)
+  ! enddo
 
 
 !

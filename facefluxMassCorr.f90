@@ -40,7 +40,7 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
 
   ! Face interpolation factor
   fxn=lambda 
-  fxp=1.-lambda
+  fxp=1.0_dp-lambda
 
   ! Distance vector between cell centers
   xpn=xc(ijn)-xc(ijp)
@@ -56,14 +56,25 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
   nzz=arz/are
 
   ! Distance from P' to N'-reciprocal value
-  dppnnr = 1./((xpn*nxx)+(ypn*nyy)+(zpn*nzz))
+  dppnnr = 1.0_dp/((xpn*nxx)+(ypn*nyy)+(zpn*nzz))
 
   ! Values at points p' and e' due to non-orthogonality. 
-  xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
-  xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz
+  xpp=xf-(xf-xc(ijp))*nxx
+  ypp=yf-(yf-yc(ijp))*nyy
+  zpp=zf-(zf-zc(ijp))*nzz
+
+  xep=xf-(xf-xc(ijn))*nxx
+  yep=yf-(yf-yc(ijn))*nyy
+  zep=zf-(zf-zc(ijn))*nzz
+
   ! Distances |P'P| and |E'E| projected ionto x,y,z-axis
-  xpp=xpp-xc(ijp); ypp=ypp-yc(ijp); zpp=zpp-zc(ijp)
-  xep=xep-xc(ijn); yep=yep-yc(ijn); zep=zep-zc(ijn)
+  xpp=xpp-xc(ijp)
+  ypp=ypp-yc(ijp)
+  zpp=zpp-zc(ijp)
+
+  xep=xep-xc(ijn)
+  yep=yep-yc(ijn)
+  zep=zep-zc(ijn)
 
   ! APU==1./AP x density - interpolated            
   rapr = (apu(ijp)*den(ijp)*vol(ijp)*fxp+apu(ijn)*den(ijn)*vol(ijn)*fxn)
@@ -74,8 +85,5 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
                    +(dPdxi(2,ijn)*yep-dPdxi(2,ijp)*ypp)   &
                    +(dPdxi(3,ijn)*zep-dPdxi(3,ijp)*zpp))  &
                    *dppnnr 
-
-  ! Underelax mass-flux correction - set urf in input file later
-  !fmcor= fmcor*0.6d0
 
 end subroutine

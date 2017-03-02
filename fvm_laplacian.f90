@@ -89,53 +89,53 @@ subroutine fvm_laplacian(mu,phi)
 
 !.....Modify matrix coefficients to reflect presence of Boundary Conditions in PDE problem.
 
-  ! Contribution from inlet boundaries
-  do i=1,ninl
-    iface = iInletFacesStart+i
-    ijp = owner(iface)
-    ijb = iInletStart+i
+  ! ! Contribution from inlet boundaries
+  ! do i=1,ninl
+  !   iface = iInletFacesStart+i
+  !   ijp = owner(iface)
+  !   ijb = iInletStart+i
 
-    k=diag(ijp)
-    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
-    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+  !   k=diag(ijp)
+  !   are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+  !   dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
-    a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
-    su(ijp) = su(ijp) + a(k)*phi(ijb)
+  !   a(k) = a(k) - mu(ijp)*are/dpw  
+  !   su(ijp) = su(ijp) + a(k)*phi(ijb)
 
-  end do
+  ! end do
 
-  ! Contribution from outlet boundaries
-  do i=1,nout
-    iface = iOutletFacesStart+i
-    ijp = owner(iface)
-    ijb = iOutletStart+i
+  ! ! Contribution from outlet boundaries
+  ! do i=1,nout
+  !   iface = iOutletFacesStart+i
+  !   ijp = owner(iface)
+  !   ijb = iOutletStart+i
 
-    k=diag(ijp)
-    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
-    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+  !   k=diag(ijp)
+  !   are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+  !   dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
-    a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
-    su(ijp) = su(ijp) + a(k)*phi(ijb)
+  !   a(k) = a(k) - mu(ijp)*are/dpw 
+  !   su(ijp) = su(ijp) + a(k)*phi(ijb)
 
-  end do
+  ! end do
 
-  ! Contribution from symmetry boundaries
-  do i=1,nsym
-    iface = iSymmetryFacesStart
-    ijp = owner(iface)
-    ijb = iSymmetryStart+i
+  ! ! Contribution from symmetry boundaries
+  ! do i=1,nsym
+  !   iface = iSymmetryFacesStart
+  !   ijp = owner(iface)
+  !   ijb = iSymmetryStart+i
 
-    k=diag(ijp)
+  !   k=diag(ijp)
 
-    are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
-    dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
+  !   are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+  !   dpw = sqrt( (xc(ijp)-xf(iface))**2 + (yc(ijp)-yf(iface))**2 + (zc(ijp)-zf(iface))**2 )
 
-    a(k) = a(k) - mu(ijp)*are/dpw !..or mu_wall*are/dpw;  
+  !   a(k) = a(k) - mu(ijp)*are/dpw 
 
-    ! a(k) = a(k) - mu(ijp)*srds(i)  
-    su(ijp) = su(ijp) + a(k)*phi(ijb)
+  !   ! a(k) = a(k) - mu(ijp)*srds(i)  
+  !   su(ijp) = su(ijp) + a(k)*phi(ijb)
 
-  end do
+  ! end do
 
   ! Contribution from wall boundaries
   do i=1,nwal

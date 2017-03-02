@@ -26,7 +26,7 @@ subroutine PIMPLE_multiple_correction
   real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
-  h(:) = a(:) 
+  h = a 
 
 !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   DO icorr=1,ncorr
@@ -45,8 +45,14 @@ subroutine PIMPLE_multiple_correction
     !
     call get_rAU_x_UEqnH()
 
-    a(:) = 0.0d0
-    su(:) = 0.0d0 
+    ! Tentative (!) velocity gradients used for velocity interpolation: 
+    call grad(U,dUdxi)
+    call grad(V,dVdxi)
+    call grad(W,dWdxi) 
+
+    ! Initialize coefficient array and source:
+    a = 0.0d0
+    su = 0.0d0 
 
     ! > Assemble off diagonal entries of system matrix and find mass flux,
     !   accumulate diagonal entries of sysem matrix, and rhs vector stored in su array.
@@ -120,12 +126,8 @@ subroutine PIMPLE_multiple_correction
     if(.not.const_mflux) call adjustMassFlow
 
 
-
-
-  
-
-  ! Test continutity:
-  write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  ! ! Test continutity:
+  ! write(6,'(20x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
 
 
 
@@ -145,14 +147,12 @@ subroutine PIMPLE_multiple_correction
     DO ipcorr=1,npcor                                                                    
                                                                                          
       ! Initialize pressure
-      pp(:)=0.0d0                                                        
+      pp=0.0d0                                                        
                                                                                          
       ! Solving pressure equation
       call iccg(pp,ip)
                                                                                                                                            
                                                                                          
-      
-
       !
       ! Correct mass fluxes at inner cv-faces only (only inner flux)
       !

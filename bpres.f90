@@ -97,65 +97,7 @@ subroutine bpres(p,istage)
 
   else ! istage==2 and higher
 
-    ! Loop Boundary faces:
-
-    ! Inlet faces
-    do i=1,ninl
-      iface = iInletFacesStart+i
-      ijp = owner(iface)
-      ijb = iInletStart+i
-
-      ! Distance vector
-      xpb = xf(iface)-xc(ijp) 
-      ypb = yf(iface)-yc(ijp)
-      zpb = zf(iface)-zc(ijp)
-
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
-
-    end do
-
-    ! ! Outlet faces
-    ! do i=1,nout
-
-    !   ijp = owner(iOutletFacesStart+i)
-    !   ijb = iOutletStart+i
-
-    !   ! Takes owner cell value
-    !   p(ijb) = 0.0_dp !p(ijp)
-    ! end do
-
-    ! Outlet faces
-    do i=1,nout
-      iface = iOutletFacesStart+i
-      ijp = owner(iface)
-      ijb = iOutletStart+i
-
-      ! Distance vector
-      xpb = xf(iface)-xc(ijp) 
-      ypb = yf(iface)-yc(ijp)
-      zpb = zf(iface)-zc(ijp)
-
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb 
-
-    end do
-
-    ! Symmetry faces
-    do i=1,nsym
-      iface = iSymmetryFacesStart+i
-      ijp = owner(iface)
-      ijb = iSymmetryStart+i
-
-      ! Distance vector
-      xpb = xf(iface)-xc(ijp) 
-      ypb = yf(iface)-yc(ijp)
-      zpb = zf(iface)-zc(ijp)
-
-      ! Linear extrapolation
-      p(ijb) = p(ijp) + dPdxi(1,ijp)*xpb+dPdxi(2,ijp)*ypb+dPdxi(3,ijp)*zpb
-      
-    end do
+    ! ! Loop Boundary faces:
 
     ! Wall faces
     do i=1,nwal

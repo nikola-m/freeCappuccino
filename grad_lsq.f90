@@ -52,7 +52,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 !
 
   ! Initialize dmat matrix:
-  dmat(:,:) = 0.0_dp
+  dmat = 0.0_dp
 
   if(istage.eq.1) then
   ! Coefficient matrix - should be calculated only once 
@@ -124,9 +124,9 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   elseif(istage.eq.2) then
 
   ! Initialize rhs vector
-  b1(:) = 0.0_dp
-  b2(:) = 0.0_dp
-  b3(:) = 0.0_dp
+  b1 = 0.0_dp
+  b2 = 0.0_dp
+  b3 = 0.0_dp
 
   ! Inner faces:
 

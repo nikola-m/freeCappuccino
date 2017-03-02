@@ -35,10 +35,10 @@ subroutine allocate_arrays
     if(ierr /= 0)write(*,*)"allocation error: pp" 
 
   ! Turbulent K.E. and dissipation or any other turbulent scalar taking its place
-  ! allocate(te(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: te" 
-  ! allocate(ed(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: ed" 
+  allocate(te(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: te" 
+  allocate(ed(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: ed" 
 
   ! Effective viscosity  
   allocate(vis(numTotal),stat=ierr) 
@@ -184,10 +184,10 @@ subroutine allocate_arrays
     
   ! allocate(to(numTotal),stat=ierr) 
   !   if(ierr /= 0)write(*,*)"allocation error: to" 
-  ! allocate(teo(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: teo" 
-  ! allocate(edo(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: edo" 
+  allocate(teo(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: teo" 
+  allocate(edo(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: edo" 
   ! allocate(varto(numTotal),stat=ierr) 
   !   if(ierr /= 0)write(*,*)"allocation error: varto" 
   ! allocate(cono(numTotal),stat=ierr) 
@@ -202,10 +202,10 @@ subroutine allocate_arrays
     if(ierr /= 0)write(*,*)"allocation error: woo" 
   ! allocate(too(numTotal),stat=ierr) 
   !   if(ierr /= 0)write(*,*)"allocation error: too" 
-  ! allocate(teoo(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: teoo" 
-  ! allocate(edoo(numTotal),stat=ierr) 
-  !   if(ierr /= 0)write(*,*)"allocation error: edoo" 
+  allocate(teoo(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: teoo" 
+  allocate(edoo(numTotal),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: edoo" 
   ! allocate(vartoo(numTotal),stat=ierr) 
   !   if(ierr /= 0)write(*,*)"allocation error: vartoo" 
   ! allocate(conoo(numTotal),stat=ierr) 
@@ -265,10 +265,10 @@ subroutine allocate_arrays
   allocate(dPdxi(3,numCells),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: dPdxi"
 
-      ! allocate(dTEdxi(3,numCells),stat=ierr) 
-      !   if(ierr /= 0)write(*,*)"allocation error: dTEdxi"
-      ! allocate(dEDdxi(3,numCells),stat=ierr) 
-      !   if(ierr /= 0)write(*,*)"allocation error: dEDdxi"
+  allocate(dTEdxi(3,numCells),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: dTEdxi"
+  allocate(dEDdxi(3,numCells),stat=ierr) 
+    if(ierr /= 0)write(*,*)"allocation error: dEDdxi"
 
 
       !allocate(dTdxi(3,numCells),stat=ierr) 
@@ -277,9 +277,5 @@ subroutine allocate_arrays
         !if(ierr /= 0)write(*,*)"allocation error: dVartdxi"
       !allocate(dCondxi(3,numCells),stat=ierr) 
         !if(ierr /= 0)write(*,*)"allocation error: dCondxi"
-
-      ! !allocate(d(6,numCells),stat=ierr) 
-      ! allocate(d(3,6,numCells),stat=ierr) 
-      !   if(ierr /= 0)write(*,*)"allocation error: d"
 
 end subroutine

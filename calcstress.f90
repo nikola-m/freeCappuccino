@@ -11,7 +11,6 @@ subroutine calcstress
   use parameters
   use geometry, only: numCells, vol
   use variables
-  use k_epsilon_std, only: te
   use OMEGA_Turb_Models, only: bij
 
   implicit none 
@@ -26,9 +25,8 @@ subroutine calcstress
               dwdx, dwdy, dwdz        ! dwdxi - the velocity gradient
   real(dp) ::  uuold,vvold, wwold, &  ! Reynolds stress tensor  components 
               uvold, uwold,vwold 
-  real(dp) :: twothirds, facnapm
+  real(dp) :: facnapm
 
-  twothirds = 2.0d0/3.0d0
   facnapm = 1.0d0-facnap
 
   do inp=1,numCells

@@ -8,6 +8,7 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   use parameters
   use geometry, only: xc,yc,zc
   use variables
+  use interpolation 
 
   implicit none
 !
@@ -201,20 +202,47 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
     !  |________wj'_________|_______________wcorr___________________|
     we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
 
-    ! ue = face_interpolated(u,dUdxi,inp,idew,idns,idtb,fxp,fxe)
-    ! ve = face_interpolated(v,dVdxi,inp,idew,idns,idtb,fxp,fxe)
-    ! we = face_interpolated(w,dWdxi,inp,idew,idns,idtb,fxp,fxe)
+    ! ue = face_interpolated(ijp,ijn,xf,yf,zf,lambda,u,dUdxi)
+    ! ve = face_interpolated(ijp,ijn,xf,yf,zf,lambda,v,dVdxi)
+    ! we = face_interpolated(ijp,ijn,xf,yf,zf,lambda,w,dWdxi)
+
+    ! ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
+    ! ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
+    ! we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
 
     fuhigh=flomass*ue
     fvhigh=flomass*ve
     fwhigh=flomass*we
+
+
+    ! fuhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)+&
+    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, u, dUdxi)
+    ! fvhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)+&
+    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, v, dVdxi)
+    ! fwhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)+&
+    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, w, dWdxi)
+
+    ! fuhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)+&
+    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)
+    ! fvhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)+&
+    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)
+    ! fwhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)+&
+    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)
+
+    ! fuhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)+&
+    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, u, dUdxi)
+    ! fvhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)+&
+    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, v, dVdxi)
+    ! fwhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, w, dWdxi)+&
+    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, w, dWdxi)
+
 
   end if
 
 !--------------------------------------------------------------------------------------------
 !     BOUNDED HIGH-ORDER CONVECTIVE SCHEMES (Waterson & Deconinck JCP 224 (2007) pp. 182-207)
 !--------------------------------------------------------------------------------------------
-  if(lsmart.or.lavl.or.lmuscl.or.lumist.or.lgamma) then
+  if(lluds.or.lsmart.or.lavl.or.lmuscl.or.lumist.or.lgamma) then
 
   !.... find r's. this is universal for all schemes.
   !.....if flow goes from p to e
@@ -286,13 +314,22 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   elseif(lgamma) then
   !.....psi for gamma scheme:
   !.....if flow goes from p to e
-  psiw1 = max(0., min(r1, 2.*r1/(r1+1.)))
-  psiw2 = max(0., min(r2, 2.*r2/(r2+1.)))
-  psiw3 = max(0., min(r3, 2.*r3/(r3+1.)))
+  ! psiw1 = max(0., min(r1, 2.*r1/(r1+1.)))
+  ! psiw2 = max(0., min(r2, 2.*r2/(r2+1.)))
+  ! psiw3 = max(0., min(r3, 2.*r3/(r3+1.)))
+  ! !.....if flow goes from e to p
+  ! psie1 = max(0., min(r4, 2.*r4/(r4+1.)))
+  ! psie2 = max(0., min(r5, 2.*r5/(r5+1.)))
+  ! psie3 = max(0., min(r6, 2.*r6/(r6+1.)))
+  !.....psi for koren scheme:
+  !.....if flow goes from p to e
+       psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
+       psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
+       psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
   !.....if flow goes from e to p
-  psie1 = max(0., min(r4, 2.*r4/(r4+1.)))
-  psie2 = max(0., min(r5, 2.*r5/(r5+1.)))
-  psie3 = max(0., min(r6, 2.*r6/(r6+1.)))
+       psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
+       psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
+       psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
   !=====end gamma scheme=============================
 
   !=====luds scheme================================

@@ -44,11 +44,11 @@ subroutine PISO_multiple_correction
     call get_rAU_x_UEqnH() 
 
     ! Tentative (!) velocity gradients used for velocity interpolation: 
-    call grad(U,dUdxi)
-    call grad(V,dVdxi)
-    call grad(W,dWdxi) 
+    ! call grad(U,dUdxi)
+    ! call grad(V,dVdxi)
+    ! call grad(W,dWdxi) 
 
-    ! Initialize coeffisient array and source:
+    ! Initialize coefficient array and source:
     a = 0.0_dp
     su = 0.0_dp 
 
@@ -133,7 +133,7 @@ subroutine PISO_multiple_correction
     !// one cell's pressure has to be set to produce a unique pressure solution
     !     pEqn.setReference(pRefCell, pRefValue);
     !//
-    a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
+    ! a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
     a( diag(pRefCell) ) = 1.0_dp
 
     ! Reference pressure
@@ -144,7 +144,7 @@ subroutine PISO_multiple_correction
     DO ipcorr=1,npcor
      
       ! Initialize pressure
-      pp=0.0_dp 
+      ! pp=0.0_dp 
 
       ! Solve pressure equation system
       ! call bicgstab(pp,ip)
@@ -152,7 +152,8 @@ subroutine PISO_multiple_correction
 
       !                                                                                  
       ! Mass flux correction and source term modification for the ipcorr-th corrector.
-      !                
+      !        
+              
       ! if(ipcorr.ne.npcor) then                                            
 
       !   do i=1,numInnerFaces
@@ -183,11 +184,6 @@ subroutine PISO_multiple_correction
 
       !   end do
 
-      !     ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      !   write(6,'(20x,i1,a,/,20x,a,1pe10.3,/,20x,a,1pe10.3)')  &
-      !         ipcorr,'. nonorthogonal pass:', &
-      !         ' sum  =',sum(su),    &
-      !         '|sum| =',abs(sum(su))
       ! endif                                                                   
 
                                                                                                                                                                                

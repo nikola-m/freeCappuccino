@@ -9,13 +9,13 @@ subroutine init
 ! 1)  Open & Read Input File
 ! 2)  Open & Read Grid File & Allocate Arrays
 ! 3)  Index arrays of matrix elements stored in CSR format
-! 4)  Set Index Arrays For Cell Looping, Set Monitoring Point And Pressure Reference Point
-! 5)  Various initialisations
-!     5.1)  Field Initialisation
-! 6)  Read Restart File And Set Field Values
-! 7)  Initial Gradient Calculation
-! 8)  Initialization of parameters for boundary adjecent cells
-! 9)  Calculate distance to the nearest wall.
+! 4)  Various initialisations
+!     4.1)  Parameter Initialisation
+!     4.2)  Field Initialisation
+! 5)  Read Restart File And Set Field Values
+! 6)  Initial Gradient Calculation
+! 7)  Initialization of parameters for boundary adjecent cells
+! 8)  Calculate distance to the nearest wall.
 !
 !***********************************************************************
   use types
@@ -25,7 +25,8 @@ subroutine init
   use title_mod
   use gradients
   use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
-  use k_epsilon_std, only: te,ed,dTEdxi,dEDdxi,allocate_k_epsilon_std
+  ! use k_epsilon_std
+  use k_eqn_eddy
   use temperature, only: t,utt,vtt,wtt,pranl
   use utils, only: timestamp, show_logo, i4vec_print2
   use LIS_linear_solver_library
@@ -38,7 +39,7 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, ijp, ijn, inp, ijo, ijw, ijs, iface
+  integer :: i, ijp, ijn, inp, ijo, ijw, ijs, ijb, iface
   real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
@@ -126,6 +127,9 @@ subroutine init
   WRITE(6,'(a)') ' '
 
 
+  ! Turbulent flow computation condition
+  lturb = levm.or.lasm.or.lles
+
 !
 ! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
 !
@@ -135,23 +139,18 @@ subroutine init
 
   call allocate_gradients
 
-  select case (TurbModel)
-    case (1)
-      call allocate_k_epsilon_std
-    case default
-  end select  
-
 !
-! 3)  Index arrays of matrix elements stored in CSR format
+! 3) Index arrays of matrix elements stored in CSR format
 !
   call create_CSR_matrix_from_mesh_data
 
+
 !
-! 4)  Set Coefficient values for Turbulence models
+! 4) Various initialisations
 !
 
-  ! Turbulent flow computation
-  lturb = levm.or.lles
+
+! 4.1) Parameter Initialisation
 
 
   ! Reciprocal values of underrelaxation factors
@@ -159,15 +158,6 @@ subroutine init
     urfr(i)=1.0_dp / urf(i)
     urfm(i)=1.0_dp - urf(i)
   enddo
-
-
-
-
-!
-! 5)  Various initialisations
-!
-
-! 5.0)  Parameter Initialisation
 
   ! Initial time
   if(.not.lread) time = 0.0_dp
@@ -179,7 +169,7 @@ subroutine init
   magUbar = uin
 
 
-! 5.1)  Field Initialisation
+! 4.2)  Field Initialisation
 
 ! Field initialisation loop over inner cells--------------------------------
   do inp = 1,numCells
@@ -243,18 +233,20 @@ subroutine init
   u(ijw) = 0.0_dp
   v(ijw) = 0.0_dp
   w(ijw) = 0.0_dp
-  te(ijw) = tein
-  ed(ijw) = edin
+  te(ijw) = 0.
+  ed(ijw) = 0.
   enddo
 
-  ! Moving Wall
-  do i=1,20!nwalm
-  iface = iWallFacesStart + i !iWallMFacesStart + i
-  ijw = iWallStart+i !iWallMStart+i
-  u(ijw) = 1.0_dp
-  v(ijw) = 0.0_dp
-  w(ijw) = 0.0_dp
-  enddo
+  ! ! Moving Wall
+  ! do i=1,20!nwalm
+  ! iface = iWallFacesStart + i !iWallMFacesStart + i
+  ! ijw = iWallStart+i !iWallMStart+i
+  ! u(ijw) = 1.0_dp
+  ! v(ijw) = 0.0_dp
+  ! w(ijw) = 0.0_dp
+  ! te(ijw) = tein
+  ! ed(ijw) = edin
+  ! enddo
 
   ! ! Pressure Outlet
   ! do i=1,npru
@@ -326,7 +318,7 @@ subroutine init
   enddo
 
 !
-! 6)  Read Restart File And Set Field Values
+! 5)  Read Restart File And Set Field Values
 !
   if(lread) then
     call readfiles
@@ -336,7 +328,7 @@ subroutine init
 
 
 !
-! 7)  Initial Gradient Calculation
+! 6)  Initial Gradient Calculation
 !
   dUdxi = 0.0_dp
   dVdxi = 0.0_dp
@@ -364,7 +356,7 @@ subroutine init
 ! stop
 
 !
-! 8) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
+! 7) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
 !
 
   ! Loop over wall boundaries to calculate normal distance from cell center dnw.
@@ -416,15 +408,14 @@ subroutine init
 
 
   !
-  ! 9) Distance to the nearest wall needed for some turbulence models
+  ! 8) Distance to the nearest wall (needed for some turbulence models).
   !
 
     ! Source term
-    su = 0.0_dp
-    su(1:numCells) = -8*pi**2*sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells))*Vol(1:numCells)
+    su(1:numCells) = -Vol(1:numCells)
 
     ! Initialize solution
-    p(1:numTotal) = 0.0_dp
+    p = 0.0_dp
 
     do i=1,numBoundaryFaces
       iface = numInnerFaces+i
@@ -459,11 +450,31 @@ subroutine init
     ! call dpcg(p,ip)
     ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
 
-  ! do i=1,numCells
-  !   write(6,'(es11.4)') p(i)
-  ! enddo 
-  ! write(*,'(a)') ' '
-  ! write(*,'(a,es11.4)') 'L_inf error norm: ', maxval( abs( p(1:numCells)-sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells)) ) )
+    ! Update values at constant gradient bc faces - we need these values for correct gradients
+
+    ! Inlet faces
+    do i=1,ninl
+      iface = iInletFacesStart+i
+      ijp = owner(iface)
+      ijb = iInletStart+i
+      p(ijb)=p(ijp)
+    end do
+
+    ! Outlet faces
+    do i=1,nout
+      iface = iOutletFacesStart+i
+      ijp = owner(iface)
+      ijb = iOutletStart+i
+      p(ijb)=p(ijp)
+    end do
+
+    ! Symmetry faces
+    do i=1,nsym
+      iface = iSymmetryFacesStart+i
+      ijp = owner(iface)
+      ijb = iSymmetryStart+i
+      p(ijb)=p(ijp)
+    end do
 
     sor(ip) = sor_backup
     nsw(ip) = nsw_backup
@@ -473,7 +484,7 @@ subroutine init
 
     ! Wall distance computation from Poisson eq. solution stored in pp:
     wallDistance = -sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:)  ) + &
-                    sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2*p  )
+                    sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2*p(1:numCells)  )
 
     ! Clear arrays
     su = 0.0_dp
@@ -481,9 +492,10 @@ subroutine init
     p = 0.0_dp
     dPdxi = 0.0_dp
   
-  ! write(*,'(a)') ' '
-  ! do i=1,numCells
-  !   write(6,'(es11.4)') wallDistance(i)
-  ! enddo   
+   ! write(*,'(a)') ' '
+   ! do i=1,numCells
+   !   write(6,'(es11.4)') wallDistance(i)
+   ! enddo   
+   ! stop
 
 end subroutine
