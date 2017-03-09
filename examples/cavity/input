@@ -19,7 +19,7 @@ t f f f f f f      LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
 10*1e-6     (SOR(I),I=1,NPHI)
 20 20 20 200 5 5 5 5 5 50    (NSW(I),I=1,NPHI)
 1000 1e+20 1001 1      NUMSTEP,TIMESTEP,NZAPIS,MAXIT
-f f f t      lstsq, lstsq_qr, lstsq_dm, gauss
+f t f f      lstsq, lstsq_qr, lstsq_dm, gauss
 1 1      NPCOR, NIGRAD
 t f      BDF,CN
 t f f 1      SIMPLE,PISO,PIMPLE,ncorr

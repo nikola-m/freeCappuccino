@@ -93,18 +93,18 @@ program caffa3d_uns
     woo = wo 
     teoo = teo 
     edoo = edo
-    too = to 
-    vartoo = varto 
-    conoo = cono 
+    if (lcal(ien)) too = to 
+    if (lcal(ivart)) vartoo = varto 
+    if (lcal(icon)) conoo = cono 
   endif
     uo = u 
     vo = v 
     wo = w 
     teo = te 
     edo = ed 
-    to = t         
-    varto = vart 
-    cono = con 
+    if (lcal(ien)) to = t         
+    if (lcal(ivart)) varto = vart 
+    if (lcal(icon)) cono = con 
 !
 !===============================================
 !.....Set inlet boundary conditions at every timestep

@@ -174,67 +174,67 @@ subroutine init
   do inp = 1,numCells
 
 ! Initialization of field variables from input file:
-  u(inp) = uin ! xc(inp)+yc(inp)+zc(inp) 
+  u(inp) = xc(inp)+yc(inp)+zc(inp) !uin
   v(inp) = vin
   w(inp) = win
   te(inp) = tein
   ed(inp) = edin
 
-! Channel flow:
-! Random number based fluctuation of mean profile            
-      ! call init_random_seed()
-      ! call random_number(perturb)    
-      ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
-      ! u(inp) = perturb*u(inp)
-      ! v(inp) = perturb/100.
-      ! w(inp) = perturb/100.
+  ! Channel flow:
+  ! Random number based fluctuation of mean profile            
+  ! call init_random_seed()
+  ! call random_number(perturb)    
+  ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
+  ! u(inp) = perturb*u(inp)
+  ! v(inp) = perturb/100.
+  ! w(inp) = perturb/100.
 
   enddo
  
   ! Initialize variables at boundaries
 
-  ! do i=1,numBoundaryFaces
-  ! iface = numInnerFaces+i
-  ! ijp = numCells+i
-  ! u(ijp) = xf(iface)+yf(iface)+zf(iface)
+  do i=1,numBoundaryFaces
+  iface = numInnerFaces+i
+  ijp = numCells+i
+  u(ijp) = xf(iface)+yf(iface)+zf(iface)
+  enddo
+
+  ! ! Inlet - will be defined in 'bcin'
+
+  ! ! Outlet - zero gradient
+  ! do i=1,nout
+  ! iface = iOutletFacesStart + i
+  ! ijp = owner(iface)
+  ! ijo = iOutletStart+i
+  ! u(ijo) = u(ijp)
+  ! v(ijo) = v(ijp)
+  ! w(ijo) = w(ijp)
+  ! te(ijo) = te(ijp)
+  ! ed(ijo) = ed(ijp)
   ! enddo
 
-  ! Inlet - will be defined in 'bcin'
+  ! ! Symmetry
+  ! do i=1,nsym
+  ! iface = iSymmetryFacesStart + i
+  ! ijp = owner(iface)
+  ! ijs = iSymmetryStart + i
+  ! u(ijs) = u(ijp)
+  ! v(ijs) = v(ijp)
+  ! w(ijs) = w(ijp)
+  ! te(ijs) = te(ijp)
+  ! ed(ijs) = ed(ijp)
+  ! enddo
 
-  ! Outlet - zero gradient
-  do i=1,nout
-  iface = iOutletFacesStart + i
-  ijp = owner(iface)
-  ijo = iOutletStart+i
-  u(ijo) = u(ijp)
-  v(ijo) = v(ijp)
-  w(ijo) = w(ijp)
-  te(ijo) = te(ijp)
-  ed(ijo) = ed(ijp)
-  enddo
-
-  ! Symmetry
-  do i=1,nsym
-  iface = iSymmetryFacesStart + i
-  ijp = owner(iface)
-  ijs = iSymmetryStart + i
-  u(ijs) = u(ijp)
-  v(ijs) = v(ijp)
-  w(ijs) = w(ijp)
-  te(ijs) = te(ijp)
-  ed(ijs) = ed(ijp)
-  enddo
-
-  ! Wall
-  do i=1,nwal
-  iface = iWallFacesStart + i
-  ijw = iWallStart+i
-  u(ijw) = 0.0_dp
-  v(ijw) = 0.0_dp
-  w(ijw) = 0.0_dp
-  te(ijw) = 0.
-  ed(ijw) = 0.
-  enddo
+  ! ! Wall
+  ! do i=1,nwal
+  ! iface = iWallFacesStart + i
+  ! ijw = iWallStart+i
+  ! u(ijw) = 0.0_dp
+  ! v(ijw) = 0.0_dp
+  ! w(ijw) = 0.0_dp
+  ! te(ijw) = 0.
+  ! ed(ijw) = 0.
+  ! enddo
 
   ! ! Moving Wall
   ! do i=1,20!nwalm
@@ -247,19 +247,19 @@ subroutine init
   ! ed(ijw) = edin
   ! enddo
 
-  ! ! Pressure Outlet
-  ! do i=1,npru
-  ! iface = iPressOutletFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
-  ! enddo
+  ! ! ! Pressure Outlet
+  ! ! do i=1,npru
+  ! ! iface = iPressOutletFacesStart + i
+  ! ! ijp = numCells+i
+  ! ! u(ijp) = ...
+  ! ! enddo
 
-  ! ! OC faces
-  ! do i=1,noc
-  ! iface = iOCFacesStart + i
-  ! ijp = numCells+i
-  ! u(ijp) = ...
-  ! enddo
+  ! ! ! OC faces
+  ! ! do i=1,noc
+  ! ! iface = iOCFacesStart + i
+  ! ! ijp = numCells+i
+  ! ! u(ijp) = ...
+  ! ! enddo
 
   !-------------------------------------------------------    
   ! Field initialisation over inner cells + boundary faces
@@ -272,29 +272,33 @@ subroutine init
   vis = viscos
 
   ! Temperature
-  ! t = tin
+  if(lcal(ien)) t = tin
 
-  ! ! Temperature variance
-  ! vart=vartin
+  ! Temperature variance
+  if(lcal(ivart)) vart = vartin
   
-  ! ! Concentration
-  ! con=conin
+  ! Concentration
+  if(lcal(icon)) con=conin
 
   ! Reynolds stress tensor components
-  uu = 0.0_dp
-  vv = 0.0_dp
-  ww = 0.0_dp
-  uv = 0.0_dp
-  uw = 0.0_dp
-  vw = 0.0_dp
+  if (lturb) then
+    uu = 0.0_dp
+    vv = 0.0_dp
+    ww = 0.0_dp
+    uv = 0.0_dp
+    uw = 0.0_dp
+    vw = 0.0_dp
+  endif
 
-  ! ! Turbulent heat fluxes
-  ! utt = 0.0_dp
-  ! vtt = 0.0_dp
-  ! wtt = 0.0_dp
+  ! Turbulent heat fluxes
+  if(lcal(ien).and.lbuoy) then
+    utt = 0.0_dp
+    vtt = 0.0_dp
+    wtt = 0.0_dp
+  endif
 
   ! Reynolds stress anisotropy
-  ! if(earsm_wj.or.earsm_m) bij(:,:)=0.0_dp
+  if(lasm) bij = 0.0_dp
 
   ! Pressure and pressure correction
   p = 0.0_dp
@@ -346,13 +350,13 @@ subroutine init
   call grad(W,dWdxi)
   
 
-! print*,'gradijenti:'
-! do i=1,numCells
-!   print*,i,':',dudxi(1,i)
-! enddo
-! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
-! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
-! stop
+print*,'gradijenti:'
+do i=1,numCells
+  print*,i,':',dudxi(1,i)
+enddo
+print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
+print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
+stop
 
 !
 ! 7) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
