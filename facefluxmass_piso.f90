@@ -70,27 +70,37 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
 
 
   !+Interpolate velocities to face center:+++++++++++++++++++++++++
+  !    |________Ue'_________|
+  ui = u(ijp)*fxp+u(ijn)*fxn
+
   ! Interpolate gradients defined at CV centers to faces
   duxi = dudxi(1,ijp)*fxp+dudxi(1,ijn)*fxn
   duyi = dudxi(2,ijp)*fxp+dudxi(2,ijn)*fxn
   duzi = dudxi(3,ijp)*fxp+dudxi(3,ijn)*fxn
-  !    |________Ue'_________|_______________Ucorr___________________|
-  ui = u(ijp)*fxp+u(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! UI = face_interpolated(U,dUdxi,ijp,idew,idns,idtb,fxp,fxn)
+  !      |_______________Ucorr________________|
+  ui = ui+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+
+
+
+  !  |________Ve'_________|
+  vi=v(ijp)*fxp+v(ijn)*fxn
 
   duxi = dvdxi(1,ijp)*fxp+dvdxi(1,ijn)*fxn
   duyi = dvdxi(2,ijp)*fxp+dvdxi(2,ijn)*fxn
   duzi = dvdxi(3,ijp)*fxp+dvdxi(3,ijn)*fxn
-  !  |________Ve'_________|_______________Vcorr___________________|
-  vi=v(ijp)*fxp+v(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! VI = face_interpolated(V,dVdxi,ijp,idew,idns,idtb,fxp,fxn)
+  !    |_______________Vcorr________________|
+  vi=vi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+
+  
+
+ !  |________We'_________|
+  wi=w(ijp)*fxp+w(ijn)*fxn
 
   duxi = dwdxi(1,ijp)*fxp+dwdxi(1,ijn)*fxn
   duyi = dwdxi(2,ijp)*fxp+dwdxi(2,ijn)*fxn
   duzi = dwdxi(3,ijp)*fxp+dwdxi(3,ijn)*fxn
-  !  |________We'_________|_______________Wcorr___________________|
-  wi=w(ijp)*fxp+w(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
-  ! WI = face_interpolated(W,dWdxi,ijp,idew,idns,idtb,fxp,fxn) 
+  !    |_______________Wcorr________________|
+  wi=wi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
   
   !+END: Interpolate velocities to face center:+++++++++++++++++++++++++
 

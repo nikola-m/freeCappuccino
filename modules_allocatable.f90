@@ -81,8 +81,19 @@ module parameters
   real(dp) :: CoNum,meanCoNum ! Courant number.  
 
 
-  ! Choosing discretization scheme cds, luds, smart,muscl, gamma, more in the future...
-  logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist,lgamma
+  ! Choosing discretization scheme cds, luds, smart,muscl, gamma, etc.
+  ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist,lgamma,lcds_flnt,l2nd_flnt,l2ndlim_flnt,lmuscl_flnt
+  logical :: lcds = .false.
+  logical :: lluds = .false.
+  logical :: lsmart = .false.
+  logical :: lavl = .false.
+  logical :: lmuscl = .false.
+  logical :: lumist = .false.
+  logical :: lgamma = .false.
+  logical :: lcds_flnt = .false.
+  logical :: l2nd_flnt = .false.
+  logical :: l2ndlim_flnt = .false.
+  logical :: lmuscl_flnt = .false.
     
   ! Logicals, mostly read from simulation-input file:
   logical ::  lturb,lread,lwrite,ltest             ! turbulent simulation, read restart file, write restart file, print residual of the linear solver,.,..      
@@ -91,6 +102,7 @@ module parameters
   logical ::  bdf,cn                               ! control for the time-stepping algorithm
   logical ::  simple,piso,pimple                   ! control for the velocity-pressure coupling algorithm
   logical ::  const_mflux                          ! control for constant flow rate 
+  logical :: solveOmega, solveEpsilon, SolveTKE    ! Selfexplanatory, used in 'init'
 
 
   integer :: ncorr                   ! PISO control parameter: no. of Piso corrections.
@@ -180,6 +192,10 @@ module variables
 
     real(dp), dimension(:), allocatable :: magStrain          ! Strain magnitude
     real(dp), dimension(:), allocatable :: Vorticity          ! Vorticity magnitude
+
+    real(dp) :: umin, umax
+    real(dp) :: vmin, vmax
+    real(dp) :: wmin, wmax
 
 end module variables
 

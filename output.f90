@@ -151,7 +151,7 @@ subroutine vtu_write ( output_unit, scalar_name, numNodes, numCells, &
   character ( len = 20 ) cells_num_string
 
   integer :: i,k
-  integer :: icell
+  integer :: icell,inode
   integer :: ntype
   integer :: offset
   integer :: cells_file
@@ -166,7 +166,7 @@ subroutine vtu_write ( output_unit, scalar_name, numNodes, numCells, &
   call i4_to_s_left ( numCells, cells_num_string )
 
   call get_unit( cells_file )
-  open( unit = cells_file, file='cells' )
+  open( unit = cells_file, file='polyMesh/cells' )
   rewind cells_file
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
@@ -175,34 +175,34 @@ subroutine vtu_write ( output_unit, scalar_name, numNodes, numCells, &
   '<Piece NumberOfPoints="',trim( node_num_string ),'" NumberOfCells="',trim( cells_num_string ),'">'
 
 
-!! <Scalars in nodes>
-!  write ( output_unit, '(6x,a)' ) '<PointData Scalars="scalars">'
-!  write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
-!
-!!   <Scalar field data>
-!    do inode=1,numNodes
-!      write( output_unit, '(es11.4)') scalar_field(inode) 
-!    enddo
-!!   </Scalar field data>
+! <Scalars in nodes>
+ write ( output_unit, '(6x,a)' ) '<PointData Scalars="scalars">'
+ write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
 
-!  write ( output_unit, '(8x,a)' ) '</DataArray>'
-!  write ( output_unit, '(6x,a)' ) '</PointData>'
+!   <Scalar field data>
+   do inode=1,numNodes
+     write( output_unit, '(es11.4)') scalar_field(inode) 
+   enddo
+!   </Scalar field data>
+
+ write ( output_unit, '(8x,a)' ) '</DataArray>'
+ write ( output_unit, '(6x,a)' ) '</PointData>'
 ! </Scalars in nodes>
 
-! <Scalars in cell-centers>
-  write ( output_unit, '(6x,a)' ) '<CellData Scalars="scalars">'
-  write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
+! ! <Scalars in cell-centers>
+!   write ( output_unit, '(6x,a)' ) '<CellData Scalars="scalars">'
+!   write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
 
-!
-! > Scalars in cell-centers > write scalar data
-!
-    do icell=1,numCells
-      write( output_unit, '(10x,es11.4)') scalar_field(icell) 
-    enddo
+! !
+! ! > Scalars in cell-centers > write scalar data
+! !
+!     do icell=1,numCells
+!       write( output_unit, '(10x,es11.4)') scalar_field(icell) 
+!     enddo
 
-  write ( output_unit, '(8x,a)' ) '</DataArray>'
-  write ( output_unit, '(6x,a)' ) '</CellData>'
-! </Scalars in cell-centers>
+!   write ( output_unit, '(8x,a)' ) '</DataArray>'
+!   write ( output_unit, '(6x,a)' ) '</CellData>'
+! ! </Scalars in cell-centers>
 
 !
 ! > Mesh data

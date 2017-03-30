@@ -72,7 +72,6 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
     !   ijp = owner(iface)
     !   ijb = numCells+i
     !   call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
-    !         if(ijp.eq.17) write(*,*) ijp,ijb,u(ijb), dudx(ijp), dudy(ijp), dudz(ijp)
     ! end do 
 
     ! Contribution from boundaries
@@ -95,7 +94,7 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
       ijp = owner(iface)
       ijb = iSymmetryStart+i
       call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
-    enddo
+    enddo   
 
     do i = 1,nwal
       iface = iWallFacesStart+i
@@ -179,6 +178,7 @@ subroutine gradco(ijp,ijn, &
 
     ! Value of the variable at cell-face center
     fie = fi(ijp)*fxp+fi(ijn)*fxn + dfxi*(xfc-xi)+dfyi*(yfc-yi)+dfzi*(zfc-zi)
+
 
     ! (interpolated mid-face value)x(area)
     dfxe = fie*sx

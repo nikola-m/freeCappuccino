@@ -1,8 +1,8 @@
 TO DO LIST:
-- Debug lsq metoda za gradijente - nesto ne stima, vidi sto pre.
 - Do kraja Spalart-Allmaras model
 - Koncentracija, Temperatura, Varijansa temperature
-- Kad ti se u skalarnoj rutini javlja fi, nemoj da hard kodiras ime varijable jebiga.
+- CO preseci, vise blokova, dekompozicija domena za paralelizaciju
+- Kad ti se u skalarnoj rutini javlja fi, nemoj da hard kodiras ime varijable.
 - kada da alocira te teo teoo ed edo edoo ? Ukljuci flagove ITE i IED u pricu u allocate.f90
 - Gledaj da sve instance densit prevedes u den(inp) da uzimas iz array-a, nije lose, necu uvek raditi sa const density.
 - Podesi vrednost za prt1 koje se koristi u calcheatflux, ili u init ili u calcheatflux direktno.

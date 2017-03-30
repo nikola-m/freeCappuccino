@@ -136,7 +136,7 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
     ! Explicit second order convection 
     fcfie=fm*fii
 
-  elseif(lluds) then
+  elseif(lluds.or.l2ndlim_flnt.or.l2nd_flnt) then
     !---------------------------------------------
     ! 2ND ORDER UPWIND DIFFERENCING SCHEME (LUDS) 
     !---------------------------------------------

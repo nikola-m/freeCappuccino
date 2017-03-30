@@ -120,6 +120,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
   if(ifi.eq.ite) prtr=1.0_dp/sigma_k
   if(ifi.eq.ied) prtr=1.0_dp/sigma_epsilon
 
+  fimin = minval(fi(1:numCells))
+  fimax = maxval(fi(1:numCells))
+
 ! Calculate gradient: 
   call grad(fi,dfidxi)
 

@@ -20,7 +20,7 @@ subroutine writefiles
 
 
 do i=1,numCells
-write(6,'(a,es11.4,1x,es11.4,1x,es11.4,a)') '(',u(i),v(i),w(i),')'
+  write(6,'(a,es11.4,1x,es11.4,1x,es11.4,a)') '(',u(i),v(i),w(i),')'
 enddo
 
 

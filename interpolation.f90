@@ -32,9 +32,9 @@ contains
 !     ve = face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)
 !     we = face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)
 !   elseif () then
-!     ue = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)
-!     ve = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)
-!     we = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)
+!     ue = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi, umin, umax)
+!     ve = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi, vmin, vmax)
+!     we = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi, wmin, wmax)
 !   elseif () then
 !     ue = face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)
 !     ve = face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)
@@ -47,76 +47,6 @@ contains
 ! end function
 
 
-!***********************************************************************
-!
-      function face_interpolated(inp,inn,xf,yf,zf,lambda,u,dUdxi) result(face_value)
-!
-!***********************************************************************
-!
-!     Variable interpolated at cell face center with non-orthogonality 
-!     correction.
-!     This is broken down version of two sided interpolation with cell
-!     values at two sides and corresponding gradients.
-!
-!***********************************************************************
-!
-      use types
-      use parameters
-      use geometry, only: numTotal,numCells,xc,yc,zc
-
-      implicit none
-!
-!***********************************************************************
-!
-
-!.....Result
-      real(dp) :: face_value
-
-!.....Arguments
-      integer, intent(in) :: inp, inn
-      real(dp), intent(in) :: xf,yf,zf
-      real(dp), intent(in) :: lambda
-      real(dp), dimension(numTotal), intent(in) :: u
-      real(dp), dimension(3,numCells), intent(in) :: dUdxi
-
-!.....Locals
-      real(dp) :: xpn,ypn,zpn,xi,yi,zi,fxp,fxn
-
-
-      fxn=lambda
-      fxp=1.0d0-fxn
-
-!.....Distance vector between cell centers
-      xpn=xc(inn)-xc(inp)
-      ypn=yc(inn)-yc(inp)
-      zpn=zc(inn)-zc(inp)
-
-!.....Coordinates of cell-face center - j
-
-!.....Coordinates of intersection point - j'
-      Xi=Xc(Inp)*Fxp+Xc(Inn)*Fxn
-      Yi=Yc(Inp)*Fxp+Yc(Inn)*Fxn
-      Zi=Zc(Inp)*Fxp+Zc(Inn)*Fxn
-
-      face_value = 0.5*( (U(Inp)+U(Inn)) +                &
-                 (                                        &
-                   (dUdxi(1,Inp)+dUdxi(1,Inn))*(Xf-Xi) +  &
-                   (dUdxi(2,Inp)+dUdxi(2,Inn))*(Yf-Yi) +  &
-                   (dUdxi(3,Inp)+dUdxi(3,Inn))*(Zf-Zi)    &
-                 ) +                                      &
-                 (                                        &
-                    dUdxi(1,Inp)*Xpn*Fxp +                &
-                    dUdxi(2,Inp)*Ypn*Fxp +                &
-                    dUdxi(3,Inp)*Zpn*Fxp                  &
-                  ) +                                     &
-                  (                                       &
-                    dUdxi(1,Inn)*Xpn*Fxn +                &
-                    dUdxi(2,Inn)*Ypn*Fxn +                &
-                    dUdxi(3,Inn)*Zpn*Fxn                  &
-                  )                                       &
-               )
-
-      end function
 
 
 !***********************************************************************
@@ -176,7 +106,7 @@ contains
       gradfi_n_y = gradfi(2,inn)
       gradfi_n_z = gradfi(3,inn)
 
-      nr = 0.50D0
+      nr = 0.5_dp
        
       gradfidr=gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp) &
               +gradfi_n_x*(xf-xcn)+gradfi_n_y*(yf-ycn)+gradfi_n_z*(zf-zcn)
@@ -316,7 +246,7 @@ contains
 
 !***********************************************************************
 !
-      function face_value_2nd_upwind_slope_limited(inp, xf, yf, zf, fi, gradfi, fimax,fimin) result(face_value)
+      function face_value_2nd_upwind_slope_limited(inp, xf, yf, zf, fi, gradfi, fimax, fimin) result(face_value)
 !
 !***********************************************************************
 !

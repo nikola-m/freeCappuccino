@@ -174,7 +174,7 @@ subroutine calcuvw
     sv(ijn) = sv(ijn) - svp
     sw(ijn) = sw(ijn) - swp
 
-  end do
+  end do 
 
   ! O- and C-grid cuts (these are not boundaries!)
   do i=1,noc
@@ -420,6 +420,9 @@ subroutine calcuvw
   ! Solve fvm equations
   call bicgstab(u,iu)
 
+  umin = minval(u(1:numCells))
+  umax = maxval(u(1:numCells))
+
   !
   !.....Assemble and solve system for V component of velocity
   !
@@ -458,7 +461,7 @@ subroutine calcuvw
   do inp = 1,numCells
 
     ! Main diagonal term assembly:
-    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp))
     ! a(diag(inp)) = spv(inp) - sum_off_diagonal_terms
 
     a(diag(inp)) = spv(inp) 
@@ -477,10 +480,11 @@ subroutine calcuvw
   ! Solve fvm equations
   call bicgstab(v,iv)
 
-
+  vmin = minval(v(1:numCells))
+  vmax = maxval(v(1:numCells))
  
   !
-  !.....Assemble and solve system for V component of velocity
+  !.....Assemble and solve system for W component of velocity
   !
 
   ! Crank-Nicolson time stepping source terms
@@ -536,5 +540,8 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(w,iw)
+
+  wmin = minval(w(1:numCells))
+  wmax = maxval(w(1:numCells))
 
 end subroutine

@@ -25,9 +25,7 @@ subroutine init
   use title_mod
   use gradients
   use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
-  ! use k_epsilon_std
-  ! use k_eqn_eddy
-  use utils, only: timestamp, show_logo, i4vec_print2
+  use utils, only: timestamp, show_logo, i4vec_print2, get_unit
   use LIS_linear_solver_library
 
   implicit none
@@ -38,12 +36,18 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, ijp, ijn, inp, ijo, ijw, ijs, ijb, iface
+  integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, iface
   real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
+
   integer :: nsw_backup
   real(dp) :: sor_backup
+
+  integer :: input_unit,input_status
+  character(80) :: key,field_type,boundary_type
+  character(25) :: convective_scheme
+  real(dp) :: u0, v0, w0, tke0, ed0
 
 !
 !***********************************************************************
@@ -77,7 +81,7 @@ subroutine init
   READ(5,*) LSGDH,LGGDH,LAFM
   READ(5,*) TurbModel
   READ(5,*) UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
-  READ(5,*) LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA
+  READ(5,*) convective_scheme
   READ(5,*) (GDS(I),I=1,NPHI)
   READ(5,*) (URF(I),I=1,NPHI)
   READ(5,*) (SOR(I),I=1,NPHI)
@@ -110,8 +114,8 @@ subroutine init
   WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
   WRITE(6,'(i2,1x,a)') TurbModel, 'TurbModel'
   WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
-  WRITE(6,'(7(L1,1x),a)') LCDS,LLUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA,'LCDS,LLUDS,LQUDS,LSMART,LAVL,LMUSCL,LUMIST,LGAMMA'
-  WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI), MUSCL velocity, CDS other'
+  WRITE(6,'(a,a)') convective_scheme, ': convective scheme'
+  WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI)'
   WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
   WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
   WRITE(6,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
@@ -128,6 +132,51 @@ subroutine init
 
   ! Turbulent flow computation condition
   lturb = levm.or.lasm.or.lles
+
+  ! Switches which define wether we look for some files in folder 0.
+  if ( TurbModel==1 .or. TurbModel==2 ) then
+    solveEpsilon = .true.
+    solveTKE = .true.
+  elseif ( TurbModel==3 .or. TurbModel==4 ) then
+    solveOmega = .true.
+    solveTKE = .true.
+  elseif( TurbModel==6 ) then
+    solveTKE = .true.
+  else
+    solveOmega = .false.
+    solveEpsilon = .false.
+    solveTKE = .false.
+  endif
+
+  ! Choice of convective schemes for velocity
+
+  if(adjustl(convective_scheme) == 'central') then
+    lcds = .true.
+  elseif(adjustl(convective_scheme) == 'linear') then
+    lluds = .true.
+  elseif(adjustl(convective_scheme) == 'smart') then
+    lsmart = .true.
+  elseif(adjustl(convective_scheme) == 'avl-smart') then
+    lavl = .true.
+  elseif(adjustl(convective_scheme) == 'muscl') then
+    lmuscl = .true.
+  elseif(adjustl(convective_scheme) == 'umist') then
+    lumist = .true.
+  elseif(adjustl(convective_scheme) == 'gamma') then
+    lgamma = .true.
+  elseif(adjustl(convective_scheme) == 'central-fluent') then
+    lcds_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'linear-fluent') then
+    l2nd_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'limited-linear-fluent') then
+    l2ndlim_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'muscl-fluent') then
+    lmuscl_flnt = .true.
+  endif
+
+  write(*,'(a)') ' '
+  write(*,'(2a)') '  Convective scheme: ', adjustl(convective_scheme)
+  write(*,'(a)') ' '
 
 !
 ! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
@@ -169,37 +218,749 @@ subroutine init
 
 
 ! 4.2)  Field Initialisation
+  
+  write(*,'(a)') ' '
+  write(*,'(a)') '  Initializing internal field and boundaries (reading 0/.. ):'
+  write(*,'(a)') ' '
 
-! Field initialisation loop over inner cells--------------------------------
-  do inp = 1,numCells
+  ! 
+  ! > Velocity
+  ! 
 
-! Initialization of field variables from input file:
-  u(inp) = xc(inp)+yc(inp)+zc(inp) !uin
-  v(inp) = vin
-  w(inp) = win
-  te(inp) = tein
-  ed(inp) = edin
+  call get_unit ( input_unit )
+  open ( unit = input_unit, file = '0/U')
+  write(*,'(a)') '  0/U'
+  rewind input_unit
 
-  ! Channel flow:
-  ! Random number based fluctuation of mean profile            
-  ! call init_random_seed()
-  ! call random_number(perturb)    
-  ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
-  ! u(inp) = perturb*u(inp)
-  ! v(inp) = perturb/100.
-  ! w(inp) = perturb/100.
+  do
 
+  read(input_unit,'(a)',iostat = input_status) key
+
+  if(input_status /= 0) exit
+
+    if(adjustl(key)=='internalField') then
+
+      write(*,'(2x,a)') 'internalField'
+
+      read(input_unit,*) field_type
+
+      if(adjustl(field_type)=='uniform') then
+
+          read(input_unit,*) u0,v0,w0
+
+          write(*,'(4x,a,3f9.3)') 'uniform',u0,v0,w0
+
+          do inp = 1,numCells
+            u(inp) = u0
+            v(inp) = v0
+            w(inp) = w0
+          enddo
+
+      elseif(adjustl(field_type)=='nonuniform') then
+
+          write(*,'(4x,a)') 'nonuniform'
+
+          do inp = 1,numCells
+            read(input_unit,*) u(inp),v(inp),w(inp)
+          enddo
+
+      endif
+
+    elseif(adjustl(key)=='boundaryField') then
+
+      write(*,'(2x,a)') 'boundaryField'      
+      
+      do 
+
+      read(input_unit,'(a)',iostat = input_status) boundary_type
+
+      if(input_status /= 0) exit
+
+      write(*,'(4x,a)') adjustl(boundary_type)
+
+        if(adjustl(boundary_type) == "inlet") then
+
+
+            read(input_unit,*) field_type
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) u0,v0,w0
+
+              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                u(ini) = u0
+                v(ini) = v0
+                w(ini) = w0
+              enddo     
+
+            else ! 'nonuniform'   
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                read(input_unit,*) u(ini),v(ini),w(ini)
+              enddo
+
+            endif
+
+
+        elseif(adjustl(boundary_type) == "outlet") then
+
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) u0,v0,w0
+
+              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijo = iOutletStart+i
+                u(ijo) = u0
+                v(ijo) = v0
+                w(ijo) = w0
+              enddo     
+
+            elseif(adjustl(field_type)=='zeroGradient') then  
+
+              write(*,'(6x,a)')  'zeroGradient'
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijp = owner(iface)
+                ijo = iOutletStart+i
+                u(ijo) = u(ijp)
+                v(ijo) = v(ijp)
+                w(ijo) = w(ijp)
+              enddo
+
+            endif
+
+
+
+        elseif(boundary_type == "wall") then
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) u0,v0,w0
+
+              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+
+              do i = 1,nwal
+                iface = iWallFacesStart+i
+                inw = iWallStart + i
+                u(inw) = u0
+                v(inw) = v0
+                w(inw) = w0
+              enddo      
+
+            elseif(adjustl(field_type)=='noSlip') then
+
+              write(*,'(6x,a)') 'noSlip'
+
+              do i = 1,nwal
+                iface = iWallFacesStart+i
+                inw = iWallStart + i
+                u(inw) = zero
+                v(inw) = zero
+                w(inw) = zero
+              enddo
+
+            endif
+
+        endif
+
+      enddo
+
+
+    endif  
+
+  
   enddo
+
+
+  ! What is left are dose boudaries that are not in 0
+
+  ! Symmetry
+  do i=1,nsym
+    iface = iSymmetryFacesStart + i
+    ijp = owner(iface)
+    ijs = iSymmetryStart + i
+    u(ijs) = u(ijp)
+    v(ijs) = v(ijp)
+    w(ijs) = w(ijp)
+  enddo
+
+  ! ! Pressure Outlet
+  ! do i=1,npru
+  !   iface = iPressOutletFacesStart + i
+  !   ijp = owner(iface)
+  !   u(ijp) = ...
+  ! enddo
+
+  ! ! OC faces
+  ! do i=1,noc
+  !   iface = iOCFacesStart + i
+  !   ijp = owner(iface)
+  !   u(ijp) = ...
+  ! enddo
+
+  
+  ! Initialize minimal and maximal field values for velocity
+  umin = minval(u(1:numCells))
+  umax = maxval(u(1:numCells))
+  vmin = minval(v(1:numCells))
+  vmax = maxval(v(1:numCells))
+  wmin = minval(w(1:numCells))
+  wmax = maxval(w(1:numCells))
+
+  write(*,'(a)') ' '
+
+  ! 
+  ! > TKE Turbulent kinetic energy
+  ! 
+
+  if(solveTKE) then
+
+  call get_unit ( input_unit )
+  open ( unit = input_unit, file = '0/k')
+  write(*,'(a)') '  0/k'
+  rewind input_unit
+
+
+  do
+
+  read(input_unit,'(a)',iostat = input_status) key
+
+  if(input_status /= 0) exit
+
+    if(adjustl(key)=='internalField') then
+
+      write(*,'(2x,a)') 'internalField'
+
+      read(input_unit,*) field_type
+
+      if(adjustl(field_type)=='uniform') then
+
+          read(input_unit,*) tke0
+
+          write(*,'(4x,a,f9.3)') 'uniform',tke0
+
+          do inp = 1,numCells
+            te(inp) = tke0
+          enddo
+
+      elseif(adjustl(field_type)=='nonuniform') then
+
+          write(*,'(4x,a)') 'nonuniform'
+
+          do inp = 1,numCells
+            read(input_unit,*) te(inp)
+          enddo
+
+      endif
+
+    elseif(adjustl(key)=='boundaryField') then
+
+      write(*,'(2x,a)') 'boundaryField'      
+      
+      do 
+
+      read(input_unit,'(a)',iostat = input_status) boundary_type
+
+      if(input_status /= 0) exit
+
+      write(*,'(4x,a)') adjustl(boundary_type)
+
+        if(adjustl(boundary_type) == "inlet") then
+
+
+            read(input_unit,*) field_type
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) tke0
+
+              write(*,'(6x,a,f9.3)') 'uniform',tke0
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                te(ini) = tke0
+              enddo     
+
+            else ! 'nonuniform'   
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                read(input_unit,*) te(ini)
+              enddo
+
+            endif
+
+
+        elseif(adjustl(boundary_type) == "outlet") then
+
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) tke0
+
+              write(*,'(6x,a,f9.3)') 'uniform',tke0
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijo = iOutletStart+i
+                te(ijo) = tke0
+              enddo     
+
+            elseif(adjustl(field_type)=='zeroGradient') then  
+
+              write(*,'(6x,a)')  'zeroGradient'
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijp = owner(iface)
+                ijo = iOutletStart+i
+                te(ijo) = te(ijp)
+              enddo
+
+            endif
+
+
+
+        elseif(boundary_type == "wall") then
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) tke0
+
+              write(*,'(6x,a,f9.3)') 'uniform',tke0
+
+              do i = 1,nwal
+                iface = iWallFacesStart+i
+                inw = iWallStart + i
+                te(inw) = tke0
+              enddo      
+
+            endif
+
+        endif
+
+      enddo
+
+
+    endif  
+
+  
+  enddo
+
+    ! What is left are dose boudaries that are not in 0
+
+    ! Symmetry
+    do i=1,nsym
+      iface = iSymmetryFacesStart + i
+      ijp = owner(iface)
+      ijs = iSymmetryStart + i
+      te(ijs) = te(ijp)
+    enddo
+
+    ! ! Pressure Outlet
+    ! do i=1,npru
+    !   iface = iPressOutletFacesStart + i
+    !   ijp = owner(iface)
+    !   te(ijp) = ...
+    ! enddo
+
+    ! ! OC faces
+    ! do i=1,noc
+    !   iface = iOCFacesStart + i
+    !   ijp = owner(iface)
+    !   te(ijp) = ...
+    ! enddo
+
+  endif
+
+
+  write(*,'(a)') ' '
+
+  ! 
+  ! > ED Turbulent kinetic energy dissipation rate
+  ! 
+
+  if(solveEpsilon) then
+
+  call get_unit ( input_unit )
+  open ( unit = input_unit, file = '0/epsilon')
+  write(*,'(a)') '  0/epsilon'
+  rewind input_unit
+
+
+  do
+
+  read(input_unit,'(a)',iostat = input_status) key
+
+  if(input_status /= 0) exit
+
+    if(adjustl(key)=='internalField') then
+
+      write(*,'(2x,a)') 'internalField'
+
+      read(input_unit,*) field_type
+
+      if(adjustl(field_type)=='uniform') then
+
+          read(input_unit,*) ed0
+
+          write(*,'(4x,a,f9.3)') 'uniform',ed0
+
+          do inp = 1,numCells
+            ed(inp) = ed0
+          enddo
+
+      elseif(adjustl(field_type)=='nonuniform') then
+
+          write(*,'(4x,a)') 'nonuniform'
+
+          do inp = 1,numCells
+            read(input_unit,*) ed(inp)
+          enddo
+
+      endif
+
+    elseif(adjustl(key)=='boundaryField') then
+
+      write(*,'(2x,a)') 'boundaryField'      
+      
+      do 
+
+      read(input_unit,'(a)',iostat = input_status) boundary_type
+
+      if(input_status /= 0) exit
+
+      write(*,'(4x,a)') adjustl(boundary_type)
+
+        if(adjustl(boundary_type) == "inlet") then
+
+
+            read(input_unit,*) field_type
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                ed(ini) = ed0
+              enddo     
+
+            else ! 'nonuniform'   
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                read(input_unit,*) ed(ini)
+              enddo
+
+            endif
+
+
+        elseif(adjustl(boundary_type) == "outlet") then
+
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijo = iOutletStart+i
+                ed(ijo) = ed0
+              enddo     
+
+            elseif(adjustl(field_type)=='zeroGradient') then  
+
+              write(*,'(6x,a)')  'zeroGradient'
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijp = owner(iface)
+                ijo = iOutletStart+i
+                ed(ijo) = ed(ijp)
+              enddo
+
+            endif
+
+
+
+        elseif(boundary_type == "wall") then
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i = 1,nwal
+                iface = iWallFacesStart+i
+                inw = iWallStart + i
+                ed(inw) = ed0
+              enddo      
+
+            endif
+
+        endif
+
+      enddo
+
+
+    endif  
+
+  
+  enddo
+
+  ! What is left are dose boudaries that are not in 0
+
+  ! Symmetry
+  do i=1,nsym
+    iface = iSymmetryFacesStart + i
+    ijp = owner(iface)
+    ijs = iSymmetryStart + i
+    ed(ijs) = ed(ijp)
+  enddo
+
+  ! ! Pressure Outlet
+  ! do i=1,npru
+  !   iface = iPressOutletFacesStart + i
+  !   ijp = owner(iface)
+  !   ed(ijp) = ...
+  ! enddo
+
+  ! ! OC faces
+  ! do i=1,noc
+  !   iface = iOCFacesStart + i
+  !   ijp = owner(iface)
+  !   ed(ijp) = ...
+  ! enddo
+
+  endif
+
+
+  write(*,'(a)') ' '
+
+
+  ! 
+  ! > ED Specific turbulent kinetic energy dissipation rate, also turbulence frequency - omega
+  ! 
+
+  if(solveOmega) then
+
+  call get_unit ( input_unit )
+  open ( unit = input_unit, file = '0/omega')
+  write(*,'(a)') '  0/omega'
+  rewind input_unit
+
+  do
+
+  read(input_unit,'(a)',iostat = input_status) key
+
+  if(input_status /= 0) exit
+
+    if(adjustl(key)=='internalField') then
+
+      write(*,'(2x,a)') 'internalField'
+
+      read(input_unit,*) field_type
+
+      if(adjustl(field_type)=='uniform') then
+
+          read(input_unit,*) ed0
+
+          write(*,'(4x,a,f9.3)') 'uniform',ed0
+
+          do inp = 1,numCells
+            ed(inp) = ed0
+          enddo
+
+      elseif(adjustl(field_type)=='nonuniform') then
+
+          write(*,'(4x,a)') 'nonuniform'
+
+          do inp = 1,numCells
+            read(input_unit,*) ed(inp)
+          enddo
+
+      endif
+
+    elseif(adjustl(key)=='boundaryField') then
+
+      write(*,'(2x,a)') 'boundaryField'      
+      
+      do 
+
+      read(input_unit,'(a)',iostat = input_status) boundary_type
+
+      if(input_status /= 0) exit
+
+      write(*,'(4x,a)') adjustl(boundary_type)
+
+        if(adjustl(boundary_type) == "inlet") then
+
+
+            read(input_unit,*) field_type
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                ed(ini) = ed0
+              enddo     
+
+            else ! 'nonuniform'   
+
+              do i = 1,ninl
+                iface = iInletFacesStart+i
+                ini = iInletStart + i
+                read(input_unit,*) ed(ini)
+              enddo
+
+            endif
+
+
+        elseif(adjustl(boundary_type) == "outlet") then
+
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijo = iOutletStart+i
+                ed(ijo) = ed0
+              enddo     
+
+            elseif(adjustl(field_type)=='zeroGradient') then  
+
+              write(*,'(6x,a)')  'zeroGradient'
+
+              do i=1,nout
+                iface = iOutletFacesStart + i
+                ijp = owner(iface)
+                ijo = iOutletStart+i
+                ed(ijo) = ed(ijp)
+              enddo
+
+            endif
+
+
+
+        elseif(boundary_type == "wall") then
+
+            read(input_unit,*) field_type
+
+            if(adjustl(field_type)=='uniform') then
+
+              read(input_unit,*) ed0
+
+              write(*,'(6x,a,f9.3)') 'uniform',ed0
+
+              do i = 1,nwal
+                iface = iWallFacesStart+i
+                inw = iWallStart + i
+                ed(inw) = ed0
+              enddo      
+
+            endif
+
+        endif
+
+      enddo
+
+
+    endif  
+
+  
+  enddo
+
+  ! What is left are dose boudaries that are not in 0
+
+  ! Symmetry
+  do i=1,nsym
+    iface = iSymmetryFacesStart + i
+    ijp = owner(iface)
+    ijs = iSymmetryStart + i
+    ed(ijs) = ed(ijp)
+  enddo
+
+  ! ! Pressure Outlet
+  ! do i=1,npru
+  !   iface = iPressOutletFacesStart + i
+  !   ijp = owner(iface)
+  !   ed(ijp) = ...
+  ! enddo
+
+  ! ! OC faces
+  ! do i=1,noc
+  !   iface = iOCFacesStart + i
+  !   ijp = owner(iface)
+  !   ed(ijp) = ...
+  ! enddo
+
+  endif
+
+
+! ! Field initialisation loop over inner cells--------------------------------
+!   do inp = 1,numCells
+
+! ! Initialization of field variables from input file:
+!   u(inp) = uin
+!   v(inp) = vin
+!   w(inp) = win
+!   te(inp) = tein
+!   ed(inp) = edin
+
+!   ! Channel flow:
+!   ! Random number based fluctuation of mean profile            
+!   ! call init_random_seed()
+!   ! call random_number(perturb)    
+!   ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
+!   ! u(inp) = perturb*u(inp)
+!   ! v(inp) = perturb/100.
+!   ! w(inp) = perturb/100.
+
+!   enddo
  
   ! Initialize variables at boundaries
 
-  do i=1,numBoundaryFaces
-  iface = numInnerFaces+i
-  ijp = numCells+i
-  u(ijp) = xf(iface)+yf(iface)+zf(iface)
-  enddo
-
-  ! ! Inlet - will be defined in 'bcin'
+  ! ! Inlet 
 
   ! ! Outlet - zero gradient
   ! do i=1,nout
@@ -218,6 +979,8 @@ subroutine init
   ! iface = iSymmetryFacesStart + i
   ! ijp = owner(iface)
   ! ijs = iSymmetryStart + i
+  !     ! Gradient test:
+  !     ! u(ijs) = xf(iface)+yf(iface)+zf(iface)
   ! u(ijs) = u(ijp)
   ! v(ijs) = v(ijp)
   ! w(ijs) = w(ijp)
@@ -229,11 +992,13 @@ subroutine init
   ! do i=1,nwal
   ! iface = iWallFacesStart + i
   ! ijw = iWallStart+i
+  !     ! Gradient test:
+  !     ! u(ijw) = xf(iface)+yf(iface)+zf(iface)
   ! u(ijw) = 0.0_dp
   ! v(ijw) = 0.0_dp
   ! w(ijw) = 0.0_dp
-  ! te(ijw) = 0.
-  ! ed(ijw) = 0.
+  ! te(ijw) = 0.0_dp
+  ! ed(ijw) = 0.0_dp
   ! enddo
 
   ! ! Moving Wall
@@ -247,19 +1012,22 @@ subroutine init
   ! ed(ijw) = edin
   ! enddo
 
-  ! ! ! Pressure Outlet
-  ! ! do i=1,npru
-  ! ! iface = iPressOutletFacesStart + i
-  ! ! ijp = numCells+i
-  ! ! u(ijp) = ...
-  ! ! enddo
+  ! ! Pressure Outlet
+  ! do i=1,npru
+  ! iface = iPressOutletFacesStart + i
+  ! ijp = owner(iface)
+  ! u(ijp) = ...
+  ! enddo
 
-  ! ! ! OC faces
-  ! ! do i=1,noc
-  ! ! iface = iOCFacesStart + i
-  ! ! ijp = numCells+i
-  ! ! u(ijp) = ...
-  ! ! enddo
+  ! ! OC faces
+  ! do i=1,noc
+  ! iface = iOCFacesStart + i
+  ! ijp = owner(iface)
+  ! u(ijp) = ...
+  ! enddo
+
+
+
 
   !-------------------------------------------------------    
   ! Field initialisation over inner cells + boundary faces
@@ -320,6 +1088,7 @@ subroutine init
 
   enddo
 
+
 !
 ! 5)  Read Restart File And Set Field Values
 !
@@ -327,7 +1096,6 @@ subroutine init
     call readfiles
     pp = p
   end if
-
 
 
 !
@@ -350,13 +1118,13 @@ subroutine init
   call grad(W,dWdxi)
   
 
-print*,'gradijenti:'
-do i=1,numCells
-  print*,i,':',dudxi(1,i)
-enddo
-print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
-print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
-stop
+! print*,'gradijenti:'
+! do i=1,numCells
+!   print*,i,':',dudxi(1,i)
+! enddo
+! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
+! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
+! stop
 
 !
 ! 7) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.

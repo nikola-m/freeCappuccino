@@ -116,17 +116,59 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 
   ! Boundary faces:
 
-  do i = 1,numBoundaryFaces
-
-    iface = numInnerFaces + i
+  ! Inlet: 
+  do i=1,ninl
+    iface = iInletFacesStart + i
     ijp = owner(iface)
-
         neighbour_index(ijp) = neighbour_index(ijp) + 1
         l = neighbour_index(ijp)
         D(1,l,ijp) = xf(iface)-xc(ijp)
         D(2,l,ijp) = yf(iface)-yc(ijp)
         D(3,l,ijp) = zf(iface)-zc(ijp)
+  end do
 
+  ! Outlet
+  do i=1,nout
+  iface = iOutletFacesStart + i
+  ijp = owner(iface)
+        neighbour_index(ijp) = neighbour_index(ijp) + 1
+        l = neighbour_index(ijp)
+        D(1,l,ijp) = xf(iface)-xc(ijp)
+        D(2,l,ijp) = yf(iface)-yc(ijp)
+        D(3,l,ijp) = zf(iface)-zc(ijp)
+  end do
+
+  ! Symmetry
+  do i=1,nsym
+  iface = iSymmetryFacesStart + i
+  ijp = owner(iface)
+        neighbour_index(ijp) = neighbour_index(ijp) + 1
+        l = neighbour_index(ijp)
+        D(1,l,ijp) = xf(iface)-xc(ijp)
+        D(2,l,ijp) = yf(iface)-yc(ijp)
+        D(3,l,ijp) = zf(iface)-zc(ijp)
+  end do
+
+  ! Wall
+  do i=1,nwal
+  iface = iWallFacesStart + i
+  ijp = owner(iface)
+        neighbour_index(ijp) = neighbour_index(ijp) + 1
+        l = neighbour_index(ijp)
+        D(1,l,ijp) = xf(iface)-xc(ijp)
+        D(2,l,ijp) = yf(iface)-yc(ijp)
+        D(3,l,ijp) = zf(iface)-zc(ijp)
+  end do
+
+  ! Pressure Outlet
+  do i=1,npru
+  iface = iPressOutletFacesStart + i
+  ijp = owner(iface)
+        neighbour_index(ijp) = neighbour_index(ijp) + 1
+        l = neighbour_index(ijp)
+        D(1,l,ijp) = xf(iface)-xc(ijp)
+        D(2,l,ijp) = yf(iface)-yc(ijp)
+        D(3,l,ijp) = zf(iface)-zc(ijp)
   end do
 
 !--------------------------------------------------------------------------------------------------
@@ -226,20 +268,8 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
  
   end do
 
-  ! ! Boundary faces:
-  ! do i = 1,numBoundaryFaces
+  ! Boundary faces:
 
-  !   iface = numInnerFaces + i
-  !   ijp = owner(iface)
-  !   ijn = numCells+i
-
-  !       neighbour_index(ijp) = neighbour_index(ijp) + 1
-  !       l = neighbour_index(ijp)
-  !       b(l,ijp) = fi(ijn)-fi(ijp)
-
-  ! end do
-
-  ! Contribution from boundaries
   do i = 1,ninl
     iface = iInletFacesStart+i
     ijp = owner(iface)

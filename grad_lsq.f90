@@ -110,14 +110,64 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   
   ! Boundary faces:
 
-  do i=numInnerFaces+1,numFaces
-    ijp = owner(i)
-        Dmat(1,ijp) = Dmat(1,ijp) + (xf(i)-xc(ijp))**2
-        Dmat(4,ijp) = Dmat(4,ijp) + (yf(i)-yc(ijp))**2
-        Dmat(6,ijp) = Dmat(6,ijp) + (zf(i)-zc(ijp))**2
-        Dmat(2,ijp) = Dmat(2,ijp) + (xf(i)-xc(ijp))*(yf(i)-yc(ijp)) 
-        Dmat(3,ijp) = Dmat(3,ijp) + (xf(i)-xc(ijp))*(zf(i)-zc(ijp)) 
-        Dmat(5,ijp) = Dmat(5,ijp) + (yf(i)-yc(ijp))*(zf(i)-zc(ijp)) 
+  ! Inlet: 
+  do i=1,ninl
+    iface = iInletFacesStart + i
+    ijp = owner(iface)
+        Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
+        Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
+        Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
+        Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
+        Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
+        Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
+  end do
+
+  ! Outlet
+  do i=1,nout
+  iface = iOutletFacesStart + i
+  ijp = owner(iface)
+        Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
+        Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
+        Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
+        Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
+        Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
+        Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
+  end do
+
+  ! Symmetry
+  do i=1,nsym
+  iface = iSymmetryFacesStart + i
+  ijp = owner(iface)
+        Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
+        Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
+        Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
+        Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
+        Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
+        Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
+  end do
+
+  ! Wall
+  do i=1,nwal
+  iface = iWallFacesStart + i
+  ijp = owner(iface)
+        Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
+        Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
+        Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
+        Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
+        Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
+        Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
+  end do
+
+  ! Pressure Outlet
+  do i=1,npru
+  iface = iPressOutletFacesStart + i
+  ijp = owner(iface)
+        Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
+        Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
+        Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
+        Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
+        Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
+        Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
   end do
 
 
@@ -163,17 +213,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
   end do
 
   ! Boundary faces:
-  ! do i=1,numBoundaryFaces
-  !   iface = numInnerFaces + i
-  !   ijp = owner(iface)
-  !   ijn = numCells+i
 
-  !       b1(ijp) = b1(ijp) + (Fi(ijn)-Fi(ijp))*(xf(iface)-xc(ijp)) 
-  !       b2(ijp) = b2(ijp) + (Fi(ijn)-Fi(ijp))*(yf(iface)-yc(ijp))  
-  !       b3(ijp) = b3(ijp) + (Fi(ijn)-Fi(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
-
-  ! Contribution from boundaries
   do i = 1,ninl
     iface = iInletFacesStart+i
     ijp = owner(iface)
@@ -232,6 +272,8 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
     A(2,2) = Dmat(4,inp)
     A(2,3) = Dmat(5,inp)
     A(3,3) = Dmat(6,inp)
+
+    ! ! Only if we use DGESV linear solver:
     ! A(2,1) = A(1,2)
     ! A(3,1) = A(1,3)
     ! A(3,2) = A(2,3)
@@ -241,7 +283,10 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
     B(2,1) = b2(inp)
     B(3,1) = b3(inp)
 
+    ! Solve 3x3 linear system:
     ! CALL DGESV( 3, 1, A, 3, IPIV, B, 3, INFO )
+
+    ! ... or exploit symmetry:
     CALL DPOSV( 'Upper', 3, 1, A, 3, B, 3, INFO )
 
     dFidxi(1,inp) = B(1,1)

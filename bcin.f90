@@ -4,7 +4,7 @@ subroutine bcin
   use parameters
   use geometry
   use variables
-  use title_mod, only: inlet_file
+  ! use title_mod, only: inlet_file
 
   implicit none
 
@@ -23,15 +23,15 @@ subroutine bcin
 
   if(ninl.gt.0) then
 
-    open(unit=7,file=inlet_file)
-    rewind 7
+    ! open(unit=7,file=inlet_file)
+    ! rewind 7
 
     ! Loop over inlet boundaries
     do i = 1,ninl
       iface = iInletFacesStart+i
       ini = iInletStart + i
 
-      read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini)!,t(ini)
+      ! read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini),t(ini)
 
       vis(ini) = viscos
 
@@ -52,7 +52,7 @@ subroutine bcin
 
     enddo
 
-    close(7)
+    ! close(7)
 
     ! Loop over outlet boundaries
 

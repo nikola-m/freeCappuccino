@@ -175,7 +175,7 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
 !
   use types
   use parameters
-  use geometry, only: numCells,numTotal,xc,yc,zc
+  use geometry, only: numCells,xc,yc,zc
 
   implicit none
 

@@ -190,54 +190,75 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   fvhigh = 0.0_dp
   fwhigh = 0.0_dp
 
+
   ! Explicit convective fluxes for CDS
   if(lcds) then
 
     ! > Velocities at cell face center
 
     !  |________uj'_________|_______________ucorr___________________|
-    ue=u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+    ue=u(ijp)*fxp+u(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
     !  |________vj'_________|_______________vcorr___________________|
-    ve=v(ijp)*fxp+v(ijn)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
+    ve=v(ijp)*fxp+v(ijn)*fxn!+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
     !  |________wj'_________|_______________wcorr___________________|
-    we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
-
-    ! ue = face_interpolated(ijp,ijn,xf,yf,zf,lambda,u,dUdxi)
-    ! ve = face_interpolated(ijp,ijn,xf,yf,zf,lambda,v,dVdxi)
-    ! we = face_interpolated(ijp,ijn,xf,yf,zf,lambda,w,dWdxi)
-
-    ! ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
-    ! ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
-    ! we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
+    we=w(ijp)*fxp+w(ijn)*fxn!+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
 
     fuhigh=flomass*ue
     fvhigh=flomass*ve
     fwhigh=flomass*we
 
+  end if
 
-    ! fuhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)+&
-    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, u, dUdxi)
-    ! fvhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)+&
-    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, v, dVdxi)
-    ! fwhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)+&
-    !          ce*face_value_2nd_upwind(ijn, xf, yf, zf, w, dWdxi)
 
-    ! fuhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)+&
-    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, u, dUdxi,0.0_dp,10.0_dp)
-    ! fvhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)+&
-    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, v, dVdxi,0.0_dp,10.0_dp)
-    ! fwhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)+&
-    !          ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, w, dWdxi,0.0_dp,10.0_dp)
+  !
+  ! > Convective schemes done as in FLUENT.
+  !
+  
+  if(lcds_flnt) then
 
-    ! fuhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)+&
-    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, u, dUdxi)
-    ! fvhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)+&
-    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, v, dVdxi)
-    ! fwhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, w, dWdxi)+&
-    !          ce*face_value_muscl(ijn, ijp, xf, yf, zf, w, dWdxi)
+    ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
+    ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
+    we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
 
+    fuhigh=flomass*ue
+    fvhigh=flomass*ve
+    fwhigh=flomass*we
+
+  endif
+
+  if(l2nd_flnt) then
+
+    fuhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)+&
+             ce*face_value_2nd_upwind(ijn, xf, yf, zf, u, dUdxi)
+    fvhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)+&
+             ce*face_value_2nd_upwind(ijn, xf, yf, zf, v, dVdxi)
+    fwhigh = cp*face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)+&
+             ce*face_value_2nd_upwind(ijn, xf, yf, zf, w, dWdxi)
 
   end if
+
+  if(l2ndlim_flnt) then
+
+    fuhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi, umin, umax)+&
+             ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, u, dUdxi, umin, umax)
+    fvhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi, vmin, vmax)+&
+             ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, v, dVdxi, vmin, vmax)
+    fwhigh = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi, wmin, wmax)+&
+             ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, w, dWdxi, wmin, wmax)
+
+  end if
+
+  if(lmuscl_flnt) then
+
+    fuhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)+&
+             ce*face_value_muscl(ijn, ijp, xf, yf, zf, u, dUdxi)
+    fvhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)+&
+             ce*face_value_muscl(ijn, ijp, xf, yf, zf, v, dVdxi)
+    fwhigh = cp*face_value_muscl(ijp, ijn, xf, yf, zf, w, dWdxi)+&
+             ce*face_value_muscl(ijn, ijp, xf, yf, zf, w, dWdxi)
+
+  end if
+
 
 !--------------------------------------------------------------------------------------------
 !     BOUNDED HIGH-ORDER CONVECTIVE SCHEMES (Waterson & Deconinck JCP 224 (2007) pp. 182-207)

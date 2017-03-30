@@ -79,6 +79,8 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   Kj = 0.5*(vol(ijp)*apu(ijp)+vol(ijn)*apu(ijn)) 
   cap = -dene*Kj*are/dpn
   can = cap
+
+
 !
 ! CELL FACE PRESSURE GRADIENTS AND VELOCITIES
 !
@@ -104,30 +106,46 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 
   ! UI-> (U)f -> second order interpolation at face
   !+Interpolate velocities to face center:+++++++++++++++++++++++++
+
+
+
+  !    |________Ue'_________|
+  ui = u(ijp)*fxp+u(ijn)*fxn
+
   ! Interpolate gradients defined at CV centers to faces
   ! duxi = dudxi(1,ijp)*fxp+dudxi(1,ijn)*fxn
   ! duyi = dudxi(2,ijp)*fxp+dudxi(2,ijn)*fxn
   ! duzi = dudxi(3,ijp)*fxp+dudxi(3,ijn)*fxn
-  ! !    |________Ue'_________|_______________Ucorr___________________|
-  ui = u(ijp)*fxp+u(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! UI = face_interpolated(U,dUdxi,ijp,idew,idns,idtb,fxp,fxn)
-  !ui = face_value_central(ijp,ijn, xf, yf, zf, u, dUdxi)
+  ! !      |_______________Ucorr________________|
+  ! ui = ui+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+
+  ! ui = face_value_central(ijp,ijn, xf, yf, zf, u, dUdxi)
+
+
+
+  !  |________Ve'_________|
+  vi=v(ijp)*fxp+v(ijn)*fxn
 
   ! duxi = dvdxi(1,ijp)*fxp+dvdxi(1,ijn)*fxn
   ! duyi = dvdxi(2,ijp)*fxp+dvdxi(2,ijn)*fxn
   ! duzi = dvdxi(3,ijp)*fxp+dvdxi(3,ijn)*fxn
-  ! !  |________Ve'_________|_______________Vcorr___________________|
-  vi=v(ijp)*fxp+v(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-  ! VI = face_interpolated(V,dVdxi,ijp,idew,idns,idtb,fxp,fxn)
-  !vi = face_value_central(ijp,ijn, xf, yf, zf, v, dVdxi)
+  ! !    |_______________Vcorr________________|
+  ! vi=vi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+
+  ! vi = face_value_central(ijp,ijn, xf, yf, zf, v, dVdxi)
+
+
+
+  !  |________We'_________|
+  wi=w(ijp)*fxp+w(ijn)*fxn
 
   ! duxi = dwdxi(1,ijp)*fxp+dwdxi(1,ijn)*fxn
   ! duyi = dwdxi(2,ijp)*fxp+dwdxi(2,ijn)*fxn
   ! duzi = dwdxi(3,ijp)*fxp+dwdxi(3,ijn)*fxn
-  ! !  |________We'_________|_______________Wcorr___________________|
-  wi=w(ijp)*fxp+w(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
-  ! WI = face_interpolated(W,dWdxi,ijp,idew,idns,idtb,fxp,fxn) 
-  !wi = face_value_central(ijp,ijn, xf, yf, zf, w, dWdxi)
+  ! !    |_______________Wcorr________________|
+  ! wi=wi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
+
+  ! wi = face_value_central(ijp,ijn, xf, yf, zf, w, dWdxi)
   
   !+END: Interpolate velocities to face center:+++++++++++++++++++++++++
 
@@ -142,7 +160,8 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 
   ! (1/ap)f*Sf*(Pn-Pp)
   !+Pressure deriv. along normal+++++++++++++++++++++++++++++++++++++++++ 
-  !.....Values at points p' and e' due to non-orthogonality. 
+
+  ! !.....Values at points p' and e' due to non-orthogonality. 
   ! xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
   ! xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz
   ! !.....Distances |P'P| and |E'E| projected ionto x,y,z-axis
@@ -169,8 +188,6 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 
   ! MASS FLUX via Rhie-Chow Interpolation of velocity
   flmass=dene*(ue*arx+ve*ary+we*arz)
-
-
 
   ! dpxi = 0.5*(dPdxi(1,ijn)+dPdxi(1,ijp))*xpn
   ! dpyi = 0.5*(dPdxi(2,ijn)+dPdxi(2,ijp))*ypn

@@ -339,7 +339,6 @@ subroutine mesh_geometry
 ! Locals
   integer :: i,j,k,l,ioc
   integer :: iface
-
   integer :: inp,inn
 
   character(len=1) :: ch
@@ -347,7 +346,8 @@ subroutine mesh_geometry
   character(len=80) :: line_string
 
   integer, dimension(nomax) :: node  ! It will store global node numbers of cell vertexes
-  integer :: nnodes                ! no. of nodes in face
+  integer :: nnodes                  ! no. of nodes in face
+  integer :: inode                   ! int counter
 
   integer :: numBoundaries,bctype,nfaces,startFace
   integer :: ifaceFriend, startFaceFriend
@@ -833,20 +833,24 @@ if (native_mesh_files)  then
 
     enddo
 
-    if(iface.le.numInnerFaces) then
+     if(iface.le.numInnerFaces) then
     ! > Cell-face centroid components - final
         xf(iface) = xf(iface) / (ax+1e-30)
         yf(iface) = yf(iface) / (ay+1e-30)
         zf(iface) = zf(iface) / (az+1e-30)
-    else       
-        xf(iface) = x(node(1))+x(node(2))+x(node(3))
-        yf(iface) = y(node(1))+y(node(2))+y(node(3))
-        zf(iface) = z(node(1))+z(node(2))+z(node(3))
-        if(nnodes.gt.3) then
-          xf(iface) = xf(iface)+x(node(4))
-          yf(iface) = yf(iface)+y(node(4))
-          zf(iface) = zf(iface)+z(node(4))
-        endif 
+    else   
+        ! > Because I could have not resolvde the problem, these line are inserted 
+        !   where face centroid is calculated by arithmetic average.  
+        xf(iface) = 0.0_dp
+        yf(iface) = 0.0_dp
+        zf(iface) = 0.0_dp
+
+        do inode=1,nnodes
+          xf(iface) = xf(iface)+x(node(inode))
+          yf(iface) = yf(iface)+y(node(inode))
+          zf(iface) = zf(iface)+z(node(inode))
+        end do
+
         xf(iface) = xf(iface) / dble(nnodes)
         yf(iface) = yf(iface) / dble(nnodes)
         zf(iface) = zf(iface) / dble(nnodes)
