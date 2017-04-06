@@ -45,11 +45,12 @@ A three-dimensional unstructured finite volume code for Computational Fluid Dyna
 The purpose of the code is to enable experimentation in discretizations and mathematical models. Therefore we have included many discretization options and we are in the process of implementation of many turbulence models and scalar equations for different variables.
 
 The code is based on the reference:
+
 N Mirkov, B Rašuo, S Kenjereš, On the improved finite volume procedure for simulation of turbulent flows over real complex terrains, Journal of Computational Physics, Vol. 297 (2015), pp.18-45.
 
 The code allows meshes in OpenFOAM® polyMesh format. Only slight changes are necessary in the 'boundary' file. 
 
-Discretized equations are written in CSR (Compressed Sparse Row) format, which allows easy interface with many linear solver libraries, such as LIS. Also, one can use linear solvers provided in the code such as, Incomplete Cholesky Conjugate Gradient (ICCG), ILU(0) preconditioned Bi-Conjugate Gradient Stabilised methoid for non-symmetric systems, etc.
+Discretized equations are written in CSR (Compressed Sparse Row) format, which allows easy interface with many linear solver libraries, such as [LIS](http://www.ssisc.org/lis/). Also, one can use linear solvers provided in the code such as, Incomplete Cholesky Conjugate Gradient (ICCG), ILU(0) preconditioned Bi-Conjugate Gradient Stabilised method for non-symmetric systems, etc.
 
 
 Download the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
