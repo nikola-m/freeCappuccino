@@ -61,15 +61,16 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   real(dp) :: are
   real(dp) :: xpn,ypn,zpn
   real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
-  ! real(dp) :: xi,yi,zi
+  real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
   real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
   real(dp) :: d1x,d1y,d1z
+  real(dp) :: d2x,d2y,d2z
   real(dp) :: de, vole, game, viste
   real(dp) :: fxp,fxn
-  real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  real(dp) :: nablaFIxdnnp,nablaFIxdppp
+  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
+  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
   real(dp) :: r1,r2
@@ -126,12 +127,12 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
     ! CENTRAL DIFFERENCING SCHEME (CDS) 
     !---------------------------------------------
     ! Interpolate variable FI defined at CV centers to face using corrected CDS:
-    ! ! Coordinates of interpolation point j'
-    ! xi=xc(ijp)*fxp+xc(ijn)*fxn
-    ! yi=yc(ijp)*fxp+yc(ijn)*fxn
-    ! zi=zc(ijp)*fxp+zc(ijn)*fxn
+    ! Coordinates of interpolation point j'
+    xi=xc(ijp)*fxp+xc(ijn)*fxn
+    yi=yc(ijp)*fxp+yc(ijn)*fxn
+    zi=zc(ijp)*fxp+zc(ijn)*fxn
     !   |________Ue'___________|_______________Ucorr_____________________|
-    fii=fi(ijp)*fxp+fi(ijn)*fxn!+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
+    fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
 
     ! Explicit second order convection 
     fcfie=fm*fii
@@ -204,48 +205,73 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   ! dpp_j * sf
   vole=xpn*arx+ypn*ary+zpn*arz
 
-  ! Find points P' and Pj'
-  xpp=xf-(xf-xc(ijp))*nxx
-  ypp=yf-(yf-yc(ijp))*nyy 
-  zpp=zf-(zf-zc(ijp))*nzz
+ !  !  !<- Intersection point offset and skewness correction -->
 
-  xep=xf-(xf-xc(ijn))*nxx 
-  yep=yf-(yf-yc(ijn))*nyy 
-  zep=zf-(zf-zc(ijn))*nzz     
+ !  ! Find points P' and Pj'
+ !  xpp=xf-(xf-xc(ijp))*nxx
+ !  ypp=yf-(yf-yc(ijp))*nyy 
+ !  zpp=zf-(zf-zc(ijp))*nzz
 
-  xpnp = xep-xpp 
-  ypnp = yep-ypp 
-  zpnp = zep-zpp
+ !  xep=xf-(xf-xc(ijn))*nxx 
+ !  yep=yf-(yf-yc(ijn))*nyy 
+ !  zep=zf-(zf-zc(ijn))*nzz     
 
-  volep = arx*xpnp+ary*ypnp+arz*zpnp
+ !  xpnp = xep-xpp 
+ !  ypnp = yep-ypp 
+ !  zpnp = zep-zpp
 
- ! Overrelaxed correction vector d2, where S=dpn+d2
+ !  volep = arx*xpnp+ary*ypnp+arz*zpnp
+
+ ! ! Overrelaxed correction vector d2, where S=dpn+d2
+ !  d1x = costn
+ !  d1y = costn
+ !  d1z = costn
+  
+ !  xpnp = xpnp*costn
+ !  ypnp = ypnp*costn
+ !  zpnp = zpnp*costn
+
+ !  ! Interpolate gradients defined at CV centers to faces
+ !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+ !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+ !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+
+ !  ! The cell face interpolated gradient (d phi / dx_i)_j:
+ !  ! Nonorthogonal corrections:         ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
+ !  ! And:                               ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
+ !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
+ !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+
+ !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+
+ !  !  !<-- Intersection point offset and skewness correction --|
+
+  !-- Skewness correction -->
+
+  ! Overrelaxed correction vector d2, where s=dpn+d2
   d1x = costn
   d1y = costn
   d1z = costn
-  
-  xpnp = xpnp*costn
-  ypnp = ypnp*costn
-  zpnp = zpnp*costn
+
+  d2x = xpn*costn
+  d2y = ypn*costn
+  d2z = zpn*costn
 
   ! Interpolate gradients defined at CV centers to faces
   dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
   dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
   dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
 
-  ! The cell face interpolated gradient (d phi / dx_i)_j:
-  ! Nonorthogonal corrections:         ___
-  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
-  ! And:                               ___
-  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
-  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
-  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+  !.....du/dx_i interpolated at cell face:
+  dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
 
-  dfixii = dfixi!*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-  dfiyii = dfiyi!*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-  dfizii = dfizi!*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-
-
+  ! <-- Skewness correction --|
   ! Explicit diffusion
   fdfie = game*(dfixii*arx + dfiyii*ary + dfizii*arz)  
 
@@ -306,15 +332,16 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
   real(dp) :: are
   real(dp) :: xpn,ypn,zpn
   real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
-  ! real(dp) :: xi,yi,zi
+  real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
   real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
   real(dp) :: d1x,d1y,d1z
+  real(dp) :: d2x,d2y,d2z
   real(dp) :: de, vole, game, viste, prtr
   real(dp) :: fxp,fxn
-  real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  real(dp) :: nablaFIxdnnp,nablaFIxdppp
+  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
+  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
   real(dp) :: r1,r2
@@ -372,12 +399,12 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
     ! CENTRAL DIFFERENCING SCHEME (CDS) 
     !---------------------------------------------
     ! Interpolate variable FI defined at CV centers to face using corrected CDS:
-    ! ! Coordinates of interpolation point j'
-    ! xi=xc(ijp)*fxp+xc(ijn)*fxn
-    ! yi=yc(ijp)*fxp+yc(ijn)*fxn
-    ! zi=zc(ijp)*fxp+zc(ijn)*fxn
+    ! Coordinates of interpolation point j'
+    xi=xc(ijp)*fxp+xc(ijn)*fxn
+    yi=yc(ijp)*fxp+yc(ijn)*fxn
+    zi=zc(ijp)*fxp+zc(ijn)*fxn
     !   |________Ue'___________|_______________Ucorr_____________________|
-    fii=fi(ijp)*fxp+fi(ijn)*fxn!+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
+    fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
 
     ! Explicit second order convection 
     fcfie=fm*fii
@@ -450,46 +477,73 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
   ! dpp_j * sf
   vole=xpn*arx+ypn*ary+zpn*arz
 
-  ! Find points P' and Pj'
-  xpp=xf-(xf-xc(ijp))*nxx
-  ypp=yf-(yf-yc(ijp))*nyy 
-  zpp=zf-(zf-zc(ijp))*nzz
+ !  ! |-- Intersection point offset and skewness correction -->
 
-  xep=xf-(xf-xc(ijn))*nxx 
-  yep=yf-(yf-yc(ijn))*nyy 
-  zep=zf-(zf-zc(ijn))*nzz     
+ !  ! Find points P' and Pj'
+ !  xpp=xf-(xf-xc(ijp))*nxx
+ !  ypp=yf-(yf-yc(ijp))*nyy 
+ !  zpp=zf-(zf-zc(ijp))*nzz
 
-  xpnp = xep-xpp 
-  ypnp = yep-ypp 
-  zpnp = zep-zpp
+ !  xep=xf-(xf-xc(ijn))*nxx 
+ !  yep=yf-(yf-yc(ijn))*nyy 
+ !  zep=zf-(zf-zc(ijn))*nzz     
 
-  volep = arx*xpnp+ary*ypnp+arz*zpnp
+ !  xpnp = xep-xpp 
+ !  ypnp = yep-ypp 
+ !  zpnp = zep-zpp
 
- ! Overrelaxed correction vector d2, where S=dpn+d2
+ !  volep = arx*xpnp+ary*ypnp+arz*zpnp
+
+ ! ! Overrelaxed correction vector d2, where S=dpn+d2
+ !  d1x = costn
+ !  d1y = costn
+ !  d1z = costn
+  
+ !  xpnp = xpnp*costn
+ !  ypnp = ypnp*costn
+ !  zpnp = zpnp*costn
+
+ !  ! Interpolate gradients defined at CV centers to faces
+ !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+ !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+ !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+
+ !  ! The cell face interpolated gradient (d phi / dx_i)_j:
+ !  ! Nonorthogonal corrections:          ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
+ !  ! And:                                ___
+ !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
+ !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
+ !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+
+ !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+
+ !  !<-- Intersection point offset and skewness correction --|
+
+  !-- Skewness correction -->
+
+  ! Overrelaxed correction vector d2, where s=dpn+d2
   d1x = costn
   d1y = costn
   d1z = costn
-  
-  xpnp = xpnp*costn
-  ypnp = ypnp*costn
-  zpnp = zpnp*costn
+
+  d2x = xpn*costn
+  d2y = ypn*costn
+  d2z = zpn*costn
 
   ! Interpolate gradients defined at CV centers to faces
   dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
   dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
   dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
 
-  ! The cell face interpolated gradient (d phi / dx_i)_j:
-  ! Nonorthogonal corrections:         ___
-  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
-  ! And:                               ___
-  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
-  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
-  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+  !.....du/dx_i interpolated at cell face:
+  dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+  dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
 
-  dfixii = dfixi!*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-  dfiyii = dfiyi!*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-  dfizii = dfizi!*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+  ! <-- Skewness correction --|
 
 
   ! Explicit diffusion

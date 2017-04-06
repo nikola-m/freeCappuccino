@@ -1,0 +1,1654 @@
+ 
+  You are running caffa3d-uns. 
+ 
+ 
+  April  6 2017   9:06:32.390 AM
+ 
+ 
+ 
+             MM          MMM
+            NMN.           MM
+           MMM..   OMM.    MMM.
+          .MMO.    MMM      MMM                         ...
+          MMM:     MMM      MMM                       .. .?DMD7..
+          MMM      MMM      MMM                      ..MMMMMMMMMMM~
+          MMM:     .M       MMM.                    .NMMMMMMMMMMMMMM
+          .MMM     .M.     .MMM.    ... .?MMMMM .. .MMMMMMMMMMMMMMMMM
+           MMM.    .M .    MMM. ....MMMMMMMMMMMM$..MMMMMM?     .7MMMMM.
+              MM.  M  M   MM  ..MMMMMMM~.. .MMMMM7MMMMMM.        7MMMMN
+                            =MMMMMM7..  ..MMM.MMMMMMMMM+         .MMMMM.
+                         DMMMMMD..  . . MMMM. .MMMMMMMM.        ..MMMMM.
+                    ..=MMMMMZ.     ...MMMM      MMMMMMMI.        .MMMM$.
+                    MMMMM8.   ..  .NMMMM..      :MMMMMMM         :MMMM.
+                 :MMMMM.......  ~MMMMN           MMMMMMMMO.      MMMM+
+             . ?MMMM:. ....  ,MMMMM              .MMMMMMMMM.    :MMMM.
+           ..IMMMM  .  .  =MMMMMI                ..MMMMMMMM.    MMMM=
+           .MMMM. .... DMMMMM?                     8MMMMM=     NMMMM
+          +MMM.   .~MMMMMM~                        .MMMM.     ,MMMM.
+         ~MM?.~MMMMMMM$                              MMMD    .MMMMM
+        .DMMMMMMM$                                   MMMM.  .MMMMM
+         .MMMM.                                      .MMMN..MMMMM,
+         ..MMMM.                                     .MMMM.MMMMMM
+           =MMMZ..   .=. ..         ..      =. ,:     .MMMMMMMMM
+           .MMMM~..  7  .MM.M   M   MM.    M.  ..  M  .MMMMMMMM+
+             MMMM....Z. .MM.M...M...MM..O:.  M . ~.M...ZMMMMMMM
+              MMMM,. ., :  ,:   :  :  :    .,  ,,  ,  . MMMMMMM
+               MMMM7. ..................................MMMMMM
+                MMMM8 ..................................MMMMMM
+                 NMMMM  ................................MMMMD
+                  7MMMM ............................... MMMM
+                    MMMMO............................. :MMM
+                     MMMMM..............................MMM
+                       MMMMM..........................MMMMM
+                        ZMMMMD.......................MMMMM
+                          MMMMMM.................. MMMMM
+                            MMMMMM. ............OMMMMMZ
+                              NMMMMM8.......=MMMMMMMI
+                                =MMMMMMMMMMMMMMMMM
+                                   NMMMMMMMMMM
+ 
+  Input file log: 
+---cut here-----------------------------------------------------------------------------
+Pitz-Daily backwad facing step                                        
+F T F      READ3,WRIT3,LTEST
+T T T T T T F T F F      (LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10
+  1   1   1      monCell,pRefCell,MPoints
+ 1.0000E+30  1.0000E-05      SLARGE,SORMAX
+ 1.0000E+00  1.0000E-05 DENSIT,VISCOS
+ 7.1000E-01  2.0000E+01  0.0000E+00 PRANL,TREF,BETA
+F   0.00 -9.81  0.00 1 LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
+F 30.00  0.0000E+00 roughWall,EROUGH,ZZERO
+0.20 0.60 FACNAP,FACFLX
+T 0.00 LTRANSIENT,BTIME
+T F F LEVM,LASM,LLES
+F F F LSGDH,LGGDH,LAFM
+ 3 TurbModel
+ 1.0000E+01  0.0000E+00  0.0000E+00  3.7500E-01  1.8455E+01  0.0000E+00  0.0000E+00  0.0000E+00 UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
+central                  : convective scheme
+0.99 0.99 0.99 0.00 1.00 1.00 0.00 0.00 0.00 0.00 (GDS(I),I=1,NPHI)
+0.70 0.70 0.70 0.30 0.70 0.70 0.30 0.70 0.60 0.90 (URF(I),I=1,NPHI)
+ 1.00E-06  1.00E-06  1.00E-06  1.00E-06  1.00E-07  1.00E-10  1.00E-06  1.00E-06  1.00E-06  1.00E-06 (SOR(I),I=1,NPHI)
+ 20  20  20 200  20  20   5   5   5   5 (NSW(I),I=1,NPHI)
+  100  1.00E-03    10   50 NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+F F F T lstsq, lstsq_qr, lstsq_dm, gauss
+1 1 NPCOR, NIGRAD
+T F  BDF,CN
+T F F 1 SIMPLE,PISO,PIMPLE,ncorr
+F      const_mflux
+F 1.0000E+00     CoNumFix, CoNumFixValue
+---cut here-----------------------------------------------------------------------------
+ 
+ 
+  Convective scheme: central                  
+ 
+ 
+  Mesh data: 
+ 
+  Number of nodes, numNodes =    25012
+ 
+  Number of cells, numCells =    12225
+ 
+  Number of cell-faces, numFaces =    49180
+ 
+  Number of inner cell-faces, numInnerFaces =    24170
+ 
+  Number of nonzero coefficients, nnz (= 2*numInnerFaces + numCells)  =    60565
+ 
+  Boundary information:
+ 
+  Number of cell-faces on boundary, numBoundaryFaces =    25010
+ 
+  Number of inlet faces  =       30
+ 
+  Number of outlet faces  =       57
+ 
+  Number of symmetry faces  =    24450
+ 
+  Number of wall faces  =      473
+ 
+  Cell data: 
+ 
+  First 10 elements of cell volumes array:
+ 
+         1  0.49604416E-09
+         2  0.47622556E-09
+         3  0.45719877E-09
+         4  0.43893216E-09
+         5  0.42139537E-09
+         6  0.40455923E-09
+         7  0.38839575E-09
+         8  0.37287805E-09
+         9  0.35798034E-09
+        10  0.34367784E-09
+ 
+  First 10 elements of cell x-centers array:
+ 
+         1  -.19808582E-01
+         2  -.18257364E-01
+         3  -.16768124E-01
+         4  -.15338383E-01
+         5  -.13965765E-01
+         6  -.12647988E-01
+         7  -.11382860E-01
+         8  -.10168278E-01
+         9  -.90022232E-02
+        10  -.78827559E-02
+ 
+  First 10 elements of cell y-centers array:
+ 
+         1  0.15669465E-03
+         2  0.15669465E-03
+         3  0.15669465E-03
+         4  0.15669465E-03
+         5  0.15669465E-03
+         6  0.15669465E-03
+         7  0.15669465E-03
+         8  0.15669465E-03
+         9  0.15669465E-03
+        10  0.15669465E-03
+ 
+  First 10 elements of cell z-centers array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  Face data: 
+ 
+  First 10 lines of owner and neighbour arrays:
+ 
+         1:     1       2
+         2:     1      19
+         3:     2       3
+         4:     2      20
+         5:     3       4
+         6:     3      21
+         7:     4       5
+         8:     4      22
+         9:     5       6
+        10:     5      23
+ 
+  First 10 elements of Arx array:
+ 
+         1  0.31338931E-06
+         2   0.0000000    
+         3  0.31338931E-06
+         4   0.0000000    
+         5  0.31338931E-06
+         6   0.0000000    
+         7  0.31338931E-06
+         8   0.0000000    
+         9  0.31338931E-06
+        10   0.0000000    
+ 
+  First 10 elements of Ary array:
+ 
+         1   0.0000000    
+         2  0.15828369E-05
+         3   0.0000000    
+         4  0.15195973E-05
+         5   0.0000000    
+         6  0.14588844E-05
+         7   0.0000000    
+         8  0.14005971E-05
+         9   0.0000000    
+        10  0.13446386E-05
+ 
+  First 10 elements of Arz array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  First 10 elements of xf array:
+ 
+         1  -.19017163E-01
+         2   0.0000000    
+         3  -.17497566E-01
+         4   0.0000000    
+         5  -.16038681E-01
+         6   0.0000000    
+         7  -.14638084E-01
+         8   0.0000000    
+         9  -.13293446E-01
+        10   0.0000000    
+ 
+  First 10 elements of yf array:
+ 
+         1   0.0000000    
+         2  0.31338931E-03
+         3   0.0000000    
+         4  0.31338931E-03
+         5   0.0000000    
+         6  0.31338931E-03
+         7   0.0000000    
+         8  0.31338931E-03
+         9   0.0000000    
+        10  0.31338931E-03
+ 
+  First 10 elements of zf array:
+ 
+         1   0.0000000    
+         2   0.0000000    
+         3   0.0000000    
+         4   0.0000000    
+         5   0.0000000    
+         6   0.0000000    
+         7   0.0000000    
+         8   0.0000000    
+         9   0.0000000    
+        10   0.0000000    
+ 
+  First 10 elements of interpolation factor (facint) array:
+ 
+         1  0.51019193    
+         2  0.47552846    
+         3  0.51019193    
+         4  0.47552846    
+         5  0.51019193    
+         6  0.47552846    
+         7  0.51019193    
+         8  0.47552846    
+         9  0.51019193    
+        10  0.47552846    
+ 
+  First 10 lines of Sorted IA and JA arrays:
+ 
+         1:     1       1
+         2:     1       2
+         3:     1      19
+         4:     2       1
+         5:     2       2
+         6:     2       3
+         7:     2      20
+         8:     3       2
+         9:     3       3
+        10:     3       4
+ 
+  First 20 lines of Diagonal adjacency vector:
+ 
+         1:             1
+         2:             5
+         3:             9
+         4:            13
+         5:            17
+         6:            21
+         7:            25
+         8:            29
+         9:            33
+        10:            37
+ 
+  First 10 lines of ioffset vector:
+ 
+         1:             1
+         2:             4
+         3:             8
+         4:            12
+         5:            16
+         6:            20
+         7:            24
+         8:            28
+         9:            32
+        10:            36
+ 
+  Initializing internal field and boundaries (reading 0/.. ):
+ 
+  0/U
+  internalField
+    uniform    0.000    0.000    0.000
+  boundaryField
+    inlet                                                                           
+      uniform   10.000    0.000    0.000
+    outlet                                                                          
+      zeroGradient
+    wall                                                                            
+    noSlip                                                                          
+ 
+  0/k
+  internalField
+    uniform    0.375
+  boundaryField
+    inlet                                                                           
+      uniform    0.375
+    outlet                                                                          
+      zeroGradient
+    wall                                                                            
+    uniform                                                                         
+    0.375                                                                           
+ 
+ 
+  0/omega
+  internalField
+    uniform  440.150
+  boundaryField
+    inlet                                                                           
+      uniform  440.150
+    outlet                                                                          
+      zeroGradient
+    wall                                                                            
+    uniform                                                                         
+    440.15                                                                          
+  
+  Gradient limiter: Venkatakrishnan
+  
+  Calculate distance to the nearest wall:
+  
+  PCG(IC0):  Solving for p, Initial residual =  1.452E-05, Final residual =  1.430E-21, No Iterations 177
+ 
+  Start iteration!
+ 
+  Inlet boundary condition information:
+ 
+  Mass inflow: 0.254000E-03
+  Momentum inflow: 0.254000E-02
+
+  Time step no. : 1 dt :  1.000E-03 Time =             0.001000
+
+  Courant Number mean:  0.000E+00 max:  0.000E+00
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.818E-03, Final residual =  1.540E-10, No Iterations 1
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.080E-04, Final residual =  4.693E-10, No Iterations 200
+  time step continuity errors : sum local =  6.615E-02, global = -5.080E-04, cumulative = -5.080E-04
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.491E-04, Final residual =  1.570E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  7.2662E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.184E+00, Final residual =  8.077E-11, No Iterations 7
+   0.0000E+00 <=  ED  <=  8.9825E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.182E-02, Final residual =  2.166E-09, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.460E-03, Final residual =  1.332E-09, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.099E-04, Final residual =  4.476E-10, No Iterations 196
+  time step continuity errors : sum local =  6.599E-02, global = -5.080E-04, cumulative = -1.016E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.791E-04, Final residual =  6.523E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  4.0195E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.530E+00, Final residual =  7.659E-12, No Iterations 8
+  -2.8055E+03 <=  ED  <=  8.5543E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.756E-02, Final residual =  1.726E-08, No Iterations 3
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.831E-03, Final residual =  7.138E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.320E-04, Final residual =  1.947E-10, No Iterations 200
+  time step continuity errors : sum local =  6.597E-02, global = -5.080E-04, cumulative = -1.524E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.220E-04, Final residual =  3.117E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  4.1788E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.193E+00, Final residual =  5.489E-12, No Iterations 8
+  -3.5685E+03 <=  ED  <=  8.3832E+04
+  ExecutionTime =  0.120 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  8.187E-03, Final residual =  6.088E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.517E-03, Final residual =  6.894E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.597E-04, Final residual =  1.511E-10, No Iterations 196
+  time step continuity errors : sum local =  6.601E-02, global = -5.080E-04, cumulative = -2.032E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.499E-04, Final residual =  2.870E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  4.6439E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.255E-01, Final residual =  3.492E-12, No Iterations 8
+  -3.4384E+03 <=  ED  <=  8.3090E+04
+  ExecutionTime =  0.121 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.247E-03, Final residual =  6.535E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  9.735E-04, Final residual =  6.024E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.383E-04, Final residual =  1.261E-10, No Iterations 194
+  time step continuity errors : sum local =  6.607E-02, global = -5.080E-04, cumulative = -2.540E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.054E-04, Final residual =  6.185E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.2564E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.069E-01, Final residual =  2.279E-11, No Iterations 7
+  -3.2876E+03 <=  ED  <=  8.2762E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.560E-03, Final residual =  6.297E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.340E-04, Final residual =  5.187E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.100E-04, Final residual =  9.434E-11, No Iterations 193
+  time step continuity errors : sum local =  6.615E-02, global = -5.080E-04, cumulative = -3.048E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  7.648E-05, Final residual =  3.375E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.5340E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.328E-01, Final residual =  3.709E-11, No Iterations 7
+  -3.0813E+03 <=  ED  <=  8.2614E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.829E-03, Final residual =  5.699E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.332E-04, Final residual =  5.828E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.012E-04, Final residual =  9.292E-11, No Iterations 190
+  time step continuity errors : sum local =  6.622E-02, global = -5.080E-04, cumulative = -3.556E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  5.774E-05, Final residual =  4.214E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.3283E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.916E-01, Final residual =  1.606E-10, No Iterations 21
+  -2.8188E+03 <=  ED  <=  8.2545E+04
+  ExecutionTime =  0.125 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.427E-03, Final residual =  5.914E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.091E-04, Final residual =  6.003E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  9.337E-05, Final residual =  8.379E-11, No Iterations 187
+  time step continuity errors : sum local =  6.630E-02, global = -5.080E-04, cumulative = -4.064E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.585E-05, Final residual =  6.606E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.1082E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.535E-01, Final residual =  5.836E-12, No Iterations 9
+  -2.4142E+03 <=  ED  <=  8.2513E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.165E-03, Final residual =  6.812E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.603E-04, Final residual =  9.448E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  8.756E-05, Final residual =  7.573E-11, No Iterations 184
+  time step continuity errors : sum local =  6.639E-02, global = -5.080E-04, cumulative = -4.572E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.706E-05, Final residual =  2.392E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.1222E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.385E-01, Final residual =  1.777E-11, No Iterations 8
+  -2.2008E+03 <=  ED  <=  8.2497E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.033E-03, Final residual =  5.572E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.077E-04, Final residual =  1.394E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  8.655E-05, Final residual =  8.444E-11, No Iterations 184
+  time step continuity errors : sum local =  6.646E-02, global = -5.080E-04, cumulative = -5.080E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.172E-05, Final residual =  1.228E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.2741E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.342E-01, Final residual =  1.101E-11, No Iterations 8
+  -2.2223E+03 <=  ED  <=  8.2488E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  9.046E-04, Final residual =  5.798E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.773E-04, Final residual =  2.458E-10, No Iterations 6
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  8.557E-05, Final residual =  7.585E-11, No Iterations 186
+  time step continuity errors : sum local =  6.654E-02, global = -5.080E-04, cumulative = -5.588E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.780E-05, Final residual =  1.344E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.4482E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.652E-01, Final residual =  7.193E-11, No Iterations 21
+  -2.2048E+03 <=  ED  <=  8.2483E+04
+  ExecutionTime =  0.127 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  8.315E-04, Final residual =  5.574E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.448E-04, Final residual =  4.405E-10, No Iterations 6
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  7.890E-05, Final residual =  7.887E-11, No Iterations 185
+  time step continuity errors : sum local =  6.660E-02, global = -5.080E-04, cumulative = -6.096E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.569E-05, Final residual =  1.229E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.6573E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.723E-01, Final residual =  2.319E-11, No Iterations 7
+  -2.1632E+03 <=  ED  <=  8.2481E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  7.608E-04, Final residual =  5.023E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.240E-04, Final residual =  7.863E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  7.481E-05, Final residual =  7.131E-11, No Iterations 183
+  time step continuity errors : sum local =  6.665E-02, global = -5.080E-04, cumulative = -6.604E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.385E-05, Final residual =  1.185E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8360E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.934E-01, Final residual =  5.694E-11, No Iterations 7
+  -2.2581E+03 <=  ED  <=  8.2479E+04
+  ExecutionTime =  0.116 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.998E-04, Final residual =  6.930E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.890E-04, Final residual =  6.109E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  7.435E-05, Final residual =  7.227E-11, No Iterations 183
+  time step continuity errors : sum local =  6.670E-02, global = -5.080E-04, cumulative = -7.112E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.213E-05, Final residual =  1.019E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9418E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.984E-01, Final residual =  3.737E-11, No Iterations 7
+  -3.7526E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.116 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.192E-04, Final residual =  2.578E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.637E-04, Final residual =  6.963E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.839E-05, Final residual =  6.600E-11, No Iterations 185
+  time step continuity errors : sum local =  6.674E-02, global = -5.080E-04, cumulative = -7.620E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.057E-05, Final residual =  3.496E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9592E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.710E-01, Final residual =  1.350E-12, No Iterations 8
+  -2.4870E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.947E-04, Final residual =  4.174E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.316E-04, Final residual =  5.799E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.919E-05, Final residual =  6.636E-11, No Iterations 183
+  time step continuity errors : sum local =  6.677E-02, global = -5.080E-04, cumulative = -8.128E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.992E-05, Final residual =  2.849E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8988E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.453E-01, Final residual =  4.301E-11, No Iterations 8
+  -2.5892E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.121 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.387E-04, Final residual =  4.964E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.084E-04, Final residual =  1.043E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.615E-05, Final residual =  6.200E-11, No Iterations 180
+  time step continuity errors : sum local =  6.680E-02, global = -5.080E-04, cumulative = -8.636E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.862E-05, Final residual =  3.054E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9341E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.180E-01, Final residual =  6.825E-11, No Iterations 21
+  -2.7039E+03 <=  ED  <=  8.2476E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.005E-04, Final residual =  4.680E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.938E-04, Final residual =  1.213E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.459E-05, Final residual =  5.625E-11, No Iterations 181
+  time step continuity errors : sum local =  6.683E-02, global = -5.080E-04, cumulative = -9.144E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.807E-05, Final residual =  6.200E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.0354E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.069E-01, Final residual =  3.052E-11, No Iterations 8
+  -2.8242E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.116 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.920E-04, Final residual =  2.026E-10, No Iterations 11
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.730E-04, Final residual =  5.089E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.678E-05, Final residual =  6.304E-11, No Iterations 178
+  time step continuity errors : sum local =  6.685E-02, global = -5.080E-04, cumulative = -9.652E-03
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.742E-05, Final residual =  9.709E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.1053E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.179E-01, Final residual =  4.055E-11, No Iterations 7
+  -2.9458E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.590E-04, Final residual =  3.145E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.566E-04, Final residual =  4.512E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.508E-05, Final residual =  5.316E-11, No Iterations 175
+  time step continuity errors : sum local =  6.687E-02, global = -5.080E-04, cumulative = -1.016E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.726E-05, Final residual =  1.617E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.1442E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.969E-01, Final residual =  3.837E-11, No Iterations 8
+  -3.0555E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.114 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.157E-04, Final residual =  3.306E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.477E-04, Final residual =  7.942E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.192E-05, Final residual =  5.840E-11, No Iterations 180
+  time step continuity errors : sum local =  6.688E-02, global = -5.080E-04, cumulative = -1.067E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.675E-05, Final residual =  1.694E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.1525E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.887E-01, Final residual =  4.004E-11, No Iterations 8
+  -3.1539E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.919E-04, Final residual =  4.654E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.264E-04, Final residual =  1.932E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.107E-05, Final residual =  5.800E-11, No Iterations 181
+  time step continuity errors : sum local =  6.689E-02, global = -5.080E-04, cumulative = -1.118E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.675E-05, Final residual =  1.392E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.1340E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.860E-01, Final residual =  4.193E-11, No Iterations 8
+  -3.2441E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.116 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.818E-04, Final residual =  7.454E-12, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.149E-04, Final residual =  1.551E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.203E-05, Final residual =  6.120E-11, No Iterations 180
+  time step continuity errors : sum local =  6.691E-02, global = -5.080E-04, cumulative = -1.168E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.640E-05, Final residual =  1.278E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.0949E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.862E-01, Final residual =  2.605E-11, No Iterations 7
+  -3.3321E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.115 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.738E-04, Final residual =  2.998E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.010E-04, Final residual =  1.520E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.270E-05, Final residual =  5.479E-11, No Iterations 181
+  time step continuity errors : sum local =  6.693E-02, global = -5.080E-04, cumulative = -1.219E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.626E-05, Final residual =  1.263E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.4670E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.669E-01, Final residual =  2.119E-10, No Iterations 21
+  -3.4066E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.124 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.470E-04, Final residual =  3.087E-10, No Iterations 8
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.875E-04, Final residual =  2.015E-11, No Iterations 7
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.976E-05, Final residual =  5.802E-11, No Iterations 181
+  time step continuity errors : sum local =  6.694E-02, global = -5.080E-04, cumulative = -1.270E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.594E-05, Final residual =  1.193E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.0965E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.516E-01, Final residual =  4.977E-12, No Iterations 9
+  -3.4578E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.125 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.327E-04, Final residual =  4.986E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.745E-04, Final residual =  9.256E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.748E-05, Final residual =  5.477E-11, No Iterations 179
+  time step continuity errors : sum local =  6.696E-02, global = -5.080E-04, cumulative = -1.321E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.557E-05, Final residual =  1.171E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.2014E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.289E-01, Final residual =  7.043E-12, No Iterations 9
+  -3.4884E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.266E-04, Final residual =  2.784E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.611E-04, Final residual =  3.508E-11, No Iterations 12
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.659E-05, Final residual =  4.983E-11, No Iterations 181
+  time step continuity errors : sum local =  6.698E-02, global = -5.080E-04, cumulative = -1.372E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.448E-05, Final residual =  1.149E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.4486E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.029E-01, Final residual =  2.857E-11, No Iterations 9
+  -3.4931E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.124 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.072E-04, Final residual =  1.159E-10, No Iterations 10
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.563E-04, Final residual =  1.348E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.400E-05, Final residual =  5.055E-11, No Iterations 181
+  time step continuity errors : sum local =  6.699E-02, global = -5.080E-04, cumulative = -1.422E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.430E-05, Final residual =  1.386E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.3012E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.939E-01, Final residual =  5.807E-12, No Iterations 10
+  -3.4707E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.120 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.859E-04, Final residual =  2.453E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.392E-04, Final residual =  1.632E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.219E-05, Final residual =  4.420E-11, No Iterations 180
+  time step continuity errors : sum local =  6.701E-02, global = -5.080E-04, cumulative = -1.473E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.359E-05, Final residual =  3.049E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8629E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.855E-01, Final residual =  7.163E-11, No Iterations 21
+  -3.4273E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.133 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.078E-04, Final residual =  2.443E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.293E-04, Final residual =  6.723E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.298E-05, Final residual =  5.268E-11, No Iterations 180
+  time step continuity errors : sum local =  6.703E-02, global = -5.080E-04, cumulative = -1.524E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.383E-05, Final residual =  5.632E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.6832E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.797E-01, Final residual =  3.687E-11, No Iterations 7
+  -3.3714E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.116 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.768E-04, Final residual =  2.125E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.265E-04, Final residual =  1.574E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.988E-05, Final residual =  4.174E-11, No Iterations 180
+  time step continuity errors : sum local =  6.705E-02, global = -5.080E-04, cumulative = -1.575E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.334E-05, Final residual =  1.878E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.6293E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.568E-01, Final residual =  1.913E-11, No Iterations 8
+  -3.3080E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.516E-04, Final residual =  1.860E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.139E-04, Final residual =  1.880E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.750E-05, Final residual =  4.289E-11, No Iterations 177
+  time step continuity errors : sum local =  6.706E-02, global = -5.080E-04, cumulative = -1.626E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.242E-05, Final residual =  4.846E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.6465E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.305E-01, Final residual =  1.529E-11, No Iterations 8
+  -3.2420E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.496E-04, Final residual =  1.697E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.040E-04, Final residual =  4.562E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.579E-05, Final residual =  4.269E-11, No Iterations 177
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -1.676E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.233E-05, Final residual =  3.915E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.7363E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.145E-01, Final residual =  1.817E-11, No Iterations 8
+  -3.1855E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.129 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.233E-04, Final residual =  1.530E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.009E-04, Final residual =  6.131E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.271E-05, Final residual =  3.782E-11, No Iterations 178
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -1.727E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.071E-05, Final residual =  1.440E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.7487E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.029E-01, Final residual =  3.040E-11, No Iterations 21
+  -3.1505E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.318E-04, Final residual =  1.392E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  8.997E-05, Final residual =  7.130E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.139E-05, Final residual =  3.753E-11, No Iterations 173
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -1.778E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.057E-05, Final residual =  1.130E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8004E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.053E-01, Final residual =  2.271E-11, No Iterations 8
+  -3.1371E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.121 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.287E-04, Final residual =  1.317E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  8.542E-05, Final residual =  7.819E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.069E-05, Final residual =  4.000E-11, No Iterations 174
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -1.829E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.068E-05, Final residual =  1.070E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8468E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.016E-01, Final residual =  1.852E-12, No Iterations 8
+  -3.1384E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.249E-04, Final residual =  1.347E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.802E-05, Final residual =  4.251E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.971E-05, Final residual =  3.850E-11, No Iterations 166
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -1.880E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.033E-05, Final residual =  6.933E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8837E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.940E-01, Final residual =  9.236E-13, No Iterations 9
+  -3.1468E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.335E-04, Final residual =  1.506E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.715E-05, Final residual =  4.412E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.988E-05, Final residual =  3.238E-11, No Iterations 175
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -1.930E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.030E-05, Final residual =  6.070E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.2099E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.854E-01, Final residual =  2.931E-11, No Iterations 21
+  -3.1597E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.127 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.171E-04, Final residual =  1.362E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.202E-05, Final residual =  1.584E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.875E-05, Final residual =  3.667E-11, No Iterations 172
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -1.981E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.031E-05, Final residual =  5.600E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.6597E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.766E-01, Final residual =  1.039E-10, No Iterations 21
+  -3.1741E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.124 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.104E-04, Final residual =  1.140E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.079E-05, Final residual =  2.187E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.788E-05, Final residual =  3.450E-11, No Iterations 169
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.032E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.037E-05, Final residual =  5.344E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.8406E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.682E-01, Final residual =  4.472E-11, No Iterations 21
+  -3.1875E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.132 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.920E-04, Final residual =  9.120E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.289E-05, Final residual =  1.363E-11, No Iterations 6
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.671E-05, Final residual =  3.425E-11, No Iterations 175
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.083E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  9.865E-06, Final residual =  6.221E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  7.1290E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.615E-01, Final residual =  2.669E-11, No Iterations 21
+  -3.1985E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.131E-04, Final residual =  7.434E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.760E-05, Final residual =  6.726E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.781E-05, Final residual =  3.543E-11, No Iterations 171
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.134E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  9.367E-06, Final residual =  1.189E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  7.1945E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.537E-01, Final residual =  2.153E-11, No Iterations 8
+  -3.2071E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.158E-04, Final residual =  6.392E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.947E-05, Final residual =  6.940E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.734E-05, Final residual =  3.625E-11, No Iterations 177
+  time step continuity errors : sum local =  6.706E-02, global = -5.080E-04, cumulative = -2.184E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  9.130E-06, Final residual =  7.370E-13, No Iterations 6
+   0.0000E+00 <=  TE  <=  6.9862E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.449E-01, Final residual =  1.662E-11, No Iterations 8
+  -3.2132E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.123E-04, Final residual =  5.576E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.141E-05, Final residual =  6.676E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.650E-05, Final residual =  3.538E-11, No Iterations 175
+  time step continuity errors : sum local =  6.706E-02, global = -5.080E-04, cumulative = -2.235E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.630E-06, Final residual =  4.611E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.5878E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.359E-01, Final residual =  1.306E-11, No Iterations 8
+  -3.2154E+03 <=  ED  <=  8.2477E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.121E-04, Final residual =  4.949E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.844E-05, Final residual =  5.998E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.657E-05, Final residual =  3.058E-11, No Iterations 172
+  time step continuity errors : sum local =  6.706E-02, global = -5.080E-04, cumulative = -2.286E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.912E-06, Final residual =  1.871E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.4069E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.271E-01, Final residual =  1.114E-11, No Iterations 8
+  -3.2128E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.094E-04, Final residual =  4.530E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.357E-05, Final residual =  1.892E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.638E-05, Final residual =  3.169E-11, No Iterations 175
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.337E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.439E-06, Final residual =  2.568E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  6.0709E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.184E-01, Final residual =  1.372E-11, No Iterations 8
+  -3.2055E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.998E-04, Final residual =  6.165E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.617E-05, Final residual =  5.157E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.571E-05, Final residual =  3.035E-11, No Iterations 178
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.388E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.751E-06, Final residual =  4.440E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8442E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.157E-01, Final residual =  2.502E-11, No Iterations 21
+  -3.1919E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.884E-04, Final residual =  1.050E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.423E-05, Final residual =  3.438E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.455E-05, Final residual =  3.405E-11, No Iterations 173
+  time step continuity errors : sum local =  6.707E-02, global = -5.080E-04, cumulative = -2.438E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.343E-06, Final residual =  1.171E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8279E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.114E-01, Final residual =  1.294E-11, No Iterations 10
+  -3.1742E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.942E-04, Final residual =  1.345E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.703E-05, Final residual =  1.056E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.457E-05, Final residual =  2.828E-11, No Iterations 171
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -2.489E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.143E-06, Final residual =  1.476E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8134E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.050E-01, Final residual =  1.887E-11, No Iterations 8
+  -3.1510E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.125 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.935E-04, Final residual =  1.295E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.618E-05, Final residual =  3.195E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.385E-05, Final residual =  3.234E-11, No Iterations 176
+  time step continuity errors : sum local =  6.708E-02, global = -5.080E-04, cumulative = -2.540E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  7.732E-06, Final residual =  2.279E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8019E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.998E-01, Final residual =  2.725E-11, No Iterations 21
+  -3.1240E+03 <=  ED  <=  8.2478E+04
+  ExecutionTime =  0.134 s
+
+
+  Time step no. : 2 dt :  1.000E-03 Time =             0.002000
+
+  Courant Number mean:  4.214E+00 max:  5.256E+01
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  7.886E-02, Final residual =  1.535E-08, No Iterations 3
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.349E-03, Final residual =  3.408E-09, No Iterations 3
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.881E-04, Final residual =  6.056E-10, No Iterations 201
+  time step continuity errors : sum local =  6.775E-02, global = -5.080E-04, cumulative = -2.591E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.683E-04, Final residual =  1.702E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8294E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.015E+00, Final residual =  5.384E-11, No Iterations 7
+  -1.7188E+03 <=  ED  <=  8.2232E+04
+  ExecutionTime =  0.125 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.335E-02, Final residual =  1.369E-08, No Iterations 3
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.339E-03, Final residual =  8.647E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.518E-04, Final residual =  4.381E-10, No Iterations 201
+  time step continuity errors : sum local =  6.811E-02, global = -5.080E-04, cumulative = -2.642E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.868E-04, Final residual =  1.650E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8225E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.381E+00, Final residual =  5.564E-12, No Iterations 8
+  -2.1008E+03 <=  ED  <=  8.2105E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.480E-02, Final residual =  5.391E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.375E-03, Final residual =  5.881E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.913E-04, Final residual =  2.415E-10, No Iterations 201
+  time step continuity errors : sum local =  6.833E-02, global = -5.080E-04, cumulative = -2.692E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.339E-04, Final residual =  1.543E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.7744E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.170E+00, Final residual =  4.212E-11, No Iterations 7
+  -1.3060E+03 <=  ED  <=  8.2029E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  7.114E-03, Final residual =  6.275E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.022E-03, Final residual =  5.160E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.499E-04, Final residual =  1.461E-10, No Iterations 198
+  time step continuity errors : sum local =  6.846E-02, global = -5.080E-04, cumulative = -2.743E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  9.964E-05, Final residual =  1.342E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.7724E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.103E+00, Final residual =  5.766E-11, No Iterations 7
+  -4.9197E+03 <=  ED  <=  8.1979E+04
+  ExecutionTime =  0.120 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.818E-03, Final residual =  8.217E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  8.381E-04, Final residual =  5.152E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.248E-04, Final residual =  1.078E-10, No Iterations 196
+  time step continuity errors : sum local =  6.852E-02, global = -5.080E-04, cumulative = -2.794E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  7.566E-05, Final residual =  1.283E-10, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.8532E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.070E+00, Final residual =  8.477E-12, No Iterations 8
+  -3.5000E+03 <=  ED  <=  8.1944E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.273E-03, Final residual =  5.537E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.323E-04, Final residual =  6.145E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.101E-04, Final residual =  1.035E-10, No Iterations 193
+  time step continuity errors : sum local =  6.854E-02, global = -5.080E-04, cumulative = -2.845E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  6.013E-05, Final residual =  8.349E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9140E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.029E+00, Final residual =  9.166E-11, No Iterations 7
+  -4.7320E+03 <=  ED  <=  8.1922E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.547E-03, Final residual =  7.240E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.474E-04, Final residual =  5.952E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.012E-04, Final residual =  9.514E-11, No Iterations 191
+  time step continuity errors : sum local =  6.853E-02, global = -5.080E-04, cumulative = -2.896E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.931E-05, Final residual =  4.877E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9422E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  9.550E-01, Final residual =  8.251E-11, No Iterations 7
+  -2.9279E+03 <=  ED  <=  8.1906E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.172E-03, Final residual =  5.841E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.814E-04, Final residual =  5.800E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  9.396E-05, Final residual =  7.357E-11, No Iterations 189
+  time step continuity errors : sum local =  6.849E-02, global = -5.080E-04, cumulative = -2.946E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.222E-05, Final residual =  4.564E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9450E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.851E-01, Final residual =  1.232E-11, No Iterations 8
+  -2.2586E+03 <=  ED  <=  8.1896E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  9.427E-04, Final residual =  6.755E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.215E-04, Final residual =  1.245E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  8.876E-05, Final residual =  8.295E-11, No Iterations 187
+  time step continuity errors : sum local =  6.844E-02, global = -5.080E-04, cumulative = -2.997E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.713E-05, Final residual =  4.488E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9307E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.775E-01, Final residual =  2.728E-11, No Iterations 7
+  -1.3507E+03 <=  ED  <=  8.1889E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  8.022E-04, Final residual =  4.620E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.719E-04, Final residual =  1.707E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  8.379E-05, Final residual =  8.248E-11, No Iterations 185
+  time step continuity errors : sum local =  6.841E-02, global = -5.080E-04, cumulative = -3.048E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.375E-05, Final residual =  4.487E-11, No Iterations 21
+   0.0000E+00 <=  TE  <=  5.9292E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.361E-01, Final residual =  2.067E-11, No Iterations 8
+  -1.7452E+03 <=  ED  <=  8.1885E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.861E-04, Final residual =  4.739E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.339E-04, Final residual =  9.840E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  7.686E-05, Final residual =  7.676E-11, No Iterations 183
+  time step continuity errors : sum local =  6.839E-02, global = -5.080E-04, cumulative = -3.099E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.121E-05, Final residual =  4.693E-11, No Iterations 21
+  -1.4302E-02 <=  TE  <=  5.8923E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.524E-01, Final residual =  3.397E-11, No Iterations 7
+  -2.0473E+03 <=  ED  <=  8.1879E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.070E-04, Final residual =  4.490E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.973E-04, Final residual =  9.815E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  7.269E-05, Final residual =  6.386E-11, No Iterations 180
+  time step continuity errors : sum local =  6.838E-02, global = -5.080E-04, cumulative = -3.150E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.859E-05, Final residual =  5.484E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8547E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.942E-01, Final residual =  4.144E-11, No Iterations 7
+  -2.1301E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.451E-04, Final residual =  4.398E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.585E-04, Final residual =  9.322E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.849E-05, Final residual =  6.337E-11, No Iterations 182
+  time step continuity errors : sum local =  6.839E-02, global = -5.080E-04, cumulative = -3.200E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.599E-05, Final residual =  4.678E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.7993E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.665E-01, Final residual =  9.799E-12, No Iterations 8
+  -1.9557E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.120 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.931E-04, Final residual =  1.916E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.279E-04, Final residual =  1.903E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.515E-05, Final residual =  5.700E-11, No Iterations 184
+  time step continuity errors : sum local =  6.842E-02, global = -5.080E-04, cumulative = -3.251E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.378E-05, Final residual =  4.614E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8482E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.170E-01, Final residual =  7.674E-11, No Iterations 21
+  -1.6739E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.558E-04, Final residual =  8.094E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.980E-04, Final residual =  9.527E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.287E-05, Final residual =  5.484E-11, No Iterations 184
+  time step continuity errors : sum local =  6.845E-02, global = -5.080E-04, cumulative = -3.302E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.219E-05, Final residual =  4.635E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8888E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.773E-01, Final residual =  5.810E-11, No Iterations 21
+  -1.4093E+03 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.213E-04, Final residual =  1.924E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.735E-04, Final residual =  8.345E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  6.024E-05, Final residual =  5.960E-11, No Iterations 183
+  time step continuity errors : sum local =  6.847E-02, global = -5.080E-04, cumulative = -3.353E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.083E-05, Final residual =  4.480E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9209E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.566E-01, Final residual =  6.994E-11, No Iterations 21
+  -1.1980E+03 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.868E-04, Final residual =  4.975E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.462E-04, Final residual =  2.246E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.719E-05, Final residual =  4.770E-11, No Iterations 183
+  time step continuity errors : sum local =  6.849E-02, global = -5.080E-04, cumulative = -3.404E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.949E-05, Final residual =  4.631E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9093E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.075E-01, Final residual =  6.158E-11, No Iterations 21
+  -1.0464E+03 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.482E-04, Final residual =  1.039E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.175E-04, Final residual =  5.825E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.526E-05, Final residual =  5.437E-11, No Iterations 182
+  time step continuity errors : sum local =  6.851E-02, global = -5.080E-04, cumulative = -3.454E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.828E-05, Final residual =  4.196E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9105E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.599E-01, Final residual =  6.770E-11, No Iterations 21
+  -9.6956E+02 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.167E-04, Final residual =  1.005E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.941E-04, Final residual =  6.082E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.281E-05, Final residual =  5.004E-11, No Iterations 181
+  time step continuity errors : sum local =  6.853E-02, global = -5.080E-04, cumulative = -3.505E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.717E-05, Final residual =  1.255E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9193E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.261E-01, Final residual =  8.784E-11, No Iterations 21
+  -9.9691E+02 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.902E-04, Final residual =  9.254E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.744E-04, Final residual =  6.807E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  5.001E-05, Final residual =  4.840E-11, No Iterations 177
+  time step continuity errors : sum local =  6.853E-02, global = -5.080E-04, cumulative = -3.556E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.595E-05, Final residual =  4.871E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8959E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.931E-01, Final residual =  4.604E-12, No Iterations 8
+  -1.1016E+03 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.118 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.635E-04, Final residual =  7.585E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.588E-04, Final residual =  3.869E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.743E-05, Final residual =  4.025E-11, No Iterations 178
+  time step continuity errors : sum local =  6.854E-02, global = -5.080E-04, cumulative = -3.607E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.495E-05, Final residual =  1.823E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8456E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.559E-01, Final residual =  9.129E-12, No Iterations 8
+  -1.2576E+03 <=  ED  <=  8.1877E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.376E-04, Final residual =  7.682E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.441E-04, Final residual =  9.696E-12, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.484E-05, Final residual =  4.138E-11, No Iterations 169
+  time step continuity errors : sum local =  6.854E-02, global = -5.080E-04, cumulative = -3.658E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.418E-05, Final residual =  1.988E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8047E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.273E-01, Final residual =  9.689E-12, No Iterations 8
+  -1.4194E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.183E-04, Final residual =  7.160E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.306E-04, Final residual =  1.960E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.252E-05, Final residual =  4.206E-11, No Iterations 179
+  time step continuity errors : sum local =  6.854E-02, global = -5.080E-04, cumulative = -3.708E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.290E-05, Final residual =  1.911E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8013E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.037E-01, Final residual =  9.539E-12, No Iterations 8
+  -1.5460E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.117 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.998E-04, Final residual =  4.988E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.165E-04, Final residual =  4.031E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  4.132E-05, Final residual =  3.681E-11, No Iterations 180
+  time step continuity errors : sum local =  6.855E-02, global = -5.080E-04, cumulative = -3.759E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.198E-05, Final residual =  1.746E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8398E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.797E-01, Final residual =  7.198E-12, No Iterations 8
+  -1.5984E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.813E-04, Final residual =  4.215E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.031E-04, Final residual =  1.426E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.948E-05, Final residual =  3.352E-11, No Iterations 180
+  time step continuity errors : sum local =  6.855E-02, global = -5.080E-04, cumulative = -3.810E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.099E-05, Final residual =  1.575E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8661E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.595E-01, Final residual =  6.260E-12, No Iterations 8
+  -1.5869E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.679E-04, Final residual =  3.617E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  9.174E-05, Final residual =  5.856E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.790E-05, Final residual =  3.749E-11, No Iterations 179
+  time step continuity errors : sum local =  6.856E-02, global = -5.080E-04, cumulative = -3.861E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.016E-05, Final residual =  1.417E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8798E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.419E-01, Final residual =  1.113E-12, No Iterations 8
+  -1.5239E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.124 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.550E-04, Final residual =  4.248E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  8.469E-05, Final residual =  1.454E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.651E-05, Final residual =  3.599E-11, No Iterations 177
+  time step continuity errors : sum local =  6.857E-02, global = -5.080E-04, cumulative = -3.912E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  9.290E-06, Final residual =  1.768E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.8985E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.214E-01, Final residual =  2.234E-11, No Iterations 21
+  -1.3993E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.142 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.429E-04, Final residual =  5.886E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.775E-05, Final residual =  1.231E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.489E-05, Final residual =  3.339E-11, No Iterations 178
+  time step continuity errors : sum local =  6.858E-02, global = -5.080E-04, cumulative = -3.962E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.450E-06, Final residual =  5.555E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9358E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.044E-01, Final residual =  2.814E-11, No Iterations 21
+  -1.2780E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.133 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.308E-04, Final residual =  2.013E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.063E-05, Final residual =  1.167E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.311E-05, Final residual =  3.197E-11, No Iterations 176
+  time step continuity errors : sum local =  6.859E-02, global = -5.080E-04, cumulative = -4.013E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  7.567E-06, Final residual =  1.043E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9655E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.926E-01, Final residual =  1.324E-11, No Iterations 7
+  -1.1796E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.134 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.198E-04, Final residual =  1.358E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.278E-05, Final residual =  1.127E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.149E-05, Final residual =  2.895E-11, No Iterations 177
+  time step continuity errors : sum local =  6.860E-02, global = -5.080E-04, cumulative = -4.064E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  6.975E-06, Final residual =  7.491E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9849E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.863E-01, Final residual =  3.509E-11, No Iterations 21
+  -1.1108E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.144 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.103E-04, Final residual =  1.292E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.518E-05, Final residual =  1.124E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.030E-05, Final residual =  2.815E-11, No Iterations 176
+  time step continuity errors : sum local =  6.860E-02, global = -5.080E-04, cumulative = -4.115E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  6.415E-06, Final residual =  7.103E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9945E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.744E-01, Final residual =  4.592E-11, No Iterations 21
+  -1.0837E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.013E-04, Final residual =  1.351E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.026E-05, Final residual =  1.691E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.916E-05, Final residual =  2.526E-11, No Iterations 173
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.166E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  5.906E-06, Final residual =  7.233E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9963E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.623E-01, Final residual =  5.328E-11, No Iterations 21
+  -1.0979E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.150 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  9.300E-05, Final residual =  1.528E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.523E-05, Final residual =  9.123E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.807E-05, Final residual =  2.736E-11, No Iterations 169
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.216E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  5.474E-06, Final residual =  8.791E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9915E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.514E-01, Final residual =  5.728E-11, No Iterations 21
+  -1.1386E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.144 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  8.553E-05, Final residual =  1.611E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.106E-05, Final residual =  9.404E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.712E-05, Final residual =  2.502E-11, No Iterations 169
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.267E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  5.015E-06, Final residual =  8.989E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  5.9990E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.457E-01, Final residual =  8.738E-11, No Iterations 21
+  -1.1907E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  7.958E-05, Final residual =  1.634E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.742E-05, Final residual =  3.581E-11, No Iterations 8
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.619E-05, Final residual =  2.511E-11, No Iterations 169
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.318E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.632E-06, Final residual =  6.589E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0041E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.400E-01, Final residual =  9.914E-11, No Iterations 21
+  -1.2388E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.133 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  7.310E-05, Final residual =  1.579E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.371E-05, Final residual =  1.055E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.535E-05, Final residual =  2.336E-11, No Iterations 155
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.369E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.311E-06, Final residual =  4.398E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0047E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.325E-01, Final residual =  1.307E-11, No Iterations 8
+  -1.2739E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.804E-05, Final residual =  1.541E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.076E-05, Final residual =  1.248E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.461E-05, Final residual =  2.392E-11, No Iterations 158
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.420E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.030E-06, Final residual =  4.472E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0033E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.243E-01, Final residual =  9.094E-11, No Iterations 21
+  -1.2903E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.138 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.402E-05, Final residual =  1.547E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.792E-05, Final residual =  1.277E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.394E-05, Final residual =  2.144E-11, No Iterations 174
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.470E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.655E-06, Final residual =  2.505E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0023E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.169E-01, Final residual =  9.105E-11, No Iterations 21
+  -1.2885E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.144 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.921E-05, Final residual =  1.348E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.480E-05, Final residual =  1.305E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.324E-05, Final residual =  2.193E-11, No Iterations 169
+  time step continuity errors : sum local =  6.861E-02, global = -5.080E-04, cumulative = -4.521E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.317E-06, Final residual =  1.925E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0031E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.108E-01, Final residual =  1.829E-11, No Iterations 21
+  -1.2725E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.482E-05, Final residual =  1.233E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.265E-05, Final residual =  1.308E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.269E-05, Final residual =  2.229E-11, No Iterations 168
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.572E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.034E-06, Final residual =  1.682E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0067E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.040E-01, Final residual =  2.844E-11, No Iterations 21
+  -1.2493E+03 <=  ED  <=  8.1876E+04
+  ExecutionTime =  0.144 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.107E-05, Final residual =  1.185E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.112E-05, Final residual =  1.416E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.217E-05, Final residual =  1.901E-11, No Iterations 168
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.623E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.779E-06, Final residual =  1.490E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0129E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  9.892E-02, Final residual =  1.214E-11, No Iterations 21
+  -1.2264E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.841E-05, Final residual =  1.086E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.953E-05, Final residual =  1.066E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.165E-05, Final residual =  2.024E-11, No Iterations 166
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.674E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.539E-06, Final residual =  1.320E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0210E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  9.367E-02, Final residual =  3.714E-11, No Iterations 21
+  -1.2098E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.141 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.553E-05, Final residual =  9.569E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.744E-05, Final residual =  8.504E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.112E-05, Final residual =  2.021E-11, No Iterations 160
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.724E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.308E-06, Final residual =  1.194E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0301E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.941E-02, Final residual =  6.429E-11, No Iterations 21
+  -1.2025E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.138 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.352E-05, Final residual =  8.819E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.603E-05, Final residual =  1.461E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.058E-05, Final residual =  1.728E-11, No Iterations 156
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.775E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.106E-06, Final residual =  1.118E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0389E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.616E-02, Final residual =  6.862E-11, No Iterations 21
+  -1.2044E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.136 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.156E-05, Final residual =  8.909E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.515E-05, Final residual =  1.716E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.010E-05, Final residual =  1.962E-11, No Iterations 157
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.826E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.929E-06, Final residual =  1.055E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0465E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.297E-02, Final residual =  7.127E-11, No Iterations 21
+  -1.2132E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.137 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.991E-05, Final residual =  8.038E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.465E-05, Final residual =  1.092E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.964E-05, Final residual =  1.799E-11, No Iterations 167
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.877E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.771E-06, Final residual =  1.015E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0521E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  8.037E-02, Final residual =  7.877E-11, No Iterations 21
+  -1.2254E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.802E-05, Final residual =  5.931E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.403E-05, Final residual =  7.615E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.919E-05, Final residual =  1.911E-11, No Iterations 164
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.928E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.617E-06, Final residual =  9.677E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0556E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.837E-02, Final residual =  8.146E-11, No Iterations 21
+  -1.2372E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.143 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.621E-05, Final residual =  2.214E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.322E-05, Final residual =  6.473E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.879E-05, Final residual =  1.699E-11, No Iterations 166
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -4.978E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.474E-06, Final residual =  9.067E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0569E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.644E-02, Final residual =  8.485E-11, No Iterations 21
+  -1.2452E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.138 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.431E-05, Final residual =  1.673E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.235E-05, Final residual =  5.364E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.845E-05, Final residual =  1.837E-11, No Iterations 164
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -5.029E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.350E-06, Final residual =  8.344E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0565E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.416E-02, Final residual =  7.214E-11, No Iterations 21
+  -1.2478E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.137 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.250E-05, Final residual =  4.065E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.157E-05, Final residual =  4.744E-11, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  1.810E-05, Final residual =  1.804E-11, No Iterations 155
+  time step continuity errors : sum local =  6.862E-02, global = -5.080E-04, cumulative = -5.080E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.261E-06, Final residual =  8.518E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0550E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.177E-02, Final residual =  4.674E-12, No Iterations 8
+  -1.2450E+03 <=  ED  <=  8.1875E+04
+  ExecutionTime =  0.138 s
+
+
+  Time step no. : 3 dt :  1.000E-03 Time =             0.003000
+
+  Courant Number mean:  4.249E+00 max:  3.766E+01
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.629E-03, Final residual =  5.357E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.145E-03, Final residual =  4.877E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.230E-05, Final residual =  2.976E-11, No Iterations 195
+  time step continuity errors : sum local =  6.903E-02, global = -5.080E-04, cumulative = -5.131E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.312E-04, Final residual =  2.384E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.1765E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  1.410E+00, Final residual =  2.671E-11, No Iterations 7
+  -8.8681E+02 <=  ED  <=  8.1823E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.520E-03, Final residual =  4.738E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.025E-03, Final residual =  5.691E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.205E-05, Final residual =  2.845E-11, No Iterations 193
+  time step continuity errors : sum local =  6.936E-02, global = -5.080E-04, cumulative = -5.182E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.590E-04, Final residual =  2.466E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.2720E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  9.739E-01, Final residual =  4.210E-11, No Iterations 7
+  -7.3408E+02 <=  ED  <=  8.1791E+04
+  ExecutionTime =  0.119 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.321E-03, Final residual =  4.411E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  9.099E-04, Final residual =  5.479E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.450E-05, Final residual =  3.031E-11, No Iterations 193
+  time step continuity errors : sum local =  6.961E-02, global = -5.080E-04, cumulative = -5.232E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.126E-04, Final residual =  2.363E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.3465E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  7.857E-01, Final residual =  3.857E-11, No Iterations 7
+  -6.2554E+02 <=  ED  <=  8.1770E+04
+  ExecutionTime =  0.124 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  1.120E-03, Final residual =  4.451E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  7.951E-04, Final residual =  4.653E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.526E-05, Final residual =  3.268E-11, No Iterations 193
+  time step continuity errors : sum local =  6.980E-02, global = -5.080E-04, cumulative = -5.283E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  8.253E-05, Final residual =  2.886E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4028E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.752E-01, Final residual =  3.953E-11, No Iterations 7
+  -4.6803E+02 <=  ED  <=  8.1756E+04
+  ExecutionTime =  0.127 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  9.511E-04, Final residual =  5.093E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.908E-04, Final residual =  4.692E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.545E-05, Final residual =  3.019E-11, No Iterations 193
+  time step continuity errors : sum local =  6.993E-02, global = -5.080E-04, cumulative = -5.334E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  6.228E-05, Final residual =  2.626E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4414E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  6.024E-01, Final residual =  2.468E-11, No Iterations 7
+  -3.7086E+02 <=  ED  <=  8.1747E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  8.089E-04, Final residual =  4.884E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  6.019E-04, Final residual =  3.627E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.497E-05, Final residual =  3.024E-11, No Iterations 192
+  time step continuity errors : sum local =  7.002E-02, global = -5.080E-04, cumulative = -5.385E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  4.871E-05, Final residual =  3.363E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4601E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.601E-01, Final residual =  2.824E-11, No Iterations 8
+  -3.7653E+02 <=  ED  <=  8.1740E+04
+  ExecutionTime =  0.123 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.941E-04, Final residual =  6.099E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  5.233E-04, Final residual =  3.462E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.431E-05, Final residual =  2.722E-11, No Iterations 192
+  time step continuity errors : sum local =  7.009E-02, global = -5.080E-04, cumulative = -5.436E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.935E-05, Final residual =  1.193E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4613E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  5.286E-01, Final residual =  4.613E-11, No Iterations 7
+  -3.7682E+02 <=  ED  <=  8.1737E+04
+  ExecutionTime =  0.125 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  6.016E-04, Final residual =  1.618E-10, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.583E-04, Final residual =  3.584E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.362E-05, Final residual =  3.037E-11, No Iterations 190
+  time step continuity errors : sum local =  7.014E-02, global = -5.080E-04, cumulative = -5.486E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  3.264E-05, Final residual =  3.233E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4798E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.948E-01, Final residual =  3.637E-11, No Iterations 7
+  -4.0787E+02 <=  ED  <=  8.1735E+04
+  ExecutionTime =  0.129 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  5.240E-04, Final residual =  8.017E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  4.007E-04, Final residual =  2.353E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.292E-05, Final residual =  2.600E-11, No Iterations 189
+  time step continuity errors : sum local =  7.019E-02, global = -5.080E-04, cumulative = -5.537E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.782E-05, Final residual =  6.646E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4982E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.640E-01, Final residual =  4.459E-12, No Iterations 8
+  -4.7891E+02 <=  ED  <=  8.1734E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.595E-04, Final residual =  3.213E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.530E-04, Final residual =  3.414E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.218E-05, Final residual =  2.865E-11, No Iterations 188
+  time step continuity errors : sum local =  7.022E-02, global = -5.080E-04, cumulative = -5.588E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.437E-05, Final residual =  4.811E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4965E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.365E-01, Final residual =  5.321E-11, No Iterations 21
+  -5.4936E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.133 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  4.035E-04, Final residual =  6.270E-11, No Iterations 5
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  3.115E-04, Final residual =  1.695E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.134E-05, Final residual =  2.954E-11, No Iterations 187
+  time step continuity errors : sum local =  7.024E-02, global = -5.080E-04, cumulative = -5.639E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  2.189E-05, Final residual =  8.334E-11, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4716E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  4.058E-01, Final residual =  1.356E-11, No Iterations 8
+  -5.9534E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.578E-04, Final residual =  4.235E-10, No Iterations 21
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.788E-04, Final residual =  1.353E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  3.032E-05, Final residual =  2.974E-11, No Iterations 185
+  time step continuity errors : sum local =  7.026E-02, global = -5.080E-04, cumulative = -5.690E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.988E-05, Final residual =  1.161E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.4212E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.762E-01, Final residual =  4.839E-11, No Iterations 21
+  -6.0961E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.145 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  3.167E-04, Final residual =  2.295E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.474E-04, Final residual =  1.312E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.952E-05, Final residual =  2.726E-11, No Iterations 183
+  time step continuity errors : sum local =  7.027E-02, global = -5.080E-04, cumulative = -5.740E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.842E-05, Final residual =  1.864E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.3617E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.517E-01, Final residual =  2.983E-11, No Iterations 7
+  -5.9200E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.122 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.818E-04, Final residual =  1.603E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.224E-04, Final residual =  1.178E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.887E-05, Final residual =  2.542E-11, No Iterations 179
+  time step continuity errors : sum local =  7.028E-02, global = -5.080E-04, cumulative = -5.791E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.697E-05, Final residual =  2.229E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.3028E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.304E-01, Final residual =  3.982E-11, No Iterations 21
+  -5.7263E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.126 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.525E-04, Final residual =  1.258E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  2.011E-04, Final residual =  1.001E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.807E-05, Final residual =  2.597E-11, No Iterations 179
+  time step continuity errors : sum local =  7.028E-02, global = -5.080E-04, cumulative = -5.842E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.572E-05, Final residual =  2.392E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.2318E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  3.015E-01, Final residual =  7.381E-11, No Iterations 21
+  -5.6676E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.128 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.253E-04, Final residual =  1.027E-10, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.802E-04, Final residual =  8.759E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.727E-05, Final residual =  2.540E-11, No Iterations 179
+  time step continuity errors : sum local =  7.028E-02, global = -5.080E-04, cumulative = -5.893E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.469E-05, Final residual =  1.897E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.1664E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.737E-01, Final residual =  1.006E-10, No Iterations 21
+  -5.5204E+02 <=  ED  <=  8.1733E+04
+  ExecutionTime =  0.130 s
+
+  BiCGStab(ILU(0)):  Solving for U, Initial residual =  2.003E-04, Final residual =  8.406E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for V, Initial residual =  1.617E-04, Final residual =  8.200E-11, No Iterations 4
+  BiCGStab(ILU(0)):  Solving for W, Initial residual =  0.000E+00, Final residual =  0.000E+00, No Iterations 0
+  PCG(IC0):  Solving for p, Initial residual =  2.650E-05, Final residual =  2.467E-11, No Iterations 180
+  time step continuity errors : sum local =  7.028E-02, global = -5.080E-04, cumulative = -5.944E-02
+  BiCGStab(ILU(0)):  Solving for k, Initial residual =  1.364E-05, Final residual =  1.595E-10, No Iterations 21
+   1.0000E-20 <=  TE  <=  6.0986E-01
+  BiCGStab(ILU(0)):  Solving for Omega, Initial residual =  2.575E-01, Final residual =  1.409E-10, No Iterations 21
+  -5.3293E+02 <=  ED  <=  8.1733E+04

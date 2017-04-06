@@ -45,6 +45,7 @@ subroutine init
   real(dp) :: sor_backup
 
   integer :: input_unit,input_status
+  integer :: nfaces,startFace,nFacesOffset
   character(80) :: key,field_type,boundary_type
   character(25) :: convective_scheme
   real(dp) :: u0, v0, w0, tke0, ed0
@@ -82,6 +83,7 @@ subroutine init
   READ(5,*) TurbModel
   READ(5,*) UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
   READ(5,*) convective_scheme
+  READ(5,*) limiter
   READ(5,*) (GDS(I),I=1,NPHI)
   READ(5,*) (URF(I),I=1,NPHI)
   READ(5,*) (SOR(I),I=1,NPHI)
@@ -112,9 +114,10 @@ subroutine init
   WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
   WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
   WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
-  WRITE(6,'(i2,1x,a)') TurbModel, 'TurbModel'
+  WRITE(6,'(i2,1x,a)') TurbModel, 'Turbulence Model'
   WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
-  WRITE(6,'(a,a)') convective_scheme, ': convective scheme'
+  WRITE(6,'(a,a)') convective_scheme, 'Convective scheme'
+  WRITE(6,'(a,1x,a)') limiter, 'Gradient limiter'
   WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI)'
   WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
   WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
@@ -134,19 +137,25 @@ subroutine init
   lturb = levm.or.lasm.or.lles
 
   ! Switches which define wether we look for some files in folder 0.
-  if ( TurbModel==1 .or. TurbModel==2 ) then
-    solveEpsilon = .true.
-    solveTKE = .true.
-  elseif ( TurbModel==3 .or. TurbModel==4 ) then
-    solveOmega = .true.
-    solveTKE = .true.
-  elseif( TurbModel==6 ) then
-    solveTKE = .true.
-  else
-    solveOmega = .false.
-    solveEpsilon = .false.
-    solveTKE = .false.
+  if (lturb) then
+    if ( TurbModel==1 .or. TurbModel==2 ) then
+      solveEpsilon = .true.
+      solveTKE = .true.
+    elseif ( TurbModel==3 .or. TurbModel==4 ) then
+      solveOmega = .true.
+      solveTKE = .true.
+    elseif( TurbModel==6 ) then
+      solveTKE = .true.
+    else
+      solveOmega = .false.
+      solveEpsilon = .false.
+      solveTKE = .false.
+    endif
   endif
+
+  ! Set the string for second scalar equation, which appears in linear solver log, default is 'epsilon',
+  ! Note, change also the script 'plotResiduals'
+  if ( solveOmega ) chvarSolver(6) = 'Omega  '
 
   ! Choice of convective schemes for velocity
 
@@ -164,13 +173,13 @@ subroutine init
     lumist = .true.
   elseif(adjustl(convective_scheme) == 'gamma') then
     lgamma = .true.
-  elseif(adjustl(convective_scheme) == 'central-fluent') then
+  elseif(adjustl(convective_scheme) == 'central-f') then
     lcds_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'linear-fluent') then
+  elseif(adjustl(convective_scheme) == 'linear-f') then
     l2nd_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'limited-linear-fluent') then
+  elseif(adjustl(convective_scheme) == 'limited-linear') then
     l2ndlim_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'muscl-fluent') then
+  elseif(adjustl(convective_scheme) == 'muscl-f') then
     lmuscl_flnt = .true.
   endif
 
@@ -276,7 +285,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,a)') adjustl(boundary_type)
+      write(*,'(4x,2a)') '>',adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -297,6 +306,8 @@ subroutine init
               enddo     
 
             else ! 'nonuniform'   
+
+              write(*,'(6x,a)') 'nonuniform'
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -343,19 +354,23 @@ subroutine init
 
 
 
-        elseif(boundary_type == "wall") then
+        elseif(adjustl(boundary_type) == "wall") then
 
             read(input_unit,*) field_type
 
-            if(adjustl(field_type)=='uniform') then
+            if(adjustl(field_type)=='uniform') then ! e.g. moving wall...
 
+              read(input_unit,*) nfaces,startFace
               read(input_unit,*) u0,v0,w0
 
               write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+              write(*,'(6x,2(a,i8))') 'nfaces:',nfaces,', startFace:',startFace
 
-              do i = 1,nwal
-                iface = iWallFacesStart+i
-                inw = iWallStart + i
+              nFacesOffset = startFace-iWallFacesStart
+
+              do i = 1,nfaces
+                iface = iWallFacesStart + nFacesOffset + i
+                inw = iWallStart + nFacesOffset + i
                 u(inw) = u0
                 v(inw) = v0
                 w(inw) = w0
@@ -421,13 +436,14 @@ subroutine init
   wmin = minval(w(1:numCells))
   wmax = maxval(w(1:numCells))
 
-  write(*,'(a)') ' '
 
   ! 
   ! > TKE Turbulent kinetic energy
   ! 
 
   if(solveTKE) then
+
+  write(*,'(a)') ' '
 
   call get_unit ( input_unit )
   open ( unit = input_unit, file = '0/k')
@@ -538,7 +554,7 @@ subroutine init
 
 
 
-        elseif(boundary_type == "wall") then
+        elseif(adjustl(boundary_type) == "wall") then
 
             read(input_unit,*) field_type
 
@@ -590,16 +606,18 @@ subroutine init
     !   te(ijp) = ...
     ! enddo
 
+
   endif
 
 
-  write(*,'(a)') ' '
 
   ! 
   ! > ED Turbulent kinetic energy dissipation rate
   ! 
 
   if(solveEpsilon) then
+
+  write(*,'(a)') ' '
 
   call get_unit ( input_unit )
   open ( unit = input_unit, file = '0/epsilon')
@@ -710,7 +728,7 @@ subroutine init
 
 
 
-        elseif(boundary_type == "wall") then
+        elseif(adjustl(boundary_type) == "wall") then
 
             read(input_unit,*) field_type
 
@@ -765,14 +783,14 @@ subroutine init
   endif
 
 
-  write(*,'(a)') ' '
-
 
   ! 
   ! > ED Specific turbulent kinetic energy dissipation rate, also turbulence frequency - omega
   ! 
 
   if(solveOmega) then
+
+  write(*,'(a)') ' '
 
   call get_unit ( input_unit )
   open ( unit = input_unit, file = '0/omega')
@@ -882,7 +900,7 @@ subroutine init
 
 
 
-        elseif(boundary_type == "wall") then
+        elseif(adjustl(boundary_type) == "wall") then
 
             read(input_unit,*) field_type
 
@@ -933,6 +951,8 @@ subroutine init
   !   ijp = owner(iface)
   !   ed(ijp) = ...
   ! enddo
+
+  write(*,'(a)') ' '
 
   endif
 
@@ -1001,15 +1021,15 @@ subroutine init
   ! ed(ijw) = 0.0_dp
   ! enddo
 
-  ! ! Moving Wall
+  ! Moving Wall
   ! do i=1,20!nwalm
   ! iface = iWallFacesStart + i !iWallMFacesStart + i
-  ! ijw = iWallStart+i !iWallMStart+i
-  ! u(ijw) = 1.0_dp
-  ! v(ijw) = 0.0_dp
-  ! w(ijw) = 0.0_dp
-  ! te(ijw) = tein
-  ! ed(ijw) = edin
+  ! inw = iWallStart+i !iWallMStart+i
+  ! u(inw) = 1.0_dp
+  ! v(inw) = 0.0_dp
+  ! w(inw) = 0.0_dp
+  ! te(inw) = tein
+  ! ed(inw) = edin
   ! enddo
 
   ! ! Pressure Outlet
@@ -1113,10 +1133,24 @@ subroutine init
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
 
+  ! Gradient limiter:
+  write(*,'(a)') ' '
+
+  if(adjustl(limiter) == 'Barth-Jespersen') then
+    write(*,*) ' Gradient limiter: Barth-Jespersen'
+  elseif(adjustl(limiter) == 'Venkatakrishnan') then
+    write(*,*) ' Gradient limiter: Venkatakrishnan'
+  elseif(adjustl(limiter) == 'MVenkatakrishnan') then
+    write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
+  else
+    write(*,*) ' Gradient limiter: none'
+  endif
+
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
-  
+ 
+
 
 ! print*,'gradijenti:'
 ! do i=1,numCells
@@ -1182,91 +1216,94 @@ subroutine init
   ! 8) Distance to the nearest wall (needed for some turbulence models).
   !
 
-    ! Source term
-    su(1:numCells) = -Vol(1:numCells)
+  write(*,*) ' '
+  write(*,*) ' Calculate distance to the nearest wall:'
+  write(*,*) ' '
 
-    ! Initialize solution
-    p = 0.0_dp
+  ! Source term
+  su(1:numCells) = -Vol(1:numCells)
 
-    do i=1,numBoundaryFaces
-      iface = numInnerFaces+i
-      ijp = numCells+i
-      p(ijp) = 0.0_dp
-    enddo
+  ! Initialize solution
+  p = 0.0_dp
 
-    ! Wall
-    do i=1,nwal
-      iface = iWallFacesStart + i
-      ijp = iWallStart+i
-      p(ijp) = 0.0_dp
-    enddo
+  do i=1,numBoundaryFaces
+    iface = numInnerFaces+i
+    ijp = numCells+i
+    p(ijp) = 0.0_dp
+  enddo
 
-    !  Coefficient array for Laplacian
-    sv = 1.0_dp       
+  ! Wall
+  do i=1,nwal
+    iface = iWallFacesStart + i
+    ijp = iWallStart+i
+    p(ijp) = 0.0_dp
+  enddo
 
-    ! Laplacian operator and BCs         
-    call fvm_laplacian(sv,p) 
+  !  Coefficient array for Laplacian
+  sv = 1.0_dp       
 
-    sor_backup = sor(ip)
-    nsw_backup = nsw(ip)
+  ! Laplacian operator and BCs         
+  call fvm_laplacian(sv,p) 
 
-    sor(ip) = 1e-16
-    nsw(ip) = 1000
+  sor_backup = sor(ip)
+  nsw_backup = nsw(ip)
 
-    ! Solve system
-    write(*,'(a)') ' '
-    call iccg(p,ip) 
-    ! call gaussSeidel(p,ip) 
-    ! call bicgstab(p,ip) 
-    ! call dpcg(p,ip)
-    ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
+  sor(ip) = 1e-16
+  nsw(ip) = 1000
 
-    ! Update values at constant gradient bc faces - we need these values for correct gradients
+  ! Solve system
+  call iccg(p,ip) 
+  ! call gaussSeidel(p,ip) 
+  ! call bicgstab(p,ip) 
+  ! call dpcg(p,ip)
+  ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
 
-    ! Inlet faces
-    do i=1,ninl
-      iface = iInletFacesStart+i
-      ijp = owner(iface)
-      ijb = iInletStart+i
-      p(ijb)=p(ijp)
-    end do
+  ! Update values at constant gradient bc faces - we need these values for correct gradients
 
-    ! Outlet faces
-    do i=1,nout
-      iface = iOutletFacesStart+i
-      ijp = owner(iface)
-      ijb = iOutletStart+i
-      p(ijb)=p(ijp)
-    end do
+  ! Inlet faces
+  do i=1,ninl
+    iface = iInletFacesStart+i
+    ijp = owner(iface)
+    ijb = iInletStart+i
+    p(ijb)=p(ijp)
+  end do
 
-    ! Symmetry faces
-    do i=1,nsym
-      iface = iSymmetryFacesStart+i
-      ijp = owner(iface)
-      ijb = iSymmetryStart+i
-      p(ijb)=p(ijp)
-    end do
+  ! Outlet faces
+  do i=1,nout
+    iface = iOutletFacesStart+i
+    ijp = owner(iface)
+    ijb = iOutletStart+i
+    p(ijb)=p(ijp)
+  end do
 
-    sor(ip) = sor_backup
-    nsw(ip) = nsw_backup
+  ! Symmetry faces
+  do i=1,nsym
+    iface = iSymmetryFacesStart+i
+    ijp = owner(iface)
+    ijb = iSymmetryStart+i
+    p(ijb)=p(ijp)
+  end do
 
-    ! Gradient of solution field stored in p (gradient stored in dPdxi) :
-    call grad(p,dPdxi)
+  sor(ip) = sor_backup
+  nsw(ip) = nsw_backup
 
-    ! Wall distance computation from Poisson eq. solution stored in pp:
-    wallDistance = -sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:)  ) + &
-                    sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2*p(1:numCells)  )
+  ! Gradient of solution field stored in p (gradient stored in dPdxi) :
+  call grad(p,dPdxi)
 
-    ! Clear arrays
-    su = 0.0_dp
-    sv = 0.0_dp 
-    p = 0.0_dp
-    dPdxi = 0.0_dp
-  
-   ! write(*,'(a)') ' '
-   ! do i=1,numCells
-   !   write(6,'(es11.4)') wallDistance(i)
-   ! enddo   
-   ! stop
+  ! Wall distance computation from Poisson eq. solution stored in pp:
+  wallDistance = -sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:)  ) + &
+                  sqrt(  dPdxi(1,:)*dPdxi(1,:)+dPdxi(2,:)*dPdxi(2,:)+dPdxi(3,:)*dPdxi(3,:) + 2*p(1:numCells)  )
+
+  ! Clear arrays
+  su = 0.0_dp
+  sv = 0.0_dp 
+  p = 0.0_dp
+  dPdxi = 0.0_dp
+
+  ! write(*,'(a)') ' '
+  ! do i=1,numCells
+  !   write(6,'(es11.4)') wallDistance(i)
+  ! enddo   
+  ! stop
 
 end subroutine

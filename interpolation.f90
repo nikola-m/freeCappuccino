@@ -18,12 +18,7 @@ contains
 !   real(dp), dimension(numTotal), intent(in) :: phi
 !   real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
 
-  
 !   if () then 
-!     ue = face_interpolated(ijp,ijn,xf,yf,zf,lambda,u,dUdxi)
-!     ve = face_interpolated(ijp,ijn,xf,yf,zf,lambda,v,dVdxi)
-!     we = face_interpolated(ijp,ijn,xf,yf,zf,lambda,w,dWdxi)
-!   elseif () then 
 !     ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
 !     ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
 !     we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
@@ -253,7 +248,7 @@ contains
 !     Calculates face value using values of variables and their gradients
 !     at cell-center
 !     Cell-centered gradient limited using slope limiter:
-!     Wang modified Venkataktirshnan slope limiter
+!     Wang modified Venkatakrishnan slope limiter
 !     Ref.: Z. J. Wang. "A Fast Nested Multi-grid Viscous Flow Solver for Adaptive Cartesian/Quad Grids",
 !     International Journal for Numerical Methods in Fluids. 33. 657–680. 2000.
 !     The same slope limiter is used in Fluent.

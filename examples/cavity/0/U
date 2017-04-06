@@ -1,0 +1,10 @@
+internalField
+  uniform
+  0. 0. 0.
+boundaryField
+  wall
+    noSlip
+  wall
+    uniform
+    20 760
+    1. 0. 0.

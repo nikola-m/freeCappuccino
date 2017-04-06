@@ -833,13 +833,13 @@ if (native_mesh_files)  then
 
     enddo
 
-     if(iface.le.numInnerFaces) then
-    ! > Cell-face centroid components - final
-        xf(iface) = xf(iface) / (ax+1e-30)
-        yf(iface) = yf(iface) / (ay+1e-30)
-        zf(iface) = zf(iface) / (az+1e-30)
-    else   
-        ! > Because I could have not resolvde the problem, these line are inserted 
+    !  ! > Cell-face centroid components - final
+    !  if(iface.le.numInnerFaces) then
+    !     xf(iface) = xf(iface) / (ax+1e-30)
+    !     yf(iface) = yf(iface) / (ay+1e-30)
+    !     zf(iface) = zf(iface) / (az+1e-30)
+    ! else   
+        ! > Because I could have not resolve the problem, these line are inserted 
         !   where face centroid is calculated by arithmetic average.  
         xf(iface) = 0.0_dp
         yf(iface) = 0.0_dp
@@ -854,7 +854,7 @@ if (native_mesh_files)  then
         xf(iface) = xf(iface) / dble(nnodes)
         yf(iface) = yf(iface) / dble(nnodes)
         zf(iface) = zf(iface) / dble(nnodes)
-    endif
+    ! endif
 
   enddo
 

@@ -1,0 +1,12 @@
+internalField
+  uniform
+  440.15
+boundaryField
+  inlet
+    uniform
+    440.15
+  outlet
+    zeroGradient
+  wall
+    uniform
+    440.15

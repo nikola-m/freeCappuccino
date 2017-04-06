@@ -32,7 +32,7 @@ program caffa3d_uns
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
-  character(len=5) :: timechar
+  character(len=6) :: timechar
   character(len=2) :: trpn
 !                                                                       
 !***********************************************************************
@@ -118,13 +118,13 @@ program caffa3d_uns
       ! Courant number report:
       include 'CourantNo.h'
 
-      ! Old style:
-      ! Header written to monitor at start of SIMPLE iterations 
-      !include 'simpleMonitorHeader.h'
-      !time = time + timestep
-      !write(6,*)
-      !write(6,'(a,i0,a,f12.6)') ' Time step no. : ',ITIME,' Time = ',TIME
-      !write(6,*)
+      ! ! Old style:
+      ! ! Header written to monitor at start of SIMPLE iterations 
+      ! include 'simpleMonitorHeader.h'
+      ! time = time + timestep
+      ! write(6,*)
+      ! write(6,'(a,i0,a,f12.6)') ' Time step no. : ',ITIME,' Time = ',TIME
+      ! write(6,*)
 
 ! 
 !===============================================
@@ -162,8 +162,8 @@ program caffa3d_uns
       !   resor(i)=resor(i)*rnor(i)
       ! end do
 
-      ! Write to monitor file - Old style
-      !include 'simpleMonitorResiduals.h'
+      ! ! Write to monitor file - Old style
+      ! include 'simpleMonitorResiduals.h'
 
 
       ! Check residual
@@ -211,7 +211,7 @@ program caffa3d_uns
 !.....Write field values after nzapis iterations 
 !===============================================
       if(.not.ltransient) then
-        if(mod(itime,nzapis).eq.0) then
+        if(mod(itime,nzapis).eq.0.and.itime.ne.numstep) then
           call writefiles
           call write_restart_files
         endif
@@ -225,6 +225,7 @@ program caffa3d_uns
 !===============================================
 !.....Write field values for the next run 
 !===============================================
+      itime = itime-1
       call writefiles
       call write_restart_files
       

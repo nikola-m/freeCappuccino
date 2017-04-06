@@ -197,11 +197,12 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
     ! > Velocities at cell face center
 
     !  |________uj'_________|_______________ucorr___________________|
-    ue=u(ijp)*fxp+u(ijn)*fxn!+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+    ue=u(ijp)*fxp+u(ijn)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
     !  |________vj'_________|_______________vcorr___________________|
-    ve=v(ijp)*fxp+v(ijn)*fxn!+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
+    ve=v(ijp)*fxp+v(ijn)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
     !  |________wj'_________|_______________wcorr___________________|
-    we=w(ijp)*fxp+w(ijn)*fxn!+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
+    we=w(ijp)*fxp+w(ijn)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
+ 
 
     fuhigh=flomass*ue
     fvhigh=flomass*ve

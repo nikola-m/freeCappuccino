@@ -6,6 +6,7 @@ subroutine writefiles
 !
   use types
   use parameters
+  use title_mod
   use geometry
   use variables
   use statistics
@@ -16,13 +17,99 @@ subroutine writefiles
 !***********************************************************************
 !
   integer :: i
-  ! real(dp) :: 
+  integer :: output_unit
+  character(len=6) :: timechar
+
+  ! Write in a char variable current timestep number and create a folder with this name
+  write(timechar,'(i6)') itime
+  call execute_command_line("mkdir "//trim(out_folder_path)//"/"//adjustl(timechar))
 
 
-do i=1,numCells
-  write(6,'(a,es11.4,1x,es11.4,1x,es11.4,a)') '(',u(i),v(i),w(i),')'
-enddo
 
+  ! Open an output file in this folder for velocity
+  call get_unit ( output_unit )
+  open ( unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/U')
+
+  rewind output_unit
+
+  ! Write output to file
+  do i=1,numCells
+    write(output_unit,'(a,es11.4,1x,es11.4,1x,es11.4,a)') '(',u(i),v(i),w(i),')'
+  enddo
+
+  close(output_unit)
+
+
+
+  ! Open an output file in this folder for pressure
+  call get_unit ( output_unit )
+  open ( unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/p')
+
+  rewind output_unit
+
+  ! Write output to file
+  do i=1,numCells
+    write(output_unit ,'(es11.4)') p(i)
+  enddo
+
+  close(output_unit)
+
+
+
+  if(solveTKE) then
+
+    ! Open an output file in this folder for Turbulence kinetic energy
+    call get_unit ( output_unit )
+    open ( unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/k')
+
+    rewind output_unit
+
+    ! Write output to file
+    do i=1,numCells
+      write(output_unit ,'(es11.4)') te(i)
+    enddo
+
+    close(output_unit)
+
+  endif
+
+
+
+  if( solveEpsilon ) then
+
+    ! Open an output file in this folder for Epsilon
+    call get_unit ( output_unit )
+    open ( unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/epsilon')
+
+    rewind output_unit
+
+    ! Write output to file
+    do i=1,numCells
+      write(output_unit ,'(es11.4)') ed(i)
+    enddo
+
+    close(output_unit)
+
+  endif
+
+  
+
+  if( solveOmega ) then
+
+    ! Open an output file in this folder for Omega
+    call get_unit ( output_unit )
+    open ( unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/omega')
+
+    rewind output_unit
+
+    ! Write output to file
+    do i=1,numCells
+      write(output_unit ,'(es11.4)') ed(i)
+    enddo
+
+    close(output_unit)
+
+  endif      
 
 
 ! !----------------------------------------------------------
