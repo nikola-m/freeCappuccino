@@ -42,6 +42,8 @@ A three-dimensional unstructured finite volume code for Computational Fluid Dyna
                                 =MMMMMMMMMMMMMMMMM
                                    NMMMMMMMMMM
 
+Introduction
+------------------
 The purpose of the code is to enable experimentation in discretizations and mathematical models. Therefore we have included many discretization options and we are in the process of implementation of many turbulence models and scalar equations for different variables.
 
 The code is based on the reference:
@@ -52,6 +54,15 @@ The code allows meshes in OpenFOAM® polyMesh format. Only slight changes are ne
 
 Discretized equations are written in CSR (Compressed Sparse Row) format, which allows easy interface with many linear solver libraries, such as [LIS](http://www.ssisc.org/lis/). Also, one can use linear solvers provided in the code such as, Incomplete Cholesky Conjugate Gradient (ICCG), ILU(0) preconditioned Bi-Conjugate Gradient Stabilised method for non-symmetric systems, etc.
 
+Requirements
+-----------------
+The code is written in modern fortran, so you will need fortran compiler (e.g. gfortran). Code may be built to use external library for solution of sparse linear systems [LIS](http://www.ssisc.org/lis/) or be used without it, just using built in linear solvers.
 
-Download the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
+Getting started
+-----------------
+Clone the git repository or download the zip archive of the most recent source, compile and build the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
 ![alt tag](https://github.com/nikola-m/caffa3d-uns/blob/master/examples/cavity/cavity-t0.5.png)
+
+License
+------------------
+The code is published under GNU General Public License v3.0.
