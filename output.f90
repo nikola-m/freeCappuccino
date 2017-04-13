@@ -1,16 +1,17 @@
 module output
 use types, only: dp
 use parameters
-use geometry,only: numCells, numNodes
+use geometry,only: numCells, numNodes,x,y,z
+use tensor_fields
 use utils, only: get_unit, i4_to_s_left
 
-! ! 
-! ! > Derived operators
-! !
-! interface operator(.visualize.)
-!    module procedure write_volScalarField_field
-!    module procedure write_volVectorField_field
-! end interface
+! 
+! > Derived operators
+!
+interface operator(.visualize.)
+   module procedure write_volScalarField_field
+   module procedure write_volVectorField_field
+end interface
 
 public 
 
@@ -89,48 +90,48 @@ contains
 
 
 
-! function write_volScalarField_field(phi) result(ierr)
-! !
-! ! Wrapper around subroutine vtu_write for VolScalarField
-! !
-!   implicit none
-!   type(volScalarField), intent(in) :: phi
-!   integer :: ierr
+function write_volScalarField_field(phi) result(ierr)
+!
+! Wrapper around subroutine vtu_write for VolScalarField
+!
+  implicit none
+  type(volScalarField), intent(in) :: phi
+  integer :: ierr
 
-!   integer :: output_unit
+  integer :: output_unit
 
-!   call get_unit( output_unit )
+  call get_unit( output_unit )
 
-!   open(unit = output_unit, file = trim(phi%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
+  open(unit = output_unit, file = trim(phi%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
 
-!   call vtu_write ( output_unit, trim(phi%field_name)//'_field_data', numNodes, numCells, &
-!     x, y, z, phi%mag )
+  call vtu_write ( output_unit, trim(phi%field_name)//'_field_data', numNodes, numCells, &
+    x, y, z, phi%mag )
 
-!   close (  unit = output_unit )
+  close (  unit = output_unit )
 
-! end function
+end function
 
 
-! function write_volVectorField_field(v) result(ierr)
-! !
-! ! Wrapper around subroutine vtu_write for VolScalarField
-! !
-!   implicit none
-!   type(volVectorField), intent(in) :: v
-!   integer :: ierr
+function write_volVectorField_field(v) result(ierr)
+!
+! Wrapper around subroutine vtu_write for VolScalarField
+!
+  implicit none
+  type(volVectorField), intent(in) :: v
+  integer :: ierr
 
-!   integer :: output_unit
+  integer :: output_unit
 
-!   call get_unit( output_unit )
+  call get_unit( output_unit )
 
-!   open(unit = output_unit, file = trim(v%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
+  open(unit = output_unit, file = trim(v%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
 
-!   call vtu_write_vector_field ( output_unit, trim(v%field_name)//'_field_data', numNodes, numCells, &
-!     x, y, z, v%x, v%y, v%z )
+  call vtu_write_vector_field ( output_unit, trim(v%field_name)//'_field_data', numNodes, numCells, &
+    x, y, z, v%x, v%y, v%z )
 
-!   close (  unit = output_unit )
+  close (  unit = output_unit )
 
-! end function
+end function
 
 
 

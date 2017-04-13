@@ -8,6 +8,7 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   use parameters
   use geometry, only: xc,yc,zc
   use variables
+  use gradients, only: sngrad
   use interpolation 
 
   implicit none
@@ -25,11 +26,13 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   real(dp), intent(inout) :: sup, svp, swp
 
 ! Local variables
-  real(dp) :: are
+  integer  :: nrelax
+  character(len=8) :: approach
+  real(dp) :: are,dpn
   real(dp) :: xpn,ypn,zpn
-  real(dp) :: nxx,nyy,nzz
-  real(dp) :: ixi1,ixi2,ixi3
-  real(dp) :: dpn,costheta,costn
+  ! real(dp) :: nxx,nyy,nzz
+  ! real(dp) :: ixi1,ixi2,ixi3
+  ! real(dp) :: costheta,costn
   real(dp) :: xi,yi,zi
   real(dp) :: cp,ce
   real(dp) :: duxi,duyi,duzi, &
@@ -38,8 +41,8 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   real(dp) :: duxii,dvxii,dwxii, &
               duyii,dvyii,dwyii, &
               duzii,dvzii,dwzii
-  real(dp) :: d2x,d2y,d2z,d1x,d1y,d1z
-  real(dp) :: de, vole, game
+  ! real(dp) :: d2x,d2y,d2z,d1x,d1y,d1z,vole
+  real(dp) :: de, game
   real(dp) :: fxp,fxn
   real(dp) :: fuuds,fvuds,fwuds,fuhigh,fvhigh,fwhigh
   real(dp) :: ue, ve, we
@@ -64,44 +67,13 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
   ! Distance from P to neighbor N
   dpn=sqrt(xpn**2+ypn**2+zpn**2)     
 
-  ! Components of the unit vector i_ksi
-  ixi1=xpn/dpn
-  ixi2=ypn/dpn
-  ixi3=zpn/dpn
-
   ! cell face area
   are=sqrt(arx**2+ary**2+arz**2)
 
-  ! Unit vectors of the normal
-  nxx=arx/are
-  nyy=ary/are
-  nzz=arz/are
-
-  ! Angle between vectorsa n and i_xi - we need cosine
-  costheta=nxx*ixi1+nyy*ixi2+nzz*ixi3
-
-  ! Relaxation factor for higher-order cell face gradient
-  ! Minimal correction: nrelax = +1 :
-  ! costn = costheta
-  ! Orthogonal correction: nrelax =  0 : 
-  costn = 1.0_dp
-  ! Over-relaxed approach: nrelax = -1 :
-  ! costn = 1./costheta
-  ! In general, nrelax can be any signed integer from some 
-  ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
-  !costn = costheta**nrelax
-
-  ! dpn * sf
-  vole=xpn*arx+ypn*ary+zpn*arz
-
-  ! Overrelaxed correction vector d2, where s=dpn+d2
-  d1x = costn
-  d1y = costn
-  d1z = costn
-
-  d2x = xpn*costn
-  d2y = ypn*costn
-  d2z = zpn*costn
+  ! Coordinates of point j'
+  xi = xc(ijp)*fxp+xc(ijn)*fxn
+  yi = yc(ijp)*fxp+yc(ijn)*fxn
+  zi = zc(ijp)*fxp+zc(ijn)*fxn
 
 
   ! > Equation coefficients:
@@ -124,39 +96,20 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
   ! > Explicit diffusion: 
 
-  ! Coordinates of point j'
-  xi = xc(ijp)*fxp+xc(ijn)*fxn
-  yi = yc(ijp)*fxp+yc(ijn)*fxn
-  zi = zc(ijp)*fxp+zc(ijn)*fxn
+  nrelax = 0
+  approach  = 'skewness'
 
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              u, dudxi, nrelax, approach, duxi, duyi, duzi,  &
+              duxii, duyii, duzii)
 
-  ! Interpolate gradients defined at cv centers to faces
-  duxi = dUdxi(1,ijp)*fxp+dUdxi(1,ijn)*fxn
-  duyi = dUdxi(2,ijp)*fxp+dUdxi(2,ijn)*fxn
-  duzi = dUdxi(3,ijp)*fxp+dUdxi(3,ijn)*fxn
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              v, dvdxi, nrelax, approach, dvxi, dvyi, dvzi, &
+              dvxii, dvyii, dvzii)
 
-  ! du/dx_i interpolated at cell face:
-  duxii = duxi*d1x + arx/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
-  duyii = duyi*d1y + ary/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
-  duzii = duzi*d1z + arz/vole*( u(ijn)-u(ijp)-duxi*d2x-duyi*d2y-duzi*d2z ) 
-
-  dvxi = dVdxi(1,ijp)*fxp+dVdxi(1,ijn)*fxn
-  dvyi = dVdxi(2,ijp)*fxp+dVdxi(2,ijn)*fxn
-  dvzi = dVdxi(3,ijp)*fxp+dVdxi(3,ijn)*fxn
-
-  ! dv/dx_i interpolated at cell face:
-  dvxii = dvxi*d1x + arx/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
-  dvyii = dvyi*d1y + ary/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
-  dvzii = dvzi*d1z + arz/vole*( v(ijn)-v(ijp)-dvxi*d2x-dvyi*d2y-dvzi*d2z ) 
-
-  dwxi = dWdxi(1,ijp)*fxp+dWdxi(1,ijn)*fxn
-  dwyi = dWdxi(2,ijp)*fxp+dWdxi(2,ijn)*fxn
-  dwzi = dWdxi(3,ijp)*fxp+dWdxi(3,ijn)*fxn
-
-  ! dw/dx_i interpolated at cell face:
-  dwxii = dwxi*d1x + arx/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
-  dwyii = dwyi*d1y + ary/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
-  dwzii = dwzi*d1z + arz/vole*( w(ijn)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              w, dwdxi, nrelax, approach, dwxi, dwyi, dwzi, &
+              dwxii, dwyii, dwzii)
 
 !---------------------------------------------------------------------------------------
 !     We calculate explicit and implicit diffsion fde and fdi,

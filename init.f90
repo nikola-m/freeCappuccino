@@ -36,7 +36,7 @@ subroutine init
 ! 
 ! Local variables 
 !
-  integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, iface
+  integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, ioc, iface
   real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
@@ -157,35 +157,6 @@ subroutine init
   ! Note, change also the script 'plotResiduals'
   if ( solveOmega ) chvarSolver(6) = 'Omega  '
 
-  ! Choice of convective schemes for velocity
-
-  if(adjustl(convective_scheme) == 'central') then
-    lcds = .true.
-  elseif(adjustl(convective_scheme) == 'linear') then
-    lluds = .true.
-  elseif(adjustl(convective_scheme) == 'smart') then
-    lsmart = .true.
-  elseif(adjustl(convective_scheme) == 'avl-smart') then
-    lavl = .true.
-  elseif(adjustl(convective_scheme) == 'muscl') then
-    lmuscl = .true.
-  elseif(adjustl(convective_scheme) == 'umist') then
-    lumist = .true.
-  elseif(adjustl(convective_scheme) == 'gamma') then
-    lgamma = .true.
-  elseif(adjustl(convective_scheme) == 'central-f') then
-    lcds_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'linear-f') then
-    l2nd_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'limited-linear') then
-    l2ndlim_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'muscl-f') then
-    lmuscl_flnt = .true.
-  endif
-
-  write(*,'(a)') ' '
-  write(*,'(2a)') '  Convective scheme: ', adjustl(convective_scheme)
-  write(*,'(a)') ' '
 
 !
 ! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
@@ -257,7 +228,7 @@ subroutine init
 
           read(input_unit,*) u0,v0,w0
 
-          write(*,'(4x,a,3f9.3)') 'uniform',u0,v0,w0
+          write(*,'(4x,a,3f10.4)') 'uniform',u0,v0,w0
 
           do inp = 1,numCells
             u(inp) = u0
@@ -285,7 +256,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,2a)') '>',adjustl(boundary_type)
+      write(*,'(4x,a)') adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -413,6 +384,20 @@ subroutine init
     w(ijs) = w(ijp)
   enddo
 
+  ! O-C- faces
+  do i=1,noc
+    ioc = iOCStart+i
+    ijp = ijl(i)
+    ijn = ijr(i)
+
+    fxn = foc(i)
+    fxp = 1.0_dp-foc(i)
+    
+    u(ioc) = u(ijp)*fxp + u(ijn)*fxn
+    v(ioc) = v(ijp)*fxp + v(ijn)*fxn
+    w(ioc) = w(ijp)*fxp + w(ijn)*fxn
+  enddo
+
   ! ! Pressure Outlet
   ! do i=1,npru
   !   iface = iPressOutletFacesStart + i
@@ -420,14 +405,7 @@ subroutine init
   !   u(ijp) = ...
   ! enddo
 
-  ! ! OC faces
-  ! do i=1,noc
-  !   iface = iOCFacesStart + i
-  !   ijp = owner(iface)
-  !   u(ijp) = ...
-  ! enddo
 
-  
   ! Initialize minimal and maximal field values for velocity
   umin = minval(u(1:numCells))
   umax = maxval(u(1:numCells))
@@ -592,16 +570,17 @@ subroutine init
       te(ijs) = te(ijp)
     enddo
 
+    ! OC faces
+    do i=1,noc
+      ioc = iOCStart+i
+      ijp = ijl(i)
+      ijn = ijr(i)
+      te(ioc) = te(ijp)*(1.0_dp-foc(i)) + te(ijn)*foc(i)
+    enddo
+
     ! ! Pressure Outlet
     ! do i=1,npru
     !   iface = iPressOutletFacesStart + i
-    !   ijp = owner(iface)
-    !   te(ijp) = ...
-    ! enddo
-
-    ! ! OC faces
-    ! do i=1,noc
-    !   iface = iOCFacesStart + i
     !   ijp = owner(iface)
     !   te(ijp) = ...
     ! enddo
@@ -766,16 +745,17 @@ subroutine init
     ed(ijs) = ed(ijp)
   enddo
 
+    ! OC faces
+    do i=1,noc
+      ioc = iOCStart+i
+      ijp = ijl(i)
+      ijn = ijr(i)
+      ed(ioc) = ed(ijp)*(1.0_dp-foc(i)) + ed(ijn)*foc(i)
+    enddo
+
   ! ! Pressure Outlet
   ! do i=1,npru
   !   iface = iPressOutletFacesStart + i
-  !   ijp = owner(iface)
-  !   ed(ijp) = ...
-  ! enddo
-
-  ! ! OC faces
-  ! do i=1,noc
-  !   iface = iOCFacesStart + i
   !   ijp = owner(iface)
   !   ed(ijp) = ...
   ! enddo
@@ -938,6 +918,14 @@ subroutine init
     ed(ijs) = ed(ijp)
   enddo
 
+  ! OC faces
+  do i=1,noc
+    ioc = iOCStart+i
+    ijp = ijl(i)
+    ijn = ijr(i)
+    ed(ioc) = ed(ijp)*(1.0_dp-foc(i)) + ed(ijn)*foc(i)
+  enddo
+
   ! ! Pressure Outlet
   ! do i=1,npru
   !   iface = iPressOutletFacesStart + i
@@ -945,108 +933,9 @@ subroutine init
   !   ed(ijp) = ...
   ! enddo
 
-  ! ! OC faces
-  ! do i=1,noc
-  !   iface = iOCFacesStart + i
-  !   ijp = owner(iface)
-  !   ed(ijp) = ...
-  ! enddo
-
   write(*,'(a)') ' '
 
   endif
-
-
-! ! Field initialisation loop over inner cells--------------------------------
-!   do inp = 1,numCells
-
-! ! Initialization of field variables from input file:
-!   u(inp) = uin
-!   v(inp) = vin
-!   w(inp) = win
-!   te(inp) = tein
-!   ed(inp) = edin
-
-!   ! Channel flow:
-!   ! Random number based fluctuation of mean profile            
-!   ! call init_random_seed()
-!   ! call random_number(perturb)    
-!   ! perturb = 0.9+perturb/5. ! Max perturbation is +/- 10% of mean profile
-!   ! u(inp) = perturb*u(inp)
-!   ! v(inp) = perturb/100.
-!   ! w(inp) = perturb/100.
-
-!   enddo
- 
-  ! Initialize variables at boundaries
-
-  ! ! Inlet 
-
-  ! ! Outlet - zero gradient
-  ! do i=1,nout
-  ! iface = iOutletFacesStart + i
-  ! ijp = owner(iface)
-  ! ijo = iOutletStart+i
-  ! u(ijo) = u(ijp)
-  ! v(ijo) = v(ijp)
-  ! w(ijo) = w(ijp)
-  ! te(ijo) = te(ijp)
-  ! ed(ijo) = ed(ijp)
-  ! enddo
-
-  ! ! Symmetry
-  ! do i=1,nsym
-  ! iface = iSymmetryFacesStart + i
-  ! ijp = owner(iface)
-  ! ijs = iSymmetryStart + i
-  !     ! Gradient test:
-  !     ! u(ijs) = xf(iface)+yf(iface)+zf(iface)
-  ! u(ijs) = u(ijp)
-  ! v(ijs) = v(ijp)
-  ! w(ijs) = w(ijp)
-  ! te(ijs) = te(ijp)
-  ! ed(ijs) = ed(ijp)
-  ! enddo
-
-  ! ! Wall
-  ! do i=1,nwal
-  ! iface = iWallFacesStart + i
-  ! ijw = iWallStart+i
-  !     ! Gradient test:
-  !     ! u(ijw) = xf(iface)+yf(iface)+zf(iface)
-  ! u(ijw) = 0.0_dp
-  ! v(ijw) = 0.0_dp
-  ! w(ijw) = 0.0_dp
-  ! te(ijw) = 0.0_dp
-  ! ed(ijw) = 0.0_dp
-  ! enddo
-
-  ! Moving Wall
-  ! do i=1,20!nwalm
-  ! iface = iWallFacesStart + i !iWallMFacesStart + i
-  ! inw = iWallStart+i !iWallMStart+i
-  ! u(inw) = 1.0_dp
-  ! v(inw) = 0.0_dp
-  ! w(inw) = 0.0_dp
-  ! te(inw) = tein
-  ! ed(inw) = edin
-  ! enddo
-
-  ! ! Pressure Outlet
-  ! do i=1,npru
-  ! iface = iPressOutletFacesStart + i
-  ! ijp = owner(iface)
-  ! u(ijp) = ...
-  ! enddo
-
-  ! ! OC faces
-  ! do i=1,noc
-  ! iface = iOCFacesStart + i
-  ! ijp = owner(iface)
-  ! u(ijp) = ...
-  ! enddo
-
-
 
 
   !-------------------------------------------------------    
@@ -1058,6 +947,13 @@ subroutine init
 
   ! Effective viscosity
   vis = viscos
+
+  ! call get_unit ( input_unit )
+  ! open ( unit = input_unit, file = '0/vis')
+  ! rewind input_unit
+  ! do i=1,numCells
+  !   read(input_unit,*) vis(i)
+  ! enddo
 
   ! Temperature
   if(lcal(ien)) t = tin
@@ -1108,6 +1004,16 @@ subroutine init
 
   enddo
 
+  ! O-C- bounaries
+  do i=1,noc
+    ioc = iOCStart+i
+    ijp = ijl(i)
+    ijn = ijr(i)
+    iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
+
+    fmoc(i) = den(ijp)*(arx(iface)*u(ioc)+ary(iface)*v(ioc)+arz(iface)*w(ioc))
+
+  enddo
 
 !
 ! 5)  Read Restart File And Set Field Values
@@ -1133,17 +1039,52 @@ subroutine init
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
 
-  ! Gradient limiter:
+  ! Convective scheme:
+
+  if(adjustl(convective_scheme) == 'central') then
+    lcds = .true.
+  elseif(adjustl(convective_scheme) == 'linear') then
+    lluds = .true.
+  elseif(adjustl(convective_scheme) == 'smart') then
+    lsmart = .true.
+  elseif(adjustl(convective_scheme) == 'avl-smart') then
+    lavl = .true.
+  elseif(adjustl(convective_scheme) == 'muscl') then
+    lmuscl = .true.
+  elseif(adjustl(convective_scheme) == 'umist') then
+    lumist = .true.
+  elseif(adjustl(convective_scheme) == 'gamma') then
+    lgamma = .true.
+  elseif(adjustl(convective_scheme) == 'central-f') then
+    lcds_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'linear-f') then
+    l2nd_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'limited-linear') then
+    l2ndlim_flnt = .true.
+  elseif(adjustl(convective_scheme) == 'muscl-f') then
+    lmuscl_flnt = .true.
+  else
+    write(*,'(a)') '  Convective scheme not chosen, assigning default muscl-f scheme'
+    convective_scheme = 'muscl-f'
+  endif
+  
+  write(*,'(a)') ' '
+  write(*,'(2a)') '  Convective scheme: ', adjustl(convective_scheme)
   write(*,'(a)') ' '
 
+
+  ! Gradient limiter:
   if(adjustl(limiter) == 'Barth-Jespersen') then
     write(*,*) ' Gradient limiter: Barth-Jespersen'
   elseif(adjustl(limiter) == 'Venkatakrishnan') then
     write(*,*) ' Gradient limiter: Venkatakrishnan'
   elseif(adjustl(limiter) == 'MVenkatakrishnan') then
     write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
+  elseif(adjustl(limiter) == 'no-limit') then
+    write(*,*) ' Gradient limiter: no-limit'
   else
-    write(*,*) ' Gradient limiter: none'
+    write(*,*) ' Gradient limiter type not chosen, assigning default Venkatakrishnan limiter'
+    limiter = 'Venkatakrishnan'
   endif
 
   call grad(U,dUdxi)
@@ -1206,10 +1147,6 @@ subroutine init
     srds(i) = are/dns(i)
 
   enddo
-
-  ! srdoc
-
-  ! foc
 
 
   !

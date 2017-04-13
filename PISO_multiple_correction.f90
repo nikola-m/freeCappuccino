@@ -94,7 +94,7 @@ subroutine PISO_multiple_correction
     ! O- and C-grid cuts
     do i=1,noc
 
-      iface = iOCFacesStart+i
+      iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
       ijp=ijl(i)
       ijn=ijr(i)
 

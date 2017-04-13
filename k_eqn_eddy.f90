@@ -237,7 +237,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   ! Contribution from o- and c-grid cuts
   do i=1,noc
-    iface = iOCFacesStart+i
+    iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
     ijp=ijl(i)
     ijn=ijr(i)
 
@@ -568,11 +568,13 @@ subroutine modify_mu_eff_inlet()
 
   enddo
 
-  write(*,'(8x,a)') 'mu_sgs/mu: '
-  do i = 1,ninl
-    ini = iInletStart+i 
-    write(*,'(8x,e11.4)') vis(ini)/viscos
-  enddo
+  if(ninl.gt.0) then ! If case hase inlet boundaries. 
+    write(*,'(4x,a)') 'mu_sgs/mu: '
+    do i = 1,ninl
+      ini = iInletStart+i 
+      write(*,'(8x,e11.4)') vis(ini)/viscos
+    enddo
+  endif
 
 end subroutine
 

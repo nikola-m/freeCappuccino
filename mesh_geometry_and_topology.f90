@@ -18,7 +18,7 @@ integer :: numTotal                           ! number of volume field values + 
 integer :: nnz                                ! no.of nonzeros
 
 integer :: ninl,nout,nsym,npru,nwal,noc, &
-           nwalm,nwali,nwala,nwalf
+           nwali,nwala,nwalf
 
 integer :: iInletStart
 integer :: iOutletStart
@@ -26,6 +26,8 @@ integer :: iSymmetryStart
 integer :: iWallStart
 integer :: iPressOutletStart
 integer :: iOCStart
+
+integer :: iOCBoundaries                      ! No. of O-C- boundaries, they come in pair
 
 integer :: iInletFacesStart
 integer :: iOutletFacesStart
@@ -73,6 +75,7 @@ real(dp), dimension(:), allocatable :: foc            ! Interpolation factor for
 integer, dimension(:), allocatable :: owner     ! Index of the face owner cell
 integer, dimension(:), allocatable :: neighbour ! Index of the neighbour cell  - it shares the face with owner
 integer, dimension(:), allocatable :: ijl, ijr  ! left and right cell at the block boundary, it is still an inner face in the domain
+integer, dimension(:), allocatable :: ijlFace, ijrFace  ! left and right cell face at the block boundary, it is still an inner face in the domain
 
 
 public 
@@ -340,6 +343,7 @@ subroutine mesh_geometry
   integer :: i,j,k,l,ioc
   integer :: iface
   integer :: inp,inn
+  integer :: input_status
 
   character(len=1) :: ch
   character(len=15) :: char_string,char_string2
@@ -404,11 +408,13 @@ subroutine mesh_geometry
   npru = 0
   noc = 0
 
-  ! Different types of walls: moving, isothermal, adiabatic, flux.
-  nwalm = 0
+  ! Different types of walls: isothermal, adiabatic, flux.
   nwali = 0
   nwala = 0
   nwalf = 0
+
+  ! Initialize no. of O-C- boundaries
+  iOCBoundaries  = 0
 
   read(boundary_file,'(a)') line_string
   read(boundary_file,*) numBoundaries
@@ -437,19 +443,14 @@ subroutine mesh_geometry
       case (41)
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
-        nwalm = nwalm + nfaces
+        nwali = nwali + nfaces
 
       case (42)
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
-        nwali = nwali + nfaces
-
-      case (43)
-        if (nwal==0) iWallFacesStart = startFace
-        nwal = nwal + nfaces
         nwala = nwala + nfaces
 
-      case (44)
+      case (43)
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
         nwalf = nwalf + nfaces
@@ -460,6 +461,7 @@ subroutine mesh_geometry
 
       case (6)
         if (noc==0) iOCFacesStart = startFace
+        iOCBoundaries = iOCBoundaries + 1
         noc = noc + nfaces
 
       case default
@@ -606,10 +608,6 @@ if (native_mesh_files)  then
   if( nwal.gt.0 ) then
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of wall faces  = ', nwal
-    if( nwalm.gt.0 ) then
-      write ( *, '(a)' ) ' '
-      write ( *, '(4x,a,i8)' ) 'Number of moving wall faces  = ', nwalm
-    endif
     if( nwali.gt.0 ) then
       write ( *, '(a)' ) ' '
       write ( *, '(4x,a,i8)' ) 'Number of isothermal wall faces  = ', nwali
@@ -632,8 +630,12 @@ if (native_mesh_files)  then
   if( noc.gt.0 ) then
     ! Make one correction - divide noc by two because we had read bot 'left' and 'right' faces.
     noc = noc/2
+    iOCBoundaries = iOCBoundaries/2
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of O-C- boundaries  = ', iOCBoundaries
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
+
   endif
 
 !
@@ -673,6 +675,8 @@ if (native_mesh_files)  then
 
   allocate ( ijl(noc) ) 
   allocate ( ijr(noc) ) 
+  allocate ( ijlFace(noc) ) 
+  allocate ( ijrFace(noc) ) 
   allocate ( srdoc(noc) ) 
   allocate ( foc(noc) )                                     
 
@@ -726,41 +730,51 @@ if (native_mesh_files)  then
 
   endif
 
+
   !
   ! Rewind boundary file for one more sweep - to read cyclic boundaries
   !
   if(noc.gt.0) then
 
     write ( *, '(a)' ) ' '
-    write ( *, '(a)' ) '  Defining O-C- and cyclic boundary face pairs.'
+    write ( *, '(a)' ) '  Defining O-C- and cyclic boundary face pairs...'
 
     rewind( boundary_file )
 
     read(boundary_file,'(a)') line_string
-    read(boundary_file,'(i1)') numBoundaries
+    read(boundary_file,*) numBoundaries
 
     ioc = 1
 
-    bc_loop: do i=1,numBoundaries
-      read(boundary_file,*) bctype,nfaces,startFace
+    bc_loop: do
+
+      read(boundary_file,*,iostat = input_status) bctype,nfaces,startFace 
+
+      if(input_status /= 0) exit
 
       if (bctype.eq.6) then ! we have what we call a o-c- boundary, maybe inner domain boundary maybe cyclic boundary
 
-      ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same.)
-      read(boundary_file,*) bctype,nfaces,startFaceFriend
+        ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same of course.)
+        read(boundary_file,*)  l,nfaces,startFaceFriend
 
         do k=1,nfaces
-          iface = startFace+k
+          iface = startFace + k
           ifaceFriend = startFaceFriend + k
+
           ijl(ioc) = owner(iface)
           ijr(ioc) = owner(ifaceFriend)
-          ioc = ioc+1
+
+          ijlFace(ioc) = iface
+          ijrFace(ioc) = ifaceFriend
+
+          ioc = ioc + 1
+
         enddo
-      else
-        cycle bc_loop
+
       endif
     
     enddo bc_loop
+
   endif
 
   !
@@ -813,13 +827,13 @@ if (native_mesh_files)  then
       cy = one_third*( y(node(i+2)) + y(node(i+1)) + y(node(1)) )
       cz = one_third*( z(node(i+2)) + z(node(i+1)) + z(node(1)) )
 
-      xf(iface) = xf(iface) + nx*cx
-      yf(iface) = yf(iface) + ny*cy
-      zf(iface) = zf(iface) + nz*cz
+      xf(iface) = xf(iface) + abs(nx*cx)
+      yf(iface) = yf(iface) + abs(ny*cy)
+      zf(iface) = zf(iface) + abs(nz*cz)
 
-      ax = ax + nx
-      ay = ay + ny
-      az = az + nz
+      ax = ax + abs(nx)
+      ay = ay + abs(ny)
+      az = az + abs(nz)
 
       !
       ! > Compute cell volumes 
@@ -833,7 +847,7 @@ if (native_mesh_files)  then
 
     enddo
 
-    !  ! > Cell-face centroid components - final
+    ! ! > Cell-face centroid components - final
     !  if(iface.le.numInnerFaces) then
     !     xf(iface) = xf(iface) / (ax+1e-30)
     !     yf(iface) = yf(iface) / (ay+1e-30)
@@ -971,15 +985,90 @@ if (native_mesh_files)  then
     
   enddo
 
-  ! !
-  ! ! > Interpolation factor > O-C boundaries
-  ! !
+  !
+  ! > Interpolation factor > O-C boundaries
+  !
+  if(noc.gt.0) then 
+    do ioc=1,noc
+          iface = ijlFace(ioc)
+          ifaceFriend = ijrFace(ioc)
 
-  ! do i=1,noc
-  !   iface = iOCFacesStart + i
-  !   inp = ijl(i)
-  !   inn = ijr(i)
-  ! enddo
+          inp = ijl(ioc)
+          inn = ijr(ioc)
+
+
+          xpn = xc(inn) - xf( ifaceFriend )
+          ypn = yc(inn) - yf( ifaceFriend )
+          zpn = zc(inn) - zf( ifaceFriend )
+
+          dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+
+          xpn = xf(iface) - xc(inp)
+          ypn = yf(iface) - yc(inp)
+          zpn = zf(iface) - zc(inp)
+
+          djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+          foc(ioc) = djn/(djn+dpn)
+
+    enddo
+  endif
+  
+
+  ! if(noc.gt.0) then
+
+  !   rewind( boundary_file )
+
+  !   read(boundary_file,'(a)') line_string
+  !   read(boundary_file,*) numBoundaries
+
+  !   ioc = 1
+
+  !   bc_loop2: do
+
+  !     read(boundary_file,*,iostat = input_status) bctype,nfaces,startFace 
+      
+  !     if(input_status /= 0) exit
+
+  !     if (bctype.eq.6) then ! we have what we call a o-c- boundary, maybe inner domain boundary maybe cyclic boundary
+
+  !     ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same of course.)
+  !     read(boundary_file,*) l,nfaces,startFaceFriend
+
+  !       do k=1,nfaces
+  !         iface = startFace+k
+  !         ifaceFriend = startFaceFriend + k
+
+  !         inp = ijl(ioc)
+  !         inn = ijr(ioc)
+
+
+  !         xpn = xc(inn) - xf( ifaceFriend )
+  !         ypn = yc(inn) - yf( ifaceFriend )
+  !         zpn = zc(inn) - zf( ifaceFriend )
+
+  !         dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+
+  !         xpn = xf(iface) - xc(inp)
+  !         ypn = yf(iface) - yc(inp)
+  !         zpn = zf(iface) - zc(inp)
+
+  !         djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+  !         foc(ioc) = djn/(djn+dpn)
+
+  !         ioc = ioc+1
+
+  !       enddo
+  !     else
+  !       cycle bc_loop2
+  !     endif
+   
+  !   enddo bc_loop2
+  
+  ! endif
 
 
 !

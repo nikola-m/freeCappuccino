@@ -75,7 +75,7 @@ subroutine calcp
   ! o- and c-grid cuts
   do i=1,noc
 
-    iface = iOCFacesStart+i
+    iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
     ijp=ijl(i)
     ijn=ijr(i)
 
@@ -160,17 +160,17 @@ subroutine calcp
     ! Correct mass fluxes at faces along O-C grid cuts.
     !
     do i=1,noc
-      fmoc(i) = fmoc(i) + ar(i) * ( pp(ijr(i)) - pp(ijl(i)) )
+        fmoc(i) = fmoc(i) + ar(i) * ( pp(ijr(i)) - pp(ijl(i)) )
     end do
 
     !
     ! Correct velocities and pressure
     !      
     do inp=1,numCells
-          u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
-          v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
-          w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
-          p(inp) = p(inp) + urf(ip)*(pp(inp)-ppref)
+        u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
+        v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
+        w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
+        p(inp) = p(inp) + urf(ip)*(pp(inp)-ppref)
     enddo   
 
     ! Explicit correction of boundary conditions 
@@ -196,7 +196,7 @@ subroutine calcp
 
       ! Faces along O-C grid cuts
       do i=1,noc
-        iface = iOCFacesStart+i
+        iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
         ijp = ijl(i)
         ijn = ijr(i)
         call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)

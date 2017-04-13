@@ -9,7 +9,7 @@ contains
 subroutine show_logo
 
 write(6,'(a)')' '
-write(6,'(a)')'  You are running caffa3d-uns. '
+write(6,'(a)')'  You are running Cappuccino.'
 write(6,'(a)')' '
 
   call timestamp ()
@@ -60,6 +60,17 @@ write(6,'(a)') ' '
 
 end subroutine
 
+subroutine say_goodbye
+!
+! Prints log file footer and finishing time.
+!
+  write ( *, '(a)' ) ' '
+  write ( *, '(a)' ) 'Cappuccino:'
+  write ( *, '(a)' ) '  Normal end of execution.'
+  write ( *, '(a)' ) ' '
+  call timestamp ( )
+
+end subroutine
 
 
 function csr_to_k(icell,jcell,ioffset,ja) result(k)

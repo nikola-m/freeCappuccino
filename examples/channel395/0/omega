@@ -1,0 +1,7 @@
+internalField
+  uniform
+  0.04
+boundaryField
+  wall
+    uniform
+    0.04

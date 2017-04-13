@@ -59,20 +59,12 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
     ! Contribution from O- and C-grid cuts
     do i=1,noc
-      iface = iOCFacesStart + i
+      iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
       ijp = ijl(i)
       ijn = ijr(i)
       call gradco(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), &
                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz)
     end do
-
-    ! Contribution from boundaries
-    ! do i=1,numBoundaryFaces
-    !   iface = numInnerFaces + i
-    !   ijp = owner(iface)
-    !   ijb = numCells+i
-    !   call gradbc(arx(iface), ary(iface), arz(iface), u(ijb), dudx(ijp), dudy(ijp), dudz(ijp))
-    ! end do 
 
     ! Contribution from boundaries
     do i = 1,ninl

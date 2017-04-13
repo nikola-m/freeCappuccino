@@ -1,15 +1,18 @@
 module gradients
+!
+! Module for cell center gradients, gradient limiters and surface normal gradients.
+!
 
 use types
 use parameters
-use geometry, only:numTotal,numCells
+use geometry, only: numCells,numTotal,xc,yc,zc
 
 implicit none
 
-logical :: lstsq, lstsq_qr, lstsq_dm, gauss       ! Gradient discretization approach
-character(len=20) :: limiter = 'none' ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
+logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization approach
+character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
 
-real(dp),dimension(:,:), allocatable ::  dmat  !  d(6,nxyz) - when using bn, or dm version of the subroutine
+real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
 real(dp),dimension(:,:,:), allocatable ::  dmatqr  ! when using qr version of the subroutine size(3,6,nxyz)!
 
 
@@ -18,13 +21,16 @@ interface grad
   module procedure grad_vector_field
 end interface
 
+interface sngrad
+  module procedure sngrad_scalar_field
+  module procedure sngrad_vector_field
+end interface
+
 
 private
 
-public :: lstsq, lstsq_qr, lstsq_dm, gauss
-public :: limiter
-public :: grad,allocate_gradients, &
-          create_lsq_gradients_matrix
+public :: lstsq, lstsq_qr, lstsq_dm, gauss,limiter
+public :: grad,sngrad,allocate_gradients,create_lsq_gradients_matrix
 
 
 
@@ -32,7 +38,7 @@ contains
 
 
 subroutine allocate_gradients
-  implicit none
+implicit none
   
   integer :: ierr
 
@@ -48,13 +54,18 @@ subroutine allocate_gradients
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine create_lsq_gradients_matrix(phi,dPhidxi)
+!
+!***********************************************************************
 !
 !  Discussion:
 !    Prepare System Matrix For Least-Squares Gradient Calculation.
 !    It is done by setting this --v value to one.
 !           call grad_lsq(U,dUdxi,1,D)
+!
+!***********************************************************************
 !
 use types
 use parameters
@@ -75,9 +86,12 @@ implicit none
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine grad_scalar_field(phi,dPhidxi)
-
+!
+!***********************************************************************
+!
 use types
 use parameters
 
@@ -100,11 +114,17 @@ implicit none
 
   ! Gradient limiter:
   if(adjustl(limiter) == 'Barth-Jespersen') then
+
     call slope_limiter_Barth_Jespersen(phi, dPhidxi)
+
   elseif(adjustl(limiter) == 'Venkatakrishnan') then
+
     call slope_limiter_Venkatakrishnan(phi, dPhidxi)
+
   elseif(adjustl(limiter) == 'MVenkatakrishnan') then
+
     call slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
+
   else
     ! no-limit
   endif
@@ -112,8 +132,12 @@ implicit none
 end subroutine
 
 
+!***********************************************************************
+!
 subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
-
+!
+!***********************************************************************
+!
 use types
 use parameters
 
@@ -164,7 +188,6 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
   use types
   use parameters
   use sparse_matrix, only: ioffset,ja,diag
-  use geometry, only: numTotal,numCells,xc,yc,zc
 
   implicit none
 
@@ -255,7 +278,6 @@ subroutine slope_limiter_Barth_Jespersen(phi, dPhidxi)
   use types
   use parameters
   use sparse_matrix, only: ioffset,ja,diag
-  use geometry, only: numTotal,numCells,xc,yc,zc
 
   implicit none
 
@@ -344,7 +366,6 @@ subroutine slope_limiter_Venkatakrishnan(phi, dPhidxi)
   use types
   use parameters
   use sparse_matrix, only: ioffset,ja,diag
-  use geometry, only: numTotal,numCells,xc,yc,zc
 
   implicit none
 
@@ -429,6 +450,226 @@ include 'grad_lsq_dm.f90'
 
 ! Gauss gradients
 include 'grad_gauss.f90'
+
+
+!******************************************************************************
+!
+subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+                               Fi, dFidxi, nrelax, approach, dfixi, dfiyi, dfizi, &
+                               dfixii, dfiyii, dfizii)
+!
+!******************************************************************************
+!
+!  Surface normal gradient with non-orthogonal correction done in two
+!  possible ways - either by skewness correction of intersection point
+!  offset.
+!
+!  Check out reference paper: 
+!    Mirkov, Rasuo, Kenjeres, JCP, Vol. 287, 2015.
+!
+!******************************************************************************
+!
+  implicit none
+!
+!******************************************************************************
+! 
+  integer, intent(in) :: ijp, ijn
+  real(dp), intent(in) :: xf,yf,zf
+  real(dp), intent(in) :: arx, ary, arz
+  real(dp), intent(in) :: lambda
+  real(dp), dimension(numTotal), intent(in) :: Fi
+  real(dp), dimension(3,numCells), intent(in) :: dFidxi
+  integer, intent(in) :: nrelax
+  character(len=8) :: approach
+  real(dp), intent(out) :: dfixi, dfiyi, dfizi, dfixii, dfiyii, dfizii
+!
+! Locals
+!
+  real(dp) :: are,vole
+  real(dp) :: xpn,ypn,zpn
+  real(dp) :: nxx,nyy,nzz
+  real(dp) :: ixi1,ixi2,ixi3
+  real(dp) :: dpn,costheta,costn
+
+  real(dp) :: d1x,d1y,d1z
+  real(dp) :: d2x,d2y,d2z
+  real(dp) :: fxp,fxn
+
+  real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
+  real(dp) :: nablaFIxdnnp,nablaFIxdppp
+
+!
+!******************************************************************************
+!
+
+  ! > Geometry:
+
+  ! Face interpolation factor
+  fxn=lambda 
+  fxp=1.0_dp-lambda
+
+  ! Distance vector between cell centers
+  xpn=xc(ijn)-xc(ijp)
+  ypn=yc(ijn)-yc(ijp)
+  zpn=zc(ijn)-zc(ijp)
+
+  ! Distance from P to neighbor N
+  dpn=sqrt(xpn**2+ypn**2+zpn**2)     
+
+  ! cell face area
+  are=sqrt(arx**2+ary**2+arz**2)
+
+  ! Components of the unit vector i_ksi
+  ixi1=xpn/dpn
+  ixi2=ypn/dpn
+  ixi3=zpn/dpn
+
+  ! Unit vectors of the face normal
+  nxx=arx/are
+  nyy=ary/are
+  nzz=arz/are
+
+  ! Angle between vectorsa n and i_xi - we need cosine
+  costheta=nxx*ixi1+nyy*ixi2+nzz*ixi3
+
+  ! Relaxation factor for higher-order cell face gradient
+  ! In general, nrelax can be any signed integer from some 
+  ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
+  !costn = costheta**nrelax
+
+  costn = 1.0_dp
+
+  if(nrelax == 1) then
+    ! Minimal correction: nrelax = +1 :
+    costn = costheta
+  elseif(nrelax == 0) then
+    ! Orthogonal correction: nrelax =  0 : 
+    costn = 1.0_dp
+  elseif(nrelax == -1) then
+    ! Over-relaxed approach: nrelax = -1 :
+    costn = 1.0_dp/costheta  
+  endif
+
+  ! dpp_j * sf
+  vole=xpn*arx+ypn*ary+zpn*arz
+
+
+  ! Interpolate gradients defined at CV centers to faces
+  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+
+
+  !-- Skewness correction -->
+  if (adjustl(approach) == 'skewness') then
+
+    ! Overrelaxed correction vector d2, where s=dpn+d2
+    d1x = costn
+    d1y = costn
+    d1z = costn
+
+    d2x = xpn*costn
+    d2y = ypn*costn
+    d2z = zpn*costn
+
+    !.....du/dx_i interpolated at cell face:
+    dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+    dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
+    dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z )
+
+  ! |-- Intersection point offset and skewness correction -->
+
+
+  elseif (adjustl(approach) == 'offset') then
+
+    ! Find points P' and Pj'
+    xpp=xf-(xf-xc(ijp))*nxx
+    ypp=yf-(yf-yc(ijp))*nyy 
+    zpp=zf-(zf-zc(ijp))*nzz
+
+    xep=xf-(xf-xc(ijn))*nxx 
+    yep=yf-(yf-yc(ijn))*nyy 
+    zep=zf-(zf-zc(ijn))*nzz     
+
+    xpnp = xep-xpp 
+    ypnp = yep-ypp 
+    zpnp = zep-zpp
+
+    volep = arx*xpnp+ary*ypnp+arz*zpnp
+
+   ! Overrelaxed correction vector d2, where S=dpn+d2
+    d1x = costn
+    d1y = costn
+    d1z = costn
+    
+    xpnp = xpnp*costn
+    ypnp = ypnp*costn
+    zpnp = zpnp*costn
+
+    ! The cell face interpolated gradient (d phi / dx_i)_j:
+    ! Nonorthogonal corrections:          ___
+    ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
+    ! And:                                ___
+    ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
+    nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
+    nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
+
+    dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+    dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+    dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
+ 
+
+  endif
+
+
+end subroutine
+
+
+!******************************************************************************
+!
+subroutine sngrad_vector_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+                               u,v,w, dudxi,dvdxi,dwdxi, nrelax, approach, &
+                               duxi, duyi, duzi, dvxi, dvyi, dvzi, dwxi, dwyi, dwzi, &
+                               duxii, dvxii, dwxii, duyii, dvyii, dwyii, duzii, dvzii, dwzii)
+!
+!******************************************************************************
+!
+!  Surface normal gradient with non-orthogonal correction done in two
+!  possible ways - either by skewness correction of intersection point
+!  offset.
+!
+!  Check out reference paper: 
+!    Mirkov, Rasuo, Kenjeres, JCP, Vol. 287, 2015.
+!
+! Note: same as above, just for vector field.
+!
+!******************************************************************************
+!
+  implicit none
+!
+!******************************************************************************
+! 
+  integer, intent(in) :: ijp, ijn
+  integer, intent(in) :: nrelax
+  character(len=8) :: approach
+  real(dp), intent(in) :: xf,yf,zf
+  real(dp), intent(in) :: arx, ary, arz
+  real(dp), intent(in) :: lambda
+  real(dp), dimension(numTotal), intent(in) :: u,v,w
+  real(dp), dimension(3,numCells), intent(in) :: dudxi,dvdxi,dwdxi
+  real(dp), intent(out) ::  duxi,duyi,duzi,dvxi,dvyi,dvzi,dwxi,dwyi,dwzi
+  real(dp), intent(out) ::  duxii,dvxii,dwxii,duyii,dvyii,dwyii,duzii,dvzii,dwzii
+
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              u, dudxi, nrelax, approach, duxi, duyi, duzi, duxii, duyii, duzii)
+
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              v, dvdxi, nrelax, approach, dvxi, dvyi, dvzi, dvxii, dvyii, dvzii)
+
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              w, dwdxi, nrelax, approach, dwxi, dwyi, dwzi, dwxii, dwyii, dwzii)
+
+end subroutine
 
 
 end module gradients

@@ -86,17 +86,16 @@ program caffa3d_uns
 !     Update variables : 
 !===============================================
 !
-
-  if(bdf) then
-    uoo = uo 
-    voo = vo 
-    woo = wo 
-    teoo = teo 
-    edoo = edo
-    if (lcal(ien)) too = to 
-    if (lcal(ivart)) vartoo = varto 
-    if (lcal(icon)) conoo = cono 
-  endif
+    if(bdf) then
+      uoo = uo 
+      voo = vo 
+      woo = wo 
+      teoo = teo 
+      edoo = edo
+      if (lcal(ien)) too = to 
+      if (lcal(ivart)) vartoo = varto 
+      if (lcal(icon)) conoo = cono 
+    endif
     uo = u 
     vo = v 
     wo = w 
@@ -109,29 +108,21 @@ program caffa3d_uns
 !===============================================
 !.....Set inlet boundary conditions at every timestep
 !===============================================
-      if(itime.eq.1) call bcin
+    if(itime.eq.1) call bcin
 !
 !===============================================
 !.....ITERATION CONTROL MONITOR
 !===============================================
 !
-      ! Courant number report:
-      include 'CourantNo.h'
-
-      ! ! Old style:
-      ! ! Header written to monitor at start of SIMPLE iterations 
-      ! include 'simpleMonitorHeader.h'
-      ! time = time + timestep
-      ! write(6,*)
-      ! write(6,'(a,i0,a,f12.6)') ' Time step no. : ',ITIME,' Time = ',TIME
-      ! write(6,*)
+    ! Courant number report:
+    include 'CourantNo.h'
 
 ! 
 !===============================================
 !.....ITERATION loop
 !===============================================
 !
-      iteration_loop: do iter=1,maxit 
+    iteration_loop: do iter=1,maxit 
 
       call cpu_time(start)
 
@@ -162,9 +153,6 @@ program caffa3d_uns
       !   resor(i)=resor(i)*rnor(i)
       ! end do
 
-      ! ! Write to monitor file - Old style
-      ! include 'simpleMonitorResiduals.h'
-
 
       ! Check residual
       source=max(resor(iu),resor(iv),resor(iw),resor(ip)) 
@@ -185,6 +173,7 @@ program caffa3d_uns
 
             if(const_mflux) then
               !# Correct driving force for a constant mass flow rate.
+              write(*,*)'here!!'
               include 'constant_mass_flow_forcing.f90'
             endif
 
@@ -220,7 +209,7 @@ program caffa3d_uns
  
       if(ltransient) call flush(6)
  
-      end do time_loop
+    end do time_loop
 
 !===============================================
 !.....Write field values for the next run 

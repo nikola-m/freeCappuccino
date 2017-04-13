@@ -178,7 +178,7 @@ subroutine calcuvw
 
   ! O- and C-grid cuts (these are not boundaries!)
   do i=1,noc
-    iface = iOCFacesStart + i
+    iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
     ijp=ijl(i)
     ijn=ijr(i)
 
@@ -435,16 +435,16 @@ subroutine calcuvw
         ijn = neighbour(i)
 
         k = icell_jcell_csr_value_index(i)
-        sv(ijp) = su(ijp) - a(k)*vo(ijn)
+        sv(ijp) = sv(ijp) - a(k)*vo(ijn)
 
         k = jcell_icell_csr_value_index(i)
-        sv(ijn) = su(ijn) - a(k)*vo(ijp)
+        sv(ijn) = sv(ijn) - a(k)*vo(ijp)
     enddo
 
     do ijp=1,numCells
         apotime=den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
-        su(ijp) = sv(ijp) + (apotime + sum_off_diagonal_terms)*vo(ijp)
+        sv(ijp) = sv(ijp) + (apotime + sum_off_diagonal_terms)*vo(ijp)
         spv(ijp) = spv(ijp)+apotime
     enddo
 
@@ -504,7 +504,7 @@ subroutine calcuvw
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
-        su(ijp) = sw(ijp) + (apotime + sum_off_diagonal_terms)*wo(ijp)
+        sw(ijp) = sw(ijp) + (apotime + sum_off_diagonal_terms)*wo(ijp)
         sp(ijp) = sp(ijp) + apotime
     enddo
 

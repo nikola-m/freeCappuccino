@@ -1,30 +1,10 @@
-!/*
-!Global
-!    CourantNo
 !
-!Description
-!    Calculates and outputs the mean and maximum Courant Numbers.
+! Calculate and output the mean and maximum Courant Numbers.
 !
-!// ************************************************************************* //*/
 
  if (ltransient) then
  CoNum = 0.0_dp
  meanCoNum = 0.0_dp
-
-!/*
-!if (mesh.nInternalFaces())
-!{
-!    scalarField sumPhi
-!    (
-!        fvc::surfaceSum(mag(phi))().internalField()
-!    );
-!
-!    CoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
-!
-!    meanCoNum =
-!        0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
-!}
-!*/
 
  su(:) = 0.0_dp
 
@@ -69,7 +49,7 @@
     CoNum = max( CoNum , su(inp)/Vol(inp) )
 
     meanCoNum = meanCoNum + su(inp)
-
+    
     suma = suma + Vol(inp)
 
   enddo

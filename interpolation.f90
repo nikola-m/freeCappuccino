@@ -1,14 +1,9 @@
 module interpolation
 
-
-! private 
-
-! public :: face_value
-
 contains
 
 
-! function face_value(ijp,ijn,xf,yf,zf,lambda,phi,dPhidxi,phimax,phimin) result(ue)
+! function interpolate(ijp,ijn,xf,yf,zf,phi,dPhidxi,phimax,phimin) result(ue)
 
 ! use types
 ! use parameters
@@ -20,23 +15,12 @@ contains
 
 !   if () then 
 !     ue = face_value_central(ijp, ijn, xf, yf, zf, u, dUdxi)
-!     ve = face_value_central(ijp, ijn, xf, yf, zf, v, dVdxi)
-!     we = face_value_central(ijp, ijn, xf, yf, zf, w, dWdxi)
 !   elseif () then 
 !     ue = face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)
-!     ve = face_value_2nd_upwind(ijp, xf, yf, zf, v, dVdxi)
-!     we = face_value_2nd_upwind(ijp, xf, yf, zf, w, dWdxi)
 !   elseif () then
 !     ue = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi, umin, umax)
-!     ve = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, v, dVdxi, vmin, vmax)
-!     we = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, w, dWdxi, wmin, wmax)
 !   elseif () then
 !     ue = face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)
-!     ve = face_value_muscl(ijp, ijn, xf, yf, zf, v, dVdxi)
-!     we = face_value_muscl(ijp, ijn, xf, yf, zf, w, dWdxi)
-!   else
-!     write(*,*) 'Interpolation scheme not chosen!'
-!     stop
 !   endif 
 
 ! end function
@@ -252,6 +236,7 @@ contains
 !     Ref.: Z. J. Wang. "A Fast Nested Multi-grid Viscous Flow Solver for Adaptive Cartesian/Quad Grids",
 !     International Journal for Numerical Methods in Fluids. 33. 657–680. 2000.
 !     The same slope limiter is used in Fluent.
+!
 !***********************************************************************
 !
       use types

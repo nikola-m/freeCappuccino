@@ -19,6 +19,7 @@ MOD_FILES=\
     utils.f90 \
     matrix.f90 \
     mesh_geometry_and_topology.f90 \
+    tensor_fields.f90 \
     sparse_matrix.f90 \
     LIS_linear_solver_library.f90 \
     gradients.f90 \

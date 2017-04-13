@@ -1,12 +1,13 @@
 module scalar_fluxes
 !
 ! Implementation of common functions for obtaining discretized fluxes for
-! transport equations of salars fields. 
+! transport equations of salars fields.
 ! To the outside world we show only the interface function 'facefluxsc', 
 ! wisely checking the arguments, module decides what function to call.
 !
   use types
-  use geometry, only: numTotal, numCells
+  use geometry, only: numTotal, numCells, xc,yc,zc
+  use gradients, only: sngrad
 
   implicit none
 
@@ -36,7 +37,6 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
 !
   use types
   use parameters
-  use geometry, only: xc,yc,zc
   use variables, only: vis
   use interpolation
 
@@ -58,28 +58,23 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
 
 
 ! Local variables
+  integer  :: nrelax
+  character(len=8) :: approach
   real(dp) :: are
   real(dp) :: xpn,ypn,zpn
-  real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
+  real(dp) :: dpn
   real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
   real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
-  real(dp) :: d1x,d1y,d1z
-  real(dp) :: d2x,d2y,d2z
-  real(dp) :: de, vole, game, viste
+  real(dp) :: de, game, viste
   real(dp) :: fxp,fxn
-  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
   real(dp) :: r1,r2
   real(dp) :: psie,psiw
-!----------------------------------------------------------------------
 
-  dfixi = 0.0_dp
-  dfiyi = 0.0_dp
-  dfizi = 0.0_dp
+!----------------------------------------------------------------------
 
   ! > Geometry:
 
@@ -118,6 +113,13 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   cap = -de - max(fm,zero)
   can = -de + min(fm,zero)
   !-------------------------------------------------------
+
+
+  ! Interpolate gradients defined at CV centers to faces
+  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
+
 
   !-------------------------------------------------------
   ! Explicit higher order convection
@@ -178,112 +180,23 @@ subroutine facefluxsc_interior(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   ! Explicit part of diffusion
   !-------------------------------------------------------
 
-  ! Components of the unit vector i_ksi
-  ixi1=xpn/dpn
-  ixi2=ypn/dpn
-  ixi3=zpn/dpn
+  nrelax = 0
+  approach  = 'skewness'
 
-  ! Unit vectors of the face normal
-  nxx=arx/are
-  nyy=ary/are
-  nzz=arz/are
-
-  ! Angle between vectorsa n and i_xi - we need cosine
-  costheta=nxx*ixi1+nyy*ixi2+nzz*ixi3
-
-  ! Relaxation factor for higher-order cell face gradient
-  ! Minimal correction: nrelax = +1 :
-  !costn = costheta
-  ! Orthogonal correction: nrelax =  0 : 
-  costn = 1.0_dp
-  ! Over-relaxed approach: nrelax = -1 :
-  !costn = 1./costheta
-  ! In general, nrelax can be any signed integer from some 
-  ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
-  !costn = costheta**nrelax
-
-  ! dpp_j * sf
-  vole=xpn*arx+ypn*ary+zpn*arz
-
- !  !  !<- Intersection point offset and skewness correction -->
-
- !  ! Find points P' and Pj'
- !  xpp=xf-(xf-xc(ijp))*nxx
- !  ypp=yf-(yf-yc(ijp))*nyy 
- !  zpp=zf-(zf-zc(ijp))*nzz
-
- !  xep=xf-(xf-xc(ijn))*nxx 
- !  yep=yf-(yf-yc(ijn))*nyy 
- !  zep=zf-(zf-zc(ijn))*nzz     
-
- !  xpnp = xep-xpp 
- !  ypnp = yep-ypp 
- !  zpnp = zep-zpp
-
- !  volep = arx*xpnp+ary*ypnp+arz*zpnp
-
- ! ! Overrelaxed correction vector d2, where S=dpn+d2
- !  d1x = costn
- !  d1y = costn
- !  d1z = costn
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              Fi, dFidxi, nrelax, approach, dfixi, dfiyi, dfizi, &
+              dfixii, dfiyii, dfizii)
   
- !  xpnp = xpnp*costn
- !  ypnp = ypnp*costn
- !  zpnp = zpnp*costn
 
- !  ! Interpolate gradients defined at CV centers to faces
- !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
- !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
- !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
 
- !  ! The cell face interpolated gradient (d phi / dx_i)_j:
- !  ! Nonorthogonal corrections:         ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
- !  ! And:                               ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
- !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
- !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
-
- !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-
- !  !  !<-- Intersection point offset and skewness correction --|
-
-  !-- Skewness correction -->
-
-  ! Overrelaxed correction vector d2, where s=dpn+d2
-  d1x = costn
-  d1y = costn
-  d1z = costn
-
-  d2x = xpn*costn
-  d2y = ypn*costn
-  d2z = zpn*costn
-
-  ! Interpolate gradients defined at CV centers to faces
-  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
-  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
-  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-
-  !.....du/dx_i interpolated at cell face:
-  dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-  dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-  dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-
-  ! <-- Skewness correction --|
   ! Explicit diffusion
   fdfie = game*(dfixii*arx + dfiyii*ary + dfizii*arz)  
 
   ! Implicit diffussion 
   fdfii = game*are/dpn*(dfixi*xpn+dfiyi*ypn+dfizi*zpn)
 
-
-  !-------------------------------------------------------
   ! Explicit part of fluxes
-  !-------------------------------------------------------
   suadd = -ffic+fdfie-fdfii 
-  !-------------------------------------------------------
 
 end subroutine
 
@@ -307,7 +220,6 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
 !
   use types
   use parameters
-  use geometry, only: xc,yc,zc
   use variables, only: vis
   use interpolation
 
@@ -329,28 +241,22 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
 
 
 ! Local variables
+  integer  :: nrelax
+  character(len=8) :: approach
   real(dp) :: are
   real(dp) :: xpn,ypn,zpn
-  real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
+  real(dp) :: dpn
   real(dp) :: xi,yi,zi
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
   real(dp) :: fdfie,fdfii,fcfie,fcfii,ffic
-  real(dp) :: d1x,d1y,d1z
-  real(dp) :: d2x,d2y,d2z
-  real(dp) :: de, vole, game, viste, prtr
+  real(dp) :: de, game, viste, prtr
   real(dp) :: fxp,fxn
-  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
   real(dp) :: r1,r2
   real(dp) :: psie,psiw
 !----------------------------------------------------------------------
-
-  dfixi = 0.0_dp
-  dfiyi = 0.0_dp
-  dfizi = 0.0_dp
 
   ! > Geometry:
 
@@ -390,6 +296,11 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
   cap = -de - max(fm,zero)
   can = -de + min(fm,zero)
   !-------------------------------------------------------
+
+  ! Interpolate gradients defined at CV centers to faces
+  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
+  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
+  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
 
   !-------------------------------------------------------
   ! Explicit higher order convection
@@ -450,100 +361,11 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
   ! Explicit part of diffusion
   !-------------------------------------------------------
 
-  ! Components of the unit vector i_ksi
-  ixi1=xpn/dpn
-  ixi2=ypn/dpn
-  ixi3=zpn/dpn
+  nrelax = 0
+  approach  = 'skewness'
 
-  ! Unit vectors of the face normal
-  nxx=arx/are
-  nyy=ary/are
-  nzz=arz/are
-
-  ! Angle between vectorsa n and i_xi - we need cosine
-  costheta=nxx*ixi1+nyy*ixi2+nzz*ixi3
-
-  ! Relaxation factor for higher-order cell face gradient
-  ! Minimal correction: nrelax = +1 :
-  !costn = costheta
-  ! Orthogonal correction: nrelax =  0 : 
-  costn = 1.0_dp
-  ! Over-relaxed approach: nrelax = -1 :
-  !costn = 1./costheta
-  ! In general, nrelax can be any signed integer from some 
-  ! reasonable interval [-nrelax,nrelax] (or maybe even real number): 
-  !costn = costheta**nrelax
-
-  ! dpp_j * sf
-  vole=xpn*arx+ypn*ary+zpn*arz
-
- !  ! |-- Intersection point offset and skewness correction -->
-
- !  ! Find points P' and Pj'
- !  xpp=xf-(xf-xc(ijp))*nxx
- !  ypp=yf-(yf-yc(ijp))*nyy 
- !  zpp=zf-(zf-zc(ijp))*nzz
-
- !  xep=xf-(xf-xc(ijn))*nxx 
- !  yep=yf-(yf-yc(ijn))*nyy 
- !  zep=zf-(zf-zc(ijn))*nzz     
-
- !  xpnp = xep-xpp 
- !  ypnp = yep-ypp 
- !  zpnp = zep-zpp
-
- !  volep = arx*xpnp+ary*ypnp+arz*zpnp
-
- ! ! Overrelaxed correction vector d2, where S=dpn+d2
- !  d1x = costn
- !  d1y = costn
- !  d1z = costn
-  
- !  xpnp = xpnp*costn
- !  ypnp = ypnp*costn
- !  zpnp = zpnp*costn
-
- !  ! Interpolate gradients defined at CV centers to faces
- !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
- !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
- !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-
- !  ! The cell face interpolated gradient (d phi / dx_i)_j:
- !  ! Nonorthogonal corrections:          ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
- !  ! And:                                ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
- !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
- !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
-
- !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-
- !  !<-- Intersection point offset and skewness correction --|
-
-  !-- Skewness correction -->
-
-  ! Overrelaxed correction vector d2, where s=dpn+d2
-  d1x = costn
-  d1y = costn
-  d1z = costn
-
-  d2x = xpn*costn
-  d2y = ypn*costn
-  d2z = zpn*costn
-
-  ! Interpolate gradients defined at CV centers to faces
-  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
-  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
-  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-
-  !.....du/dx_i interpolated at cell face:
-  dfixii = dfixi*d1x + arx/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-  dfiyii = dfiyi*d1y + ary/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-  dfizii = dfizi*d1z + arz/vole*( fi(ijn)-fi(ijp)-dfixi*d2x-dfiyi*d2y-dfizi*d2z ) 
-
-  ! <-- Skewness correction --|
+  call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
+              Fi, dFidxi, nrelax, approach, dfixi, dfiyi, dfizi, dfixii, dfiyii, dfizii)
 
 
   ! Explicit diffusion
@@ -552,12 +374,8 @@ subroutine facefluxsc_interior_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz
   ! Implicit diffussion 
   fdfii = game*are/dpn*(dfixi*xpn+dfiyi*ypn+dfizi*zpn)
 
-
-  !-------------------------------------------------------
   ! Explicit part of fluxes
-  !-------------------------------------------------------
   suadd = -ffic+fdfie-fdfii 
-  !-------------------------------------------------------
 
 end subroutine
 
@@ -571,7 +389,6 @@ subroutine facefluxsc_boundary(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
 !
   use types
   use parameters
-  use geometry, only: xc,yc,zc,numTotal
   use variables, only: vis
 
   implicit none
@@ -595,20 +412,13 @@ subroutine facefluxsc_boundary(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
   real(dp) :: nxx,nyy,nzz,ixi1,ixi2,ixi3,dpn,costheta,costn
   real(dp) :: Cp,Ce
   real(dp) :: fm
-
-  real(dp) :: fdfie,fdfii!,fcfie,fcfii,ffic
-
+  real(dp) :: fdfie,fdfii
   real(dp) :: d1x,d1y,d1z,d2x,d2y,d2z
-
   real(dp) :: de, vole, game, viste
-
   real(dp) :: fxp,fxn
-  ! real(dp) :: xpp,ypp,zpp,xep,yep,zep,xpnp,ypnp,zpnp,volep
-  ! real(dp) :: nablaFIxdnnp,nablaFIxdppp
   real(dp) :: dfixi,dfiyi,dfizi
   real(dp) :: dfixii,dfiyii,dfizii
-  ! real(dp) :: r1,r2
-  ! real(dp) :: psie,psiw
+
 !----------------------------------------------------------------------
 
   dfixi = 0.0_dp
@@ -667,48 +477,6 @@ subroutine facefluxsc_boundary(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
   game = viste*prtr+viscos
 
 
-
-
-
- !  !-- Intersection point offset and skewness correction --
-
- !  ! Find points P' and Pj'
- !  xpp=xf-(xf-xc(ijp))*nxx; ypp=yf-(yf-yc(ijp))*nyy; zpp=zf-(zf-zc(ijp))*nzz
- !  xep=xf-(xf-xc(ijn))*nxx; yep=yf-(yf-yc(ijn))*nyy; zep=zf-(zf-zc(ijn))*nzz     
-
- !  xpnp = xep-xpp; ypnp = yep-ypp; zpnp = zep-zpp
- !  volep = arx*xpnp+ary*ypnp+arz*zpnp
-
- !  ! Overrelaxed correction vector d2, where S=dpn+d2
- !  d1x = costn
- !  d1y = costn
- !  d1z = costn
-  
- !  xpnp = xpnp*costn
- !  ypnp = ypnp*costn
- !  zpnp = zpnp*costn
-
- !  ! Interpolate gradients defined at CV centers to faces
- !  dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
- !  dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
- !  dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-
- !  ! The cell face interpolated gradient (d phi / dx_i)_j:
- !  ! Nonorthogonal corrections:         ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dNN')
- !  ! And:                               ___
- !  ! nablaFIxdnnp =>> dot_product(dFidxi,dPP')
- !  nablaFIxdnnp = dFidxi(1,ijn)*(xep-xc(ijn))+dFidxi(2,ijn)*(yep-yc(ijn))+dFidxi(3,ijn)*(zep-zc(ijn))
- !  nablaFIxdppp = dFidxi(1,ijp)*(xpp-xc(ijp))+dFidxi(2,ijp)*(ypp-yc(ijp))+dFidxi(3,ijp)*(zpp-zc(ijp))
-
- !  dfixii = dfixi*d1x + arx/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
- !  dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
-
- !  !-- Intersection point offset and skewness correction --
-
-
-
   !-- Skewness correction --
 
   ! Overrelaxed correction vector d2, where s=dpn+d2
@@ -738,12 +506,11 @@ subroutine facefluxsc_boundary(ijp, ijn, xf, yf, zf, arx, ary, arz, flmass, FI, 
   !-- Skewness correction --
  
 
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ! Explicit diffusion
   fdfie = game*(dfixii*arx + dfiyii*ary + dfizii*arz)   
+
   ! Implicit diffussion 
   fdfii = game*are/dpn*(dfixi*xpn+dfiyi*ypn+dfizi*zpn)
-!+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
   ! Difusion coefficient
