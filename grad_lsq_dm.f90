@@ -15,13 +15,12 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
 !      Arguments:
 !
 !      FI - field variable which gradient we look for.
-!      DFIDX,DFIDY,DFIDZ - cell centered gradient - a three component gradient vector.
+!      DFIDXi- cell centered gradient - a three component gradient vector.
 !      ISTAGE - integer. If ISTAGE=1 calculates and stores only geometrical
 !      parameters - a system matrix for least square problem at every cell. 
 !      Usually it is called with ISTAGE=1 at the beggining of simulation.
 !      If 2 it doesn't calculate system matrix, just RHS and solves system.
 !      Dmat - LSQ matrix with geometry data
-!      XC,YC,ZC - coordinates of cell centers    
 !
 !      Example call:
 !      CALL GRADFI_LSQ_DM(U,DUDX,DUDY,DUDZ,2,D)

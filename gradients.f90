@@ -6,6 +6,7 @@ module gradients
 use types
 use parameters
 use geometry, only: numCells,numTotal,xc,yc,zc
+use sparse_matrix, only: ioffset,ja,diag
 
 implicit none
 
@@ -13,7 +14,7 @@ logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization app
 character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
 
 real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
-real(dp),dimension(:,:,:), allocatable ::  dmatqr  ! when using qr version of the subroutine size(3,6,nxyz)!
+real(dp),dimension(:,:,:), allocatable ::  dmatqr  !  when using qr version of the subroutine size(3,6,nxyz)!
 
 
 interface grad
@@ -37,7 +38,12 @@ public :: grad,sngrad,allocate_gradients,create_lsq_gradients_matrix
 contains
 
 
+!***********************************************************************
+!
 subroutine allocate_gradients
+!
+!***********************************************************************
+!
 implicit none
   
   integer :: ierr
@@ -49,7 +55,6 @@ implicit none
     allocate(dmatqr(3,6,numCells),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: dmatqr"
   endif
-
 
 end subroutine
 
@@ -67,8 +72,6 @@ subroutine create_lsq_gradients_matrix(phi,dPhidxi)
 !
 !***********************************************************************
 !
-use types
-use parameters
 
 implicit none
 
@@ -92,8 +95,6 @@ subroutine grad_scalar_field(phi,dPhidxi)
 !
 !***********************************************************************
 !
-use types
-use parameters
 
 implicit none
 
@@ -138,10 +139,8 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
 !
 !***********************************************************************
 !
-use types
-use parameters
 
-implicit none
+  implicit none
 
   real(dp), dimension(numTotal), intent(in) :: U,V,W
   real(dp), dimension(3,numCells), intent(inout) :: dUdxi,dVdxi,dWdxi
@@ -185,9 +184,6 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
 !
 !***********************************************************************
 !
-  use types
-  use parameters
-  use sparse_matrix, only: ioffset,ja,diag
 
   implicit none
 
@@ -248,8 +244,14 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
       ! Wang proposition for epsilon
       epsi = (0.05*( fimax-fimin ))**2 
 
-      slopelimit = max(min(slopelimit, 1./(deltam+small)*((deltap+epsi)*deltam+2*deltam**2*deltap) &
-                                                     /(deltap**2+2*deltam**2+deltap*deltam+epsi+small)),zero)
+      slopelimit = max(                                                                          &
+                        min(                                                                     &              
+                              slopelimit,                                                        &
+                              1./(deltam+small)*((deltap+epsi)*deltam+2*deltam**2*deltap)        &
+                                               /(deltap**2+2*deltam**2+deltap*deltam+epsi+small) &
+                            ),                                                                   &
+                        zero                                                                     &
+                      )
 
     enddo
     !print*,slopelimit
@@ -275,9 +277,6 @@ subroutine slope_limiter_Barth_Jespersen(phi, dPhidxi)
 !
 !***********************************************************************
 !
-  use types
-  use parameters
-  use sparse_matrix, only: ioffset,ja,diag
 
   implicit none
 
@@ -363,9 +362,6 @@ subroutine slope_limiter_Venkatakrishnan(phi, dPhidxi)
 !
 !***********************************************************************
 !
-  use types
-  use parameters
-  use sparse_matrix, only: ioffset,ja,diag
 
   implicit none
 
@@ -480,7 +476,7 @@ subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
   real(dp), dimension(numTotal), intent(in) :: Fi
   real(dp), dimension(3,numCells), intent(in) :: dFidxi
   integer, intent(in) :: nrelax
-  character(len=8) :: approach
+  character(len=12) :: approach
   real(dp), intent(out) :: dfixi, dfiyi, dfizi, dfixii, dfiyii, dfizii
 !
 ! Locals
@@ -618,6 +614,12 @@ subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
     dfiyii = dfiyi*d1y + ary/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
     dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
  
+  !-- Uncorrected -->
+  elseif (adjustl(approach) == 'uncorrected') then
+    
+    dfixii = dfixi
+    dfiyii = dfiyi
+    dfizii = dfizi
 
   endif
 
@@ -651,7 +653,7 @@ subroutine sngrad_vector_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
 ! 
   integer, intent(in) :: ijp, ijn
   integer, intent(in) :: nrelax
-  character(len=8) :: approach
+  character(len=12) :: approach
   real(dp), intent(in) :: xf,yf,zf
   real(dp), intent(in) :: arx, ary, arz
   real(dp), intent(in) :: lambda

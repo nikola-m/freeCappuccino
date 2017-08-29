@@ -34,6 +34,7 @@ subroutine calc_statistics
     w_nsample = w_aver(inp)/n_sample
     !      con_nsample = con_aver(inp)/n_sample
 
+    if(lturb) then
     ! Reynolds stress components
     uu_aver(inp) = uu_aver(inp)+(u(inp)-u_nsample)**2
     vv_aver(inp) = vv_aver(inp)+(v(inp)-v_nsample)**2
@@ -48,6 +49,7 @@ subroutine calc_statistics
                  ((u(inp)-u_nsample)*(w(inp)-w_nsample))
     vw_aver(inp) = vw_aver(inp)+ &
                  ((v(inp)-v_nsample)*(w(inp)-w_nsample))
+    endif
 
 !    concon_aver(inp) = concon_aver(inp)+ &
 !                 (con(inp)-con_nsample)**2 

@@ -1,7 +1,8 @@
 module output
 use types, only: dp
 use parameters
-use geometry,only: numCells, numNodes,x,y,z
+use geometry,only: numCells,numFaces,numNodes,nomax,native_mesh_files,x,y,z,arx,ary,arz, &
+                   read_line_faces_file_polyMesh
 use tensor_fields
 use utils, only: get_unit, i4_to_s_left
 
@@ -104,8 +105,7 @@ function write_volScalarField_field(phi) result(ierr)
 
   open(unit = output_unit, file = trim(phi%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
 
-  call vtu_write ( output_unit, trim(phi%field_name)//'_field_data', numNodes, numCells, &
-    x, y, z, phi%mag )
+  call vtu_write ( output_unit, trim(phi%field_name)//'_field_data', phi%mag )
 
   close (  unit = output_unit )
 
@@ -126,8 +126,7 @@ function write_volVectorField_field(v) result(ierr)
 
   open(unit = output_unit, file = trim(v%field_name)//'_field_data.vtu', status = 'replace', iostat = ierr)
 
-  call vtu_write_vector_field ( output_unit, trim(v%field_name)//'_field_data', numNodes, numCells, &
-    x, y, z, v%x, v%y, v%z )
+  call vtu_write_vector_field ( output_unit, trim(v%field_name)//'_field_data', v%x, v%y, v%z )
 
   close (  unit = output_unit )
 
@@ -135,24 +134,21 @@ end function
 
 
 
-subroutine vtu_write ( output_unit, scalar_name, numNodes, numCells, &
-    x, y, z, scalar_field )
+subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 !
 ! Writes scalar field data to Paraview XML, unstructured, ".vtu" file.
 !
   implicit none
+
   integer, intent(in) :: output_unit
-  character ( len = * ) scalar_name
-  integer, intent(in) :: numNodes
-  integer, intent(in) :: numCells
-  real(dp), dimension(numNodes), intent(in) :: x, y, z
+  character ( len = * ), intent(in) :: scalar_name
   real(dp), dimension(numCells), intent(in) :: scalar_field
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
 
   integer :: i,k
-  integer :: icell,inode
+  integer :: icell
   integer :: ntype
   integer :: offset
   integer :: cells_file
@@ -176,34 +172,34 @@ subroutine vtu_write ( output_unit, scalar_name, numNodes, numCells, &
   '<Piece NumberOfPoints="',trim( node_num_string ),'" NumberOfCells="',trim( cells_num_string ),'">'
 
 
-! <Scalars in nodes>
- write ( output_unit, '(6x,a)' ) '<PointData Scalars="scalars">'
- write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
+! ! <Scalars in nodes>
+!  write ( output_unit, '(6x,a)' ) '<PointData Scalars="scalars">'
+!  write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
 
-!   <Scalar field data>
-   do inode=1,numNodes
-     write( output_unit, '(es11.4)') scalar_field(inode) 
-   enddo
-!   </Scalar field data>
+! !   <Scalar field data>
+!    do i=1,numNodes
+!      write( output_unit, '(es11.4)') scalar_field(i) 
+!    enddo
+! !   </Scalar field data>
 
- write ( output_unit, '(8x,a)' ) '</DataArray>'
- write ( output_unit, '(6x,a)' ) '</PointData>'
-! </Scalars in nodes>
+!  write ( output_unit, '(8x,a)' ) '</DataArray>'
+!  write ( output_unit, '(6x,a)' ) '</PointData>'
+! ! </Scalars in nodes>
 
-! ! <Scalars in cell-centers>
-!   write ( output_unit, '(6x,a)' ) '<CellData Scalars="scalars">'
-!   write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
+! <Scalars in cell-centers>
+  write ( output_unit, '(6x,a)' ) '<CellData Scalars="scalars">'
+  write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
 
-! !
-! ! > Scalars in cell-centers > write scalar data
-! !
-!     do icell=1,numCells
-!       write( output_unit, '(10x,es11.4)') scalar_field(icell) 
-!     enddo
+!
+! > Scalars in cell-centers > write scalar data
+!
+    do icell=1,numCells
+      write( output_unit, '(10x,es11.4)') scalar_field(icell) 
+    enddo
 
-!   write ( output_unit, '(8x,a)' ) '</DataArray>'
-!   write ( output_unit, '(6x,a)' ) '</CellData>'
-! ! </Scalars in cell-centers>
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+  write ( output_unit, '(6x,a)' ) '</CellData>'
+! </Scalars in cell-centers>
 
 !
 ! > Mesh data
@@ -270,17 +266,13 @@ end subroutine vtu_write
 
 
 
-subroutine vtu_write_vector_field ( output_unit, field_name, numNodes, numCells, &
-    x, y, z, u, v, w )
+subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 !
 ! Writes scalar field data to Paraview XML, unstructured, ".vtu" file.
 !
   implicit none
   integer, intent(in) :: output_unit
-  character ( len = * ) field_name
-  integer, intent(in) :: numNodes
-  integer, intent(in) :: numCells
-  real(dp), dimension(numNodes), intent(in) :: x, y, z
+  character ( len = * ), intent(in) :: field_name
   real(dp), dimension(numCells), intent(in) :: u, v, w
 
   character ( len = 20 ) node_num_string
@@ -392,16 +384,13 @@ end subroutine vtu_write_vector_field
 
 
 
-subroutine vtu_write_mesh ( output_unit, numNodes, numCells, &
-           x, y, z )
+subroutine vtu_write_mesh ( output_unit )
 !
 ! Writes scalar field data to Paraview XML, unstructured, ".vtu" file.
 !
   implicit none
+
   integer, intent(in) :: output_unit
-  integer, intent(in) :: numNodes
-  integer, intent(in) :: numCells
-  real(dp), dimension(numNodes), intent(in) :: x, y, z
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
@@ -429,38 +418,6 @@ subroutine vtu_write_mesh ( output_unit, numNodes, numCells, &
   write ( output_unit, '(2x,a)' ) '<UnstructuredGrid>'
   write ( output_unit, '(4x,5a)' ) &
   '<Piece NumberOfPoints="',trim( node_num_string ),'" NumberOfCells="',trim( cells_num_string ),'">'
-
-
-!! <Scalars in nodes>
-!  write ( output_unit, '(6x,a)' ) '<PointData Scalars="scalars">'
-!  write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
-!
-!!   <Scalar field data>
-!    do inode=1,numNodes
-!      write( output_unit, '(es11.4)') scalar_field(inode) 
-!    enddo
-!!   </Scalar field data>
-
-!  write ( output_unit, '(8x,a)' ) '</DataArray>'
-!  write ( output_unit, '(6x,a)' ) '</PointData>'
-! </Scalars in nodes>
-
-! Keep maybe to plot domain decomposition - each color for a region - useful for parallel version...
-
-!! <Scalars in cell-centers>
-!  write ( output_unit, '(6x,a)' ) '<CellData Scalars="scalars">'
-!  write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
-!
-!!
-!! > Scalars in cell-centers > write scalar data
-!!
-!    do icell=1,numCells
-!      write( output_unit, '(10x,es11.4)') scalar_field(icell) 
-!    enddo
-!
-!  write ( output_unit, '(8x,a)' ) '</DataArray>'
-!  write ( output_unit, '(6x,a)' ) '</CellData>'
-!! </Scalars in cell-centers>
 
 !
 ! > Mesh data
@@ -524,6 +481,176 @@ subroutine vtu_write_mesh ( output_unit, numNodes, numCells, &
 
 end subroutine vtu_write_mesh
 
+
+
+subroutine vtp_write ( output_unit, scalar_name, scalar_field )
+!
+! Writes scalar field data to Paraview POLYDATA format, ".vtp" file.
+!
+  implicit none
+
+  integer, intent(in) :: output_unit
+  character ( len = * ), intent(in) :: scalar_name
+  real(dp), dimension(numCells), intent(in) :: scalar_field
+
+  character ( len = 20 ) node_num_string
+  character ( len = 20 ) cells_num_string
+  character ( len = 20)  faces_num_string
+  character ( len = 1) ch
+
+  integer :: i,k
+  integer :: npts
+  integer :: offset
+  integer :: faces_file
+  integer :: nnodes 
+  integer, dimension(nomax) :: node
+
+  real(dp) :: are, nx, ny, nz
+
+!
+! > Header
+!
+
+  call i4_to_s_left ( numNodes, node_num_string )
+  call i4_to_s_left ( numCells, cells_num_string )
+  call i4_to_s_left ( numFaces, faces_num_string )
+
+  call get_unit( faces_file )
+  open( unit = faces_file, file='polyMesh/faces' )
+  rewind faces_file
+
+  do i=1,100
+    read(faces_file,'(a)') ch
+    if (ch == "(") exit
+  end do
+
+  write ( output_unit, '(a)' )    '<?xml version="1.0"?>'
+  write ( output_unit, '(a)' )    '<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">'
+  write ( output_unit, '(2x,a)' ) '<PolyData>'
+  write ( output_unit, '(4x,5a)' ) '<Piece NumberOfPoints="',trim( node_num_string ), &
+  '" NumberOfVerts="0" NumberOfLines="0" NumberOfStrips="0" NumberOfPolys="',trim( faces_num_string ),'">'
+
+
+!
+! > Mesh data
+!
+  write ( output_unit, '(6x,a)' ) '<Points>'
+  write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" NumberOfComponents="3" Format="ascii">'
+
+!
+! > Mesh data > Nodal coordinates
+!
+  do i=1,numNodes
+    write ( output_unit, '(10x,3es11.4)' ) x(i),y(i),z(i)
+  enddo
+
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+  write ( output_unit, '(6x,a)' ) '</Points>'
+
+
+! <Scalars in nodes>
+ write ( output_unit, '(6x,a)' ) '<PointData Scalars="my_scalars">'
+ write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
+
+!   <Scalar field data>
+    do i=1,numNodes
+     write( output_unit, '(es11.4)') scalar_field(i) 
+    enddo
+!   </Scalar field data>
+
+ write ( output_unit, '(8x,a)' ) '</DataArray>'
+ write ( output_unit, '(6x,a)' ) '</PointData>'
+! </Scalars in nodes>
+
+
+! <Scalars in cell-centers>
+  write ( output_unit, '(6x,a)' ) '<CellData Scalars="face_scalars" Normals="cell_normals">'
+  write ( output_unit, '(8x,3a)' ) '<DataArray type="Float32" Name="',scalar_name,'" Format="ascii">'
+
+!
+! > Scalars in cell-centers > write scalar data
+!
+    do i=1,numFaces
+      write( output_unit, '(10x,es11.4)') scalar_field(i) 
+    enddo
+
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+
+  write ( output_unit, '(8x,a)' ) '<DataArray type="Float32" Name="cell_normals" NumberOfComponents="3" Format="ascii">'
+
+!
+! > Scalars in cell-centers > write cell normals
+!
+    do i=1,numFaces
+
+      are = sqrt(arx(i)**2+ary(i)**2+arz(i)**2)
+
+      nx = arx(i)/are
+      ny = ary(i)/are
+      nz = arz(i)/are
+
+      write( output_unit, '(10x,3es11.4)') nx,ny,nz 
+    enddo
+
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+  write ( output_unit, '(6x,a)' ) '</CellData>'
+! </Scalars in cell-centers>
+
+
+!
+! > Mesh data > Connectivity
+!
+  write ( output_unit, '(6x,a)' ) '<Polys>'
+
+  write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="connectivity" Format="ascii">'
+
+
+  do i=1,numFaces
+
+    node(:) = 0
+
+    ! Read line in 'faces' file
+    if (native_mesh_files) then
+      read( faces_file, * ) nnodes, (node(k), k=1,nnodes)
+    else ! OpenFOAM polyMesh
+      call read_line_faces_file_polyMesh(faces_file,nnodes,node,nomax)
+    endif
+
+    ! Note, Paraview starts counting from 0, we in Fortran start with 1, therefore: node(k)-1
+    write( output_unit, '(10x,12i8:(12i8:))') (node(k)-1, k=1,nnodes) 
+
+  enddo
+
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+
+!
+! > Mesh data > Offsets
+!
+  rewind faces_file
+  do i=1,100
+    read(faces_file,'(a)') ch
+    if (ch == "(") exit
+  end do
+
+  offset = 0
+
+  write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="offsets" Format="ascii">'
+    do i=1,numFaces
+      read( faces_file, '(i1)' ) npts
+      offset = offset + npts
+      write( output_unit, '(i12)') offset 
+    enddo
+  write ( output_unit, '(8x,a)' ) '</DataArray>'
+
+
+  write ( output_unit, '(6x,a)' ) '</Polys>'
+  write ( output_unit, '(4x,a)' ) '</Piece>'
+  write ( output_unit, '(2x,a)' ) '</PolyData>'
+  write ( output_unit, '(a)' ) '</VTKFile>'
+
+  close ( faces_file )
+
+end subroutine vtp_write
 
 
 end module

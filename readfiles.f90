@@ -58,8 +58,11 @@ subroutine readfiles
   
   close (3)
 
+  ! Initialize pressure correction with current pressure field.
+  pp = p
+
   !------------------------------------------------
-  !     [read statistics after first collection: ]
+  ! [read statistics after first collection: ]
   !------------------------------------------------
   if (ltransient) then
 
@@ -68,7 +71,7 @@ subroutine readfiles
     rewind 85
     rewind 86
 
-    read(85,*) n_sample
+    read(85,*)  n_sample
     read(86,*)  u_aver,v_aver,w_aver, &
                 uu_aver,vv_aver,ww_aver, &
                 uv_aver,uw_aver,vw_aver, &

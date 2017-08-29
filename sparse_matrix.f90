@@ -21,6 +21,16 @@ module sparse_matrix
     real(dp), dimension(:), allocatable :: apu, apv, apw ! Reciprocal values of diagonal coefficients
     real(dp), dimension(:), allocatable :: al, ar        ! Coefs along O-C grid cuts size(1:noc)
 
+!
+! The CSR matrix derived type
+!
+type csrMatrix
+  integer, dimension(:), allocatable :: ioffset
+  integer, dimension(:), allocatable :: ja
+  real(dp), dimension(:), allocatable :: coef
+end type
+
+
 public
 
 contains

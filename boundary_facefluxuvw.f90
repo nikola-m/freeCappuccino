@@ -125,14 +125,9 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   cap = -de - max(flomass,zero)
 
 
-
-
   ! > Face velocity components and Explicit diffusion: 
 
   ! Coordinates of point j'
-  ! xi=xc(ijp)*fxp+xc(ijb)*fxn
-  ! yi=yc(ijp)*fxp+yc(ijb)*fxn
-  ! zi=zc(ijp)*fxp+zc(ijb)*fxn
   xi = xf
   yi = yf
   zi = zf
@@ -231,7 +226,7 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
 !--------------------------------------------------------------------------------------------
 !     BOUNDED HIGH-ORDER CONVECTIVE SCHEMES (Waterson & Deconinck JCP 224 (2007) pp. 182-207)
 !--------------------------------------------------------------------------------------------
-  if(lsmart.or.lavl.or.lmuscl.or.lumist.or.lgamma) then
+  if(flux_limiter) then
 
   !.... find r's. this is universal for all schemes.
   !.....if flow goes from p to e
@@ -299,18 +294,38 @@ subroutine boundary_facefluxuvw(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   !=====end umist scheme=============================
 
 
-  !=====gamma scheme================================
-  elseif(lgamma) then
-  !.....psi for gamma scheme:
-  !.....if flow goes from p to e
-  psiw1 = max(0., min(r1, 2.*r1/(r1+1.)))
-  psiw2 = max(0., min(r2, 2.*r2/(r2+1.)))
-  psiw3 = max(0., min(r3, 2.*r3/(r3+1.)))
-  !.....if flow goes from e to p
-  psie1 = max(0., min(r4, 2.*r4/(r4+1.)))
-  psie2 = max(0., min(r5, 2.*r5/(r5+1.)))
-  psie3 = max(0., min(r6, 2.*r6/(r6+1.)))
-  !=====end gamma scheme=============================
+  elseif(lkoren) then
+  ! psi for koren scheme:
+  ! if flow goes from p to e
+    psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
+    psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
+    psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
+  ! if flow goes from e to p
+    psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
+    psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
+    psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
+
+  elseif(lcharm) then
+  ! psi for smarter; charm notable; isnas
+  ! if flow goes from p to e
+    psiw1 = (r1+abs(r1))*(3*r1+1.)/(2*(r1+1.)**2)
+    psiw2 = (r2+abs(r2))*(3*r2+1.)/(2*(r2+1.)**2)
+    psiw3 = (r3+abs(r3))*(3*r3+1.)/(2*(r3+1.)**2)
+  ! if flow goes from e to p
+    psie1 = (r4+abs(r4))*(3*r4+1.)/(2*(r4+1.)**2)
+    psie2 = (r5+abs(r5))*(3*r5+1.)/(2*(r5+1.)**2)
+    psie3 = (r6+abs(r6))*(3*r6+1.)/(2*(r6+1.)**2)
+
+  elseif(lospre) then
+  ! psi for ospre
+  ! if flow goes from p to e
+    psiw1 = 1.5*r1*(r1+1.)/(r1**2+r1+1.)
+    psiw2 = 1.5*r2*(r2+1.)/(r2**2+r2+1.)
+    psiw3 = 1.5*r3*(r3+1.)/(r3**2+r3+1.)
+  ! if flow goes from e to p
+    psie1 = 1.5*r4*(r4+1.)/(r4**2+r4+1.)
+    psie2 = 1.5*r5*(r5+1.)/(r5**2+r5+1.)
+    psie3 = 1.5*r6*(r6+1.)/(r6**2+r6+1.)
 
   !=====luds scheme================================
   else

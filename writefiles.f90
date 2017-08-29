@@ -11,6 +11,7 @@ subroutine writefiles
   use variables
   use statistics
   use sparse_matrix
+  use output
 
   implicit none
 !
@@ -38,6 +39,17 @@ subroutine writefiles
   enddo
 
   close(output_unit)
+
+
+  ! Write output files in Paraview .vtu format
+!+-----------------------------------------------------------------------------+
+  call get_unit( output_unit )
+
+  open(unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/velocity_field.vtu')
+
+  call vtu_write_vector_field( output_unit, 'velocity_field', u, v, w )
+
+  close (  unit = output_unit )
 
 
 
@@ -110,6 +122,9 @@ subroutine writefiles
     close(output_unit)
 
   endif      
+
+end subroutine
+
 
 
 ! !----------------------------------------------------------
@@ -192,4 +207,3 @@ subroutine writefiles
 ! !--------------------------------------------------------------
 !       endif
 
-end subroutine

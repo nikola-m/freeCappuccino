@@ -16,6 +16,8 @@ subroutine calcp
   use variables
   use gradients
   use fieldManipulation
+  use faceflux_mass
+
 
   implicit none
 !
@@ -26,8 +28,8 @@ subroutine calcp
   real(dp) :: sum, ppref, cap, can, fmcor
 
 
-  a = 0.0d0
-  su = 0.0d0
+  a = 0.0_dp
+  su = 0.0_dp
 
   ! Tentative (!) velocity gradients used for velocity interpolation: 
   call grad(U,dUdxi)

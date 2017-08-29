@@ -27,7 +27,7 @@ subroutine PISO_multiple_correction
   ! Before entering the corection loop backup a_nb coefficient arrays:
   h = a  
 
-!+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   DO icorr=1,ncorr
 
     !// From the last solution of velocity, extract the diag. term from the matrix and store the reciprocal
@@ -44,9 +44,9 @@ subroutine PISO_multiple_correction
     call get_rAU_x_UEqnH() 
 
     ! Tentative (!) velocity gradients used for velocity interpolation: 
-    ! call grad(U,dUdxi)
-    ! call grad(V,dVdxi)
-    ! call grad(W,dWdxi) 
+    call grad(U,dUdxi)
+    call grad(V,dVdxi)
+    call grad(W,dWdxi) 
 
     ! Initialize coefficient array and source:
     a = 0.0_dp
@@ -124,16 +124,12 @@ subroutine PISO_multiple_correction
     !     adjustPhi(phi, U, p);
     if(.not.const_mflux) call adjustMassFlow
 
-    ! ! Test continutity: sum=0
-    ! ! write(6,'(19x,a,1pe10.3)') ' Initial sum  =',sum(abs(su))
-    ! include 'continuityErrors.h'
-
     !!  "If you have a pressure equations with boundaries that do not fix pressure level, you have to fix a reference pressure." H.Jasak cfd-online forum
     !// In incompressible flow, only relative pressure matters.  Unless there is a pressure BC present,
     !// one cell's pressure has to be set to produce a unique pressure solution
     !     pEqn.setReference(pRefCell, pRefValue);
     !//
-    ! a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
+    a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
     a( diag(pRefCell) ) = 1.0_dp
 
     ! Reference pressure
@@ -286,7 +282,7 @@ subroutine PISO_multiple_correction
     ! Explicit correction of boundary conditions 
     call correctBoundaryConditionsVelocity
 
-!+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   enddo
                                                                                                                        
       

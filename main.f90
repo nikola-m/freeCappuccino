@@ -1,17 +1,17 @@
 !
-!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%!
 !
-program caffa3d_uns
+program cappuccino
 !
-!***********************************************************************
+!******************************************************************************
 !
 ! Description:
-!  An unstructured finite volume solver.
+!  A 3D unstructured finite volume solver for Computational Fluid Dynamics.
 !  
 ! Usage:
-! ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>      
+! ./cappuccino <input_file> <monitor_file> <restart_file> <output_folder_path>      
 !
-!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+!%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 !
   use types
   use parameters
@@ -19,7 +19,9 @@ program caffa3d_uns
   use variables
   use title_mod
   use fieldManipulation
-  use sparse_matrix, only: su,apu
+  use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,apu
+  use utils, only: show_logo
+  use gradients, only: allocate_gradients
   use temperature
   use concentration
 
@@ -27,65 +29,62 @@ program caffa3d_uns
 
   integer :: iter, i, ijp, ijn, inp
   integer :: narg
-  integer :: imon
+  integer :: itimes, itimee
   real(dp):: magUbarStar, rUAw, gragPplus, flowDirection
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
   character(len=6) :: timechar
-  character(len=2) :: trpn
 !                                                                       
-!***********************************************************************
+!******************************************************************************
 !
 
-!  Check if any command line arguments are found
+!  Check command line arguments
   narg=command_argument_count()
-  if (narg==0.or.narg<5) write(*,*) &
-  'Usage: ./caffa3d <input_file> <inlet_file> <monitor_file> <restart_file> <out_folder_path>'
+  if (narg==0.or.narg<4) write(*,'(a)') 'Usage: '&
+  &'./caffa3d <input_file> <monitor_file> <restart_file> <out_folder_path>'
   call get_command_argument(1,input_file)
-  call get_command_argument(2,inlet_file)
-  call get_command_argument(3,monitor_file)
-  call get_command_argument(4,restart_file)
-  call get_command_argument(5,out_folder_path)
+  call get_command_argument(2,monitor_file)
+  call get_command_argument(3,restart_file)
+  call get_command_argument(4,out_folder_path)
 
 !-----------------------------------------------
-! Files opening
+!  Initialization, grid definition 
 !-----------------------------------------------
+
   call openfiles
-!
-!-----------------------------------------------
-!  Initialisation, grid definition 
-!-----------------------------------------------
+
+  call show_logo
+
+  call read_input_file
+
+  call mesh_geometry
+
+  call allocate_arrays
+
+  call allocate_gradients
+
+  call create_CSR_matrix_from_mesh_data
+
   call init
-
-!-----------------------------------------------
-!  Open files for data at monitoring points 
-!-----------------------------------------------
-  if(ltransient) then
-    open(unit=89,file=trim(out_folder_path)//'/transient_monitoring_points')
-    rewind 89
-      do imon=1,mpoints
-        write(trpn,'(i2)') imon
-        open(91+imon,file=trim(out_folder_path)//"/transient_monitor_point_"//trpn, access='append')
-        if(.not.lread) rewind(91+imon)
-      end do
-  end if
-
 !
 !===============================================
 !     T i m e   l o o p : 
 !===============================================
-!
+
   write(6,'(a)') ' '
   write(6,'(a)') '  Start iteration!'
   write(6,'(a)') ' '
 
-  time_loop: do itime=1,numstep ! time_loop 
+  itimes = itime+1
+  itimee = itime+numstep
+
+  time_loop: do itime=itimes,itimee ! time_loop 
 !
 !===============================================
-!     Update variables : 
+!   Update variables : 
 !===============================================
-!
+
     if(bdf) then
       uoo = uo 
       voo = vo 
@@ -108,7 +107,7 @@ program caffa3d_uns
 !===============================================
 !.....Set inlet boundary conditions at every timestep
 !===============================================
-    if(itime.eq.1) call bcin
+    if(itime.eq.itimes) call bcin
 !
 !===============================================
 !.....ITERATION CONTROL MONITOR
@@ -126,18 +125,18 @@ program caffa3d_uns
 
       call cpu_time(start)
 
-!.....Calculate velocities.
+      ! Calculate velocities.
       call calcuvw 
-    
-!.....Pressure-velocity coupling. Two options: SIMPLE and PISO
+   
+      ! Pressure-velocity coupling. Two options: SIMPLE and PISO
       if(SIMPLE)   call CALCP
       if(PISO)     call PISO_multiple_correction
       if(PIMPLE)   call PIMPLE_multiple_correction
 
-!.....Turbulence
+      ! Turbulence
       if(lturb)    call correct_turbulence()
 
-!.....Scalars: Temperature , temperature variance, and concentration eqs.
+      !Scalars: Temperature , temperature variance, and concentration eqs.
       if(lcal(ien))   call calculate_temperature_field()
       ! if(lcal(ivart)) call calculate_temperature_variance_field()
       if(lcal(icon))  call calculate_concentration_field()
@@ -172,8 +171,7 @@ program caffa3d_uns
           if(source.lt.sormax.or.iter.ge.maxit) then 
 
             if(const_mflux) then
-              !# Correct driving force for a constant mass flow rate.
-              write(*,*)'here!!'
+              ! Correct driving force for a constant mass flow rate.
               include 'constant_mass_flow_forcing.f90'
             endif
 
@@ -181,8 +179,7 @@ program caffa3d_uns
             call writehistory !<- write monitoring points
             call calc_statistics 
 
-
-            ! # Create and save a frame for animation
+            ! Create and save a frame for animation
             if(mod(itime,nzapis).eq.1000) then 
                include 'create_and_save_frame.f90'
             endif
@@ -193,30 +190,29 @@ program caffa3d_uns
 
       end if 
 
-      end do iteration_loop
+    end do iteration_loop
 
 
 !===============================================
 !.....Write field values after nzapis iterations 
 !===============================================
-      if(.not.ltransient) then
-        if(mod(itime,nzapis).eq.0.and.itime.ne.numstep) then
-          call writefiles
-          call write_restart_files
-        endif
+    if(.not.ltransient) then
+      if(mod(itime,nzapis).eq.0.and.itime.ne.numstep) then
+        call writefiles
+        call write_restart_files
       endif
+    endif
 
- 
-      if(ltransient) call flush(6)
- 
-    end do time_loop
+
+    if(ltransient) call flush(6)
+
+  end do time_loop
 
 !===============================================
 !.....Write field values for the next run 
 !===============================================
-      itime = itime-1
-      call writefiles
-      call write_restart_files
+  itime = itime-1
+  call writefiles
+  call write_restart_files
       
-
-end program caffa3d_uns
+end program

@@ -1,0 +1,16 @@
+gmshToCappuccino
+
+Prepocessor of Gmsh mesh files for Cappuccino code.
+
+Create gmshToCappuccino binary using make:
+  > make
+
+Program reads gmsh .msh files, if you have .geo file first create mesh using gmsh (for the example provided):
+  > gmsh kanal.geo -3 -o kanal.msh
+
+Run gmshToCappucino:
+  > ./gmshToCappuccino
+Program asks for the name of the input file, type the name without .msh extension
+  > kanal
+
+Results are six files in Cappuccino polyMesh format (points,faces,cells,owner,neighbour,boundary).

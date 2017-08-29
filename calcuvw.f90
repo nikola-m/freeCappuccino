@@ -9,7 +9,8 @@ subroutine calcuvw
   use geometry
   use sparse_matrix
   use variables
-  use gradients, only:grad
+  use gradients, only: grad
+  use faceflux_velocity, only: facefluxuvw
 
   implicit none
 !
@@ -103,8 +104,8 @@ subroutine calcuvw
     if(bdf) then
     !-----------------------------------------------------------------------
     ! Backward differentiation formula:
-    ! in case that BTIME=0. --> Implicit Euler
-    ! in case that BTIME=1. --> Three Level Implicit Time Integration Method or BDF2
+    ! in case that BTIME=0. --> Implicit Euler Integration
+    ! in case that BTIME=1. --> Three Level Implicit Time Integration (BDF2)
     !-----------------------------------------------------------------------
       apotime=den(inp)*vol(inp)/timestep
 
@@ -132,7 +133,7 @@ subroutine calcuvw
 
 
   !=======================================================================
-  ! Calculate Reynols stresses explicitly additional asm terms:
+  ! Calculate Reynols stresses explicitly and additional asm terms:
   !=======================================================================
   if(lturb) then
 
@@ -183,8 +184,10 @@ subroutine calcuvw
     ijn=ijr(i)
 
     call facefluxuvw(ijp, ijn,  xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gds(iu), &
-      al(i), ar(i), sup, svp, swp)  
+      srdoc(i), al(i), ar(i), sup, svp, swp)  
 
+    ! > Matrix coefficient contribution:
+    
     spu(ijp) = spu(ijp) - ar(i)
     spv(ijp) = spv(ijp) - ar(i)
     sp(ijp)  = sp(ijp)  - ar(i)
@@ -192,6 +195,16 @@ subroutine calcuvw
     spu(ijn) = spu(ijn) - al(i)
     spv(ijn) = spv(ijn) - al(i)
     sp(ijn)  = sp(ijn)  - al(i)
+
+   ! > Sources: 
+
+    su(ijp) = su(ijp) + sup
+    sv(ijp) = sv(ijp) + svp
+    sw(ijp) = sw(ijp) + swp
+
+    su(ijn) = su(ijn) - sup
+    sv(ijn) = sv(ijn) - svp
+    sw(ijn) = sw(ijn) - swp
 
   end do
 
@@ -208,7 +221,7 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
+    call facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
       cp, cb, sup, svp, swp)
 
     spu(ijp) = spu(ijp) - cb
@@ -230,7 +243,7 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iOutletStart+i
 
-    CALL boundary_facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
+    call facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
       cp, cb, sup, svp, swp)  
 
     spu(ijp) = spu(ijp) - cb

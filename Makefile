@@ -51,6 +51,10 @@ CAFFA_FILES=\
     bcin.f90 \
     bpres.f90 \
     fieldManipulation.f90 \
+    faceflux_velocity.f90 \
+    facefluxmass.f90 \
+    facefluxmass_piso.f90 \
+    facefluxMassCorr.f90 \
     calcheatflux.f90 \
     calcp-multiple_correction_SIMPLE.f90 \
     calcstress.f90 \
@@ -59,11 +63,6 @@ CAFFA_FILES=\
     correctBoundaryConditionsVelocity.f90 \
     correct_turbulence.f90 \
     correct_turbulence_inlet.f90 \
-    facefluxmass.f90 \
-    facefluxmass_piso.f90 \
-    facefluxMassCorr.f90 \
-    facefluxuvw.f90 \
-    boundary_facefluxuvw.f90 \
     fvm_laplacian.f90 \
     find_strain_rate.f90 \
     get_rAU_x_UEqnH.f90 \
@@ -72,6 +71,7 @@ CAFFA_FILES=\
     PISO_multiple_correction.f90 \
     PIMPLE_multiple_correction.f90 \
     readfiles.f90 \
+    read_input.f90 \
     random_seed.f90 \
     writefiles.f90 \
     write_restart_files.f90 \

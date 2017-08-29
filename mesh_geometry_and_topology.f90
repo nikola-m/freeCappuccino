@@ -15,32 +15,50 @@ integer :: numFaces                           ! no. of INNER+BOUNDARY faces in t
 integer :: numInnerFaces                      ! no. of INNER cells faces in the mesh
 integer :: numBoundaryFaces                   ! self explanatory
 integer :: numTotal                           ! number of volume field values + number of boundary field values numCells+numBoundaryFaces
-integer :: nnz                                ! no.of nonzeros
+integer :: nnz                                ! no. of nonzeros in sparse system matrix
 
-integer :: ninl,nout,nsym,npru,nwal,noc, &
-           nwali,nwala,nwalf
-
-integer :: iInletStart
-integer :: iOutletStart
-integer :: iSymmetryStart
-integer :: iWallStart
-integer :: iPressOutletStart
-integer :: iOCStart
-
+integer :: ninl                               ! No. of inlet boundary faces
+integer :: nout                               ! No. of outlet boundary faces
+integer :: nsym                               ! No. of symmetry boundary faces
+integer :: nwal                               ! No. of wall boundary faces
+integer :: npru                               ! No. of pressure outlet boundary faces
+integer :: noc                                ! No. of O-C- domain cut boundary faces
+integer :: ncyc                               ! No. of cyclic boundary faces
+integer :: nwali,nwala,nwalf                  ! No. of isothermal,adiabatic,heatflux boundary faces (for temperature eq.)
 integer :: iOCBoundaries                      ! No. of O-C- boundaries, they come in pair
+integer :: iCycBoundaries                     ! No. of cyclic boundaries, they come in pair
 
-integer :: iInletFacesStart
-integer :: iOutletFacesStart
-integer :: iSymmetryFacesStart
-integer :: iWallFacesStart
-integer :: iPressOutletFacesStart
-integer :: iOCFacesStart
+! In variable arrays, field variables defined at cell centres are written in positions from 1 to numCells, after that we write
+! variable values for boundary faces. We need to know where are values defined at boundary faces in these arrays.
+! That is the purpose of variables defined below.
+! We have foe example that inlet values for u-velocity component can be found at u( iInletStart+1 : iInletStart+ninl ), 
+! Temperature at wall for aexample can be found at positions t( iWallStart+1 : iWallStart+nwal ), and so on...
+
+integer :: iInletStart                        
+integer :: iOutletStart                       
+integer :: iSymmetryStart                     
+integer :: iWallStart                        
+integer :: iPressOutletStart                  
+integer :: iOCStart                           
+integer :: iCycStart                          
+
+! Where the faces pertinet to certain boundary types are located:
+
+integer :: iInletFacesStart                   
+integer :: iOutletFacesStart                  
+integer :: iSymmetryFacesStart                
+integer :: iWallFacesStart                    
+integer :: iPressOutletFacesStart             
+integer :: iOCFacesStart                      
+integer :: iCycFacesStart                     
 
 integer, parameter :: nomax = 24              ! Max no. of nodes in face - determines size of some arrays, just change this if necessary.
 
+! Logical defining are we reading native Cappuccino file format or OpenFOAM polymesh format.
 logical :: native_mesh_files
 
-integer :: points_file, faces_file, owner_file, neighbour_file, boundary_file ! file units
+! Mesh file units
+integer :: points_file, faces_file, owner_file, neighbour_file, boundary_file 
 
 
 
@@ -68,8 +86,8 @@ real(dp), dimension(:), allocatable :: facint          ! Interpolation factor
 
 real(dp), dimension(:), allocatable :: srds,dns    ! srds = |are|/|dns|, dns = normal distance to cell center from face |dpn*face_normal_unit_vec|
 real(dp), dimension(:), allocatable :: srdw,dnw    ! srdw = |are|/|dnw|, dnw = normal distance to cell center from face |dpn*face_normal_unit_vec|
-real(dp), dimension(:), allocatable :: srdoc          ! srdoc = |are|/|dpn*face_normal_unit_vec| 
-real(dp), dimension(:), allocatable :: foc            ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
+real(dp), dimension(:), allocatable :: srdoc       ! srdoc = |are|/|dpn*face_normal_unit_vec| 
+real(dp), dimension(:), allocatable :: foc         ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
 
 ! Mesh topology information - connectivity of cells trough faces
 integer, dimension(:), allocatable :: owner     ! Index of the face owner cell
@@ -215,7 +233,7 @@ end function
 
 
 subroutine find_intersection_point( &
-!                     plane defined by face corner, bottom and south:
+!                     plane defined by three face corners:
                        x1,y1,z1,&
                        x2,y2,z2, &
                        x3,y3,z3, &
@@ -250,7 +268,7 @@ subroutine find_intersection_point( &
 !
 ! example usage: 
 ! call find_intersection_point( &
-!!                            plane defined by face corner, bottom and south:
+!!                            plane defined by face corners:
 !                             x(inp),y(inp),z(inp),&
 !                             x(inp-idns),y(inp-idns),z(inp-idns), &
 !                             x(inp-idtb),y(inp-idtb),z(inp-idtb), &
@@ -339,8 +357,8 @@ subroutine mesh_geometry
 !
   implicit none
 
-! Locals
-  integer :: i,j,k,l,ioc
+  ! Locals
+  integer :: i,j,k,l,ioc,icyc
   integer :: iface
   integer :: inp,inn
   integer :: input_status
@@ -348,12 +366,13 @@ subroutine mesh_geometry
   character(len=1) :: ch
   character(len=15) :: char_string,char_string2
   character(len=80) :: line_string
+  character(len=10) :: bctype
 
   integer, dimension(nomax) :: node  ! It will store global node numbers of cell vertexes
   integer :: nnodes                  ! no. of nodes in face
   integer :: inode                   ! int counter
 
-  integer :: numBoundaries,bctype,nfaces,startFace
+  integer :: numBoundaries,nfaces,startFace
   integer :: ifaceFriend, startFaceFriend
 
   real(dp), parameter :: half = 0.5_dp
@@ -362,7 +381,7 @@ subroutine mesh_geometry
   real(dp) :: px,py,pz, qx,qy,qz, ax,ay,az, nx,ny,nz, cx,cy,cz
   real(dp) :: xpn,ypn,zpn
   real(dp) :: xjp,yjp,zjp
-  real(dp) :: dpn,djn
+  real(dp) :: dpn,djn,are
  
 
 !
@@ -416,53 +435,61 @@ subroutine mesh_geometry
   ! Initialize no. of O-C- boundaries
   iOCBoundaries  = 0
 
+  ! Initialize no. of cyclic boundaries
+  iCycBoundaries  = 0
+
   read(boundary_file,'(a)') line_string
   read(boundary_file,*) numBoundaries
 
   do i=1,numBoundaries
   read(boundary_file,*) bctype,nfaces,startFace
 
-    select case (bctype)
+    select case ( adjustl(bctype) )
 
-      case (1)
+      case ('inlet')
         if (ninl==0) iInletFacesStart = startFace
         ninl = ninl + nfaces
 
-      case (2)
+      case ('outlet')
         if (nout==0) iOutletFacesStart = startFace
         nout = nout + nfaces
 
-      case (3)
+      case ('symmetry')
         if (nsym==0) iSymmetryFacesStart = startFace
         nsym = nsym + nfaces
 
-      case (4)
+      case ('wall')
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
 
-      case (41)
+      case ('wallIsoth')
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
         nwali = nwali + nfaces
 
-      case (42)
+      case ('wallAdiab')
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
         nwala = nwala + nfaces
 
-      case (43)
+      case ('wallQFlux')
         if (nwal==0) iWallFacesStart = startFace
         nwal = nwal + nfaces
         nwalf = nwalf + nfaces
 
-      case (5)
+      case ('prOutlet')
         if (npru==0) iPressOutletFacesStart = startFace
         npru = npru + nfaces
 
-      case (6)
+      case ('domain')
         if (noc==0) iOCFacesStart = startFace
         iOCBoundaries = iOCBoundaries + 1
         noc = noc + nfaces
+
+      case ('cyclic')
+        if (ncyc==0) iCycFacesStart = startFace
+        iCycBoundaries = iCycBoundaries + 1
+        ncyc = ncyc + nfaces
 
       case default
         write(*,*) "Non-existing boundary type in polymesh/boundary file!"
@@ -494,21 +521,32 @@ if (native_mesh_files)  then
 
 
     ! 'points' file
+
     do i=1,16
       read(points_file,*) ch
     end do
 
+    ! do
+    !   read(points_file,*) ch
+    !   if (ch == "(") then
+    !     ! Return two lines
+    !     backspace(points_file)
+    !     backspace(points_file)
+    !     exit
+    !   endif
+    ! end do
+
     read(points_file,*) numNodes
     read(points_file,*) ch ! reads "("
 
-    k=0
-    l=0
     
     ! 'owner' file
+    k=0
+    l=0
     do i=1,17
       if (i==13) then
         read(owner_file,*) char_string,line_string
-        do j=12,len_trim(line_string)
+        do j=10,len_trim(line_string)
           if (line_string(j:j+5)=='nCells') then
             k=j+7
           endif
@@ -526,20 +564,45 @@ if (native_mesh_files)  then
 
 
     ! 'neighbour' file
+
     do i=1,17
       read(neighbour_file,*) ch
     end do
+
+    ! do
+    !   read(neighbour_file,*) ch
+    !   if (ch == "(") then
+    !     ! Return two lines
+    !     backspace(neighbour_file)
+    !     backspace(neighbour_file)
+    !     exit
+    !   endif
+    ! end do
+
     read(neighbour_file,*) numInnerFaces
     read(neighbour_file,*) ch ! reads "("
 
 
     ! 'faces' file
+
     do i=1,18
       read(faces_file,*) ch
     end do
 
-  endif
+    ! do
+    !   read(faces_file,*) ch
+    !   if (ch == "(") then
+    !     ! Return two lines
+    !     backspace(faces_file)
+    !     backspace(faces_file)
+    !     exit
+    !   endif
+    ! end do
+    ! read(faces_file, *) numFaces
+    ! read(faces_file,*) ch ! reads "("
 
+
+  endif
 
   ! Number of non-zero elements in sparse matrix: nnz
   nnz = 2*numInnerFaces + numCells
@@ -556,16 +619,24 @@ if (native_mesh_files)  then
   ! Having all values of a variable, incuding those of volume field (defined in cell centers)
   ! and those of boundary surface field in a single array is helpful.
   iInletStart = numCells
+
   iOutletStart = numCells+Ninl
+
   iSymmetryStart = numCells+Ninl+Nout
+
   iWallStart = numCells+Ninl+Nout+Nsym
+
   iPressOutletStart = numCells+Ninl+Nout+Nsym+Nwal
+
   iOCStart = numCells+Ninl+Nout+Nsym+Nwal+Npru
+  
+  iCycStart = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc
 
 
 !
 ! > Write report on mesh size into log file
 !
+  write ( *, '(a)' ) ' '
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) '  Mesh data: '
 
@@ -628,14 +699,23 @@ if (native_mesh_files)  then
   endif
     
   if( noc.gt.0 ) then
-    ! Make one correction - divide noc by two because we had read bot 'left' and 'right' faces.
+    ! Make one correction - divide noc by two because we had read both 'left' and 'right' faces.
     noc = noc/2
     iOCBoundaries = iOCBoundaries/2
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of O-C- boundaries  = ', iOCBoundaries
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of O-C- faces  = ', noc
+  endif
 
+  if( ncyc.gt.0 ) then
+    ! Make one correction - divide ncyc by two because we had read both 'left' and 'right' faces.
+    ncyc = ncyc/2
+    iCycBoundaries = iCycBoundaries/2
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of cyclic boundaries  = ', iCycBoundaries
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of cyclic faces  = ', ncyc
   endif
 
 !
@@ -673,12 +753,13 @@ if (native_mesh_files)  then
   allocate ( dnw(nwal) )      
   allocate ( srdw(nwal) ) 
 
-  allocate ( ijl(noc) ) 
-  allocate ( ijr(noc) ) 
-  allocate ( ijlFace(noc) ) 
-  allocate ( ijrFace(noc) ) 
-  allocate ( srdoc(noc) ) 
-  allocate ( foc(noc) )                                     
+  allocate ( ijl(noc+ncyc) ) 
+  allocate ( ijr(noc+ncyc) ) 
+  allocate ( ijlFace(noc+ncyc) ) 
+  allocate ( ijrFace(noc+ncyc) ) 
+
+  allocate ( srdoc(noc+ncyc) ) 
+  allocate ( foc(noc+ncyc) )                               
 
 
 !
@@ -732,9 +813,9 @@ if (native_mesh_files)  then
 
 
   !
-  ! Rewind boundary file for one more sweep - to read cyclic boundaries
+  ! Rewind boundary file for one more sweep - to read O-C- and cyclic boundaries
   !
-  if(noc.gt.0) then
+  if(noc.gt.0 .or. ncyc.gt.0) then
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '  Defining O-C- and cyclic boundary face pairs...'
@@ -745,6 +826,7 @@ if (native_mesh_files)  then
     read(boundary_file,*) numBoundaries
 
     ioc = 1
+    icyc = 1
 
     bc_loop: do
 
@@ -752,10 +834,11 @@ if (native_mesh_files)  then
 
       if(input_status /= 0) exit
 
-      if (bctype.eq.6) then ! we have what we call a o-c- boundary, maybe inner domain boundary maybe cyclic boundary
 
-        ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same of course.)
-        read(boundary_file,*)  l,nfaces,startFaceFriend
+      if ( adjustl(bctype) == 'domain' ) then ! we have what we call a o-c- boundary
+
+        ! We expect to read line with info where to find corresponding faces (bctype='domain' and nfaces is the same of course.)
+        read(boundary_file,*)  bctype,nfaces,startFaceFriend
 
         do k=1,nfaces
           iface = startFace + k
@@ -768,6 +851,25 @@ if (native_mesh_files)  then
           ijrFace(ioc) = ifaceFriend
 
           ioc = ioc + 1
+
+        enddo
+
+      elseif ( adjustl(bctype) == 'cyclic' ) then ! we have cyclic boundary
+
+        ! We expect to read line with info where to find corresponding faces (bctype='cyclic' and nfaces is the same of course.)
+        read(boundary_file,*)  bctype,nfaces,startFaceFriend
+
+        do k=1,nfaces
+          iface = startFace + k
+          ifaceFriend = startFaceFriend + k
+
+          ijl(noc+icyc) = owner(iface)
+          ijr(noc+icyc) = owner(ifaceFriend)
+
+          ijlFace(noc+icyc) = iface
+          ijrFace(noc+icyc) = ifaceFriend
+
+          icyc = icyc + 1
 
         enddo
 
@@ -939,7 +1041,7 @@ if (native_mesh_files)  then
   endif
 
   !
-  ! > Interpolation factor
+  ! > Interpolation factor > inner faces
   !
 
   do iface=1,numInnerFaces
@@ -1010,65 +1112,62 @@ if (native_mesh_files)  then
 
           djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
 
+          ! Interpolation factor
           foc(ioc) = djn/(djn+dpn)
+
+          ! Face area 
+          are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+
+          ! Cell face area divided by distance to the cell center
+          srdoc(ioc) = are/(djn+dpn)
+
+    enddo
+  endif
+
+  !
+  ! > Interpolation factor > cyclic boundaries
+  !
+  if(ncyc.gt.0) then 
+    do icyc=1,ncyc
+          iface = ijlFace(noc+icyc)
+          ifaceFriend = ijrFace(noc+icyc)
+
+          inp = ijl(noc+icyc)
+          inn = ijr(noc+icyc)
+
+
+          xpn = xc(inn) - xf( ifaceFriend )
+          ypn = yc(inn) - yf( ifaceFriend )
+          zpn = zc(inn) - zf( ifaceFriend )
+
+          dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+
+          xpn = xf(iface) - xc(inp)
+          ypn = yf(iface) - yc(inp)
+          zpn = zf(iface) - zc(inp)
+
+          djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+          ! ! Interpolation factor
+          ! foc(noc+icyc) = djn/(djn+dpn)
+
+          ! U sustini uvek je periodic pravac sa uniformnom mrezom pa je:
+          foc(noc+icyc) = 0.5_dp
+
+          ! Face area 
+          are = sqrt(arx(iface)**2+ary(iface)**2+arz(iface)**2)
+
+          ! Cell face area divided by distance to the cell center
+          srdoc(noc+icyc) = are/(djn+dpn)
 
     enddo
   endif
   
-
-  ! if(noc.gt.0) then
-
-  !   rewind( boundary_file )
-
-  !   read(boundary_file,'(a)') line_string
-  !   read(boundary_file,*) numBoundaries
-
-  !   ioc = 1
-
-  !   bc_loop2: do
-
-  !     read(boundary_file,*,iostat = input_status) bctype,nfaces,startFace 
-      
-  !     if(input_status /= 0) exit
-
-  !     if (bctype.eq.6) then ! we have what we call a o-c- boundary, maybe inner domain boundary maybe cyclic boundary
-
-  !     ! We expect to read line with info where to find corresponding faces (bctype=6 and nfaces is the same of course.)
-  !     read(boundary_file,*) l,nfaces,startFaceFriend
-
-  !       do k=1,nfaces
-  !         iface = startFace+k
-  !         ifaceFriend = startFaceFriend + k
-
-  !         inp = ijl(ioc)
-  !         inn = ijr(ioc)
-
-
-  !         xpn = xc(inn) - xf( ifaceFriend )
-  !         ypn = yc(inn) - yf( ifaceFriend )
-  !         zpn = zc(inn) - zf( ifaceFriend )
-
-  !         dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
-
-
-  !         xpn = xf(iface) - xc(inp)
-  !         ypn = yf(iface) - yc(inp)
-  !         zpn = zf(iface) - zc(inp)
-
-  !         djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
-
-  !         foc(ioc) = djn/(djn+dpn)
-
-  !         ioc = ioc+1
-
-  !       enddo
-  !     else
-  !       cycle bc_loop2
-  !     endif
-   
-  !   enddo bc_loop2
-  
-  ! endif
+  ! Important!
+  ! I would like to make it simple for the rest of the code so the massive noc+ncyc
+  ! is encapsulated in  single number.
+  noc = noc + ncyc
 
 
 !

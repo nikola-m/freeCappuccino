@@ -82,27 +82,32 @@ module parameters
 
 
   ! Choosing discretization scheme cds, luds, smart,muscl, gamma, etc.
-  ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist,lgamma,lcds_flnt,l2nd_flnt,l2ndlim_flnt,lmuscl_flnt
+  ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist...,lcds_flnt,l2nd_flnt,l2ndlim_flnt,lmuscl_flnt
   logical :: lcds = .false.
+  logical :: lcdsc = .false.
   logical :: lluds = .false.
   logical :: lsmart = .false.
   logical :: lavl = .false.
   logical :: lmuscl = .false.
   logical :: lumist = .false.
-  logical :: lgamma = .false.
+  logical :: lkoren = .false.
+  logical :: lcharm = .false.
+  logical :: lospre = .false.
   logical :: lcds_flnt = .false.
   logical :: l2nd_flnt = .false.
   logical :: l2ndlim_flnt = .false.
   logical :: lmuscl_flnt = .false.
+
+  logical :: flux_limiter = .false.
     
   ! Logicals, mostly read from simulation-input file:
-  logical ::  lturb,lread,lwrite,ltest             ! turbulent simulation, read restart file, write restart file, print residual of the linear solver,.,..      
-  logical ::  ltransient                           ! LTRANSIENT is TRUE for transient (non-stationary) simulations              
-  logical ::  levm,lasm,lles,lsgdh,lggdh,lafm      ! eddy-viscosity, algebraic stress model or LES, simple gradient or generalized gradient hypothesis, algerbaic flux model
-  logical ::  bdf,cn                               ! control for the time-stepping algorithm
-  logical ::  simple,piso,pimple                   ! control for the velocity-pressure coupling algorithm
-  logical ::  const_mflux                          ! control for constant flow rate 
-  logical :: solveOmega, solveEpsilon, SolveTKE    ! Selfexplanatory, used in 'init'
+  logical :: lturb,lread,lwrite,ltest             ! turbulent simulation, read restart file, write restart file, print residual of the linear solver,.,..      
+  logical :: ltransient                           ! LTRANSIENT is TRUE for transient (non-stationary) simulations              
+  logical :: levm,lasm,lles,lsgdh,lggdh,lafm      ! eddy-viscosity, algebraic stress model or LES, simple gradient or generalized gradient hypothesis, algerbaic flux model
+  logical :: bdf,cn                               ! control for the time-stepping algorithm
+  logical :: simple,piso,pimple                   ! control for the velocity-pressure coupling algorithm
+  logical :: const_mflux                          ! control for constant flow rate 
+  logical :: solveOmega, solveEpsilon, SolveTKE   ! Selfexplanatory, used in 'init'
 
 
   integer :: ncorr                   ! PISO control parameter: no. of Piso corrections.
@@ -228,5 +233,3 @@ module statistics
     real(dp), dimension(:), allocatable :: tt_aver
                                              
 end module statistics
-
-

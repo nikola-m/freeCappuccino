@@ -15,7 +15,7 @@
 !
 !***********************************************************************
 !
-   integer :: inp,imon
+  integer :: inp,imon
 
   if(ltransient) then
   do imon=1,mpoints

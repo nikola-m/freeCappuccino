@@ -10,6 +10,7 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   use sparse_matrix, only: apu
   use variables, only: den,U,V,W,dUdxi,dVdxi,dWdxi
   use gradients
+  use interpolation
 
   implicit none
 
@@ -24,10 +25,8 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   real(dp) :: fxn, fxp
   real(dp) :: are,dpn
   real(dp) :: xpn,ypn,zpn,dene,smdpn
-  real(dp) :: xi,yi,zi
   real(dp) :: nxx,nyy,nzz
   real(dp) :: ui,vi,wi
-  real(dp) :: duxi,duyi,duzi
 
 
   ! > Geometry:
@@ -35,11 +34,6 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   ! Face interpolation factor
   fxn=lambda 
   fxp=1.0_dp-lambda
-
-  ! Coordinates of point e'
-  xi=xc(ijp)*fxp+xc(ijn)*fxn
-  yi=yc(ijp)*fxp+yc(ijn)*fxn
-  zi=zc(ijp)*fxp+zc(ijn)*fxn
 
   ! Distance vector between cell centers
   xpn=xc(ijn)-xc(ijp)
@@ -69,45 +63,21 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   can = cap
 
 
-  !+Interpolate velocities to face center:+++++++++++++++++++++++++
-  !    |________Ue'_________|
-  ui = u(ijp)*fxp+u(ijn)*fxn
+  ! Interpolate velocities to face center:
 
-  ! Interpolate gradients defined at CV centers to faces
-  duxi = dudxi(1,ijp)*fxp+dudxi(1,ijn)*fxn
-  duyi = dudxi(2,ijp)*fxp+dudxi(2,ijn)*fxn
-  duzi = dudxi(3,ijp)*fxp+dudxi(3,ijn)*fxn
-  !      |_______________Ucorr________________|
-  ui = ui+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
+  ! ui = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, u, dUdxi )
+  ! vi = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, v, dVdxi )
+  ! wi = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, w, dWdxi )
 
 
+  ui = face_value_central( ijp,ijn, xf, yf, zf, u, dUdxi )
+  vi = face_value_central( ijp,ijn, xf, yf, zf, v, dVdxi )
+  wi = face_value_central( ijp,ijn, xf, yf, zf, w, dWdxi )
 
-  !  |________Ve'_________|
-  vi=v(ijp)*fxp+v(ijn)*fxn
 
-  duxi = dvdxi(1,ijp)*fxp+dvdxi(1,ijn)*fxn
-  duyi = dvdxi(2,ijp)*fxp+dvdxi(2,ijn)*fxn
-  duzi = dvdxi(3,ijp)*fxp+dvdxi(3,ijn)*fxn
-  !    |_______________Vcorr________________|
-  vi=vi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-
-  
-
- !  |________We'_________|
-  wi=w(ijp)*fxp+w(ijn)*fxn
-
-  duxi = dwdxi(1,ijp)*fxp+dwdxi(1,ijn)*fxn
-  duyi = dwdxi(2,ijp)*fxp+dwdxi(2,ijn)*fxn
-  duzi = dwdxi(3,ijp)*fxp+dwdxi(3,ijn)*fxn
-  !    |_______________Wcorr________________|
-  wi=wi+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi)) 
-  
-  !+END: Interpolate velocities to face center:+++++++++++++++++++++++++
-
- 
   ! MASS FLUX
   !// calculate the fluxes by dotting the interpolated velocity (to cell faces) with face normals
   !     phi = (fvc::interpolate(U) & mesh.Sf()) 
-  flmass=dene*(ui*arx+vi*ary+wi*arz)
+  flmass = dene*(ui*arx+vi*ary+wi*arz)
 
 end subroutine

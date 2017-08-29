@@ -9,16 +9,6 @@ use tensor_fields
 
 implicit none
 
-
-!
-! The CSR matrix derived type
-!
-type csrMatrix
-  integer, dimension(:), allocatable :: ioffset
-  integer, dimension(:), allocatable :: ja
-  real(dp), dimension(:), allocatable :: coef
-end type
-
 !
 ! The fvEquation derived data type (all objects from fvm_discretisation_module belong to this type.)
 !

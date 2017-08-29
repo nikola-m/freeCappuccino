@@ -242,7 +242,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijn=ijr(i)
 
     call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
+     srdoc(i), fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
 
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)

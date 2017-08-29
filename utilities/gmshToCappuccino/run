@@ -1,0 +1,4 @@
+gmsh kanal.geo -3 -o kanal.msh
+./gmshToCappuccino kanal
+#mkdir polyMesh
+mv points cells faces boundary owner neighbour ../../examples/kanal/polyMesh/

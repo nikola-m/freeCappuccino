@@ -5,17 +5,13 @@ subroutine init
 !***********************************************************************
 !     Contents:
 !
-! 0)  Print code logo and timestamp in monitor file
-! 1)  Open & Read Input File
-! 2)  Open & Read Grid File & Allocate Arrays
-! 3)  Index arrays of matrix elements stored in CSR format
-! 4)  Various initialisations
-!     4.1)  Parameter Initialisation
-!     4.2)  Field Initialisation
-! 5)  Read Restart File And Set Field Values
-! 6)  Initial Gradient Calculation
-! 7)  Initialization of parameters for boundary adjecent cells
-! 8)  Calculate distance to the nearest wall.
+! 1)  Various initialisations
+!     1.1)  Parameter Initialisation
+!     1.2)  Field Initialisation
+! 2)  Read Restart File And Set Field Values
+! 3)  Initial Gradient Calculation
+! 4)  Initialization of parameters for boundary adjecent cells
+! 5)  Calculate distance to the nearest wall.
 !
 !***********************************************************************
   use types
@@ -24,117 +20,35 @@ subroutine init
   use variables
   use title_mod
   use gradients
-  use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
-  use utils, only: timestamp, show_logo, i4vec_print2, get_unit
+  use sparse_matrix, only: su,sv
+  use utils, only: get_unit
   use LIS_linear_solver_library
 
   implicit none
-!
-!***********************************************************************
-!
 
-! 
-! Local variables 
-!
+  ! 
+  ! Local variables 
+  !
+  character(80) :: key,field_type,boundary_type
   integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, ioc, iface
+  integer :: nfaces,startFace,nFacesOffset
+  integer :: input_unit,input_status
+  integer :: nsw_backup
   real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
   real(dp) :: are
-
-  integer :: nsw_backup
   real(dp) :: sor_backup
-
-  integer :: input_unit,input_status
-  integer :: nfaces,startFace,nFacesOffset
-  character(80) :: key,field_type,boundary_type
-  character(25) :: convective_scheme
   real(dp) :: u0, v0, w0, tke0, ed0
 
 !
 !***********************************************************************
 !
 
-! 
-! 0)  Print code logo and timestamp in monitor file
 !
-  call show_logo
-
-!
-! 1)  Open & Read Input File
+! 1) Various initialisations
 !
 
-!.OPEN & READ INPUT FILE...................................................
-  OPEN(UNIT=5,FILE=input_file)
-  REWIND 5
-
-  READ(5,'(a70)') TITLE 
-  READ(5,*) LREAD,LWRITE,LTEST
-  READ(5,*) (LCAL(I),I=1,NPHI)
-  READ(5,*) monCell,pRefCell,MPoints
-  READ(5,*) SLARGE,SORMAX
-  READ(5,*) DENSIT,VISCOS
-  READ(5,*) PRANL,TREF,BETA
-  READ(5,*) LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
-  READ(5,*) roughWall,EROUGH,ZZERO
-  READ(5,*) FACNAP,FACFLX
-  READ(5,*) LTRANSIENT,BTIME
-  READ(5,*) LEVM,LASM,LLES
-  READ(5,*) LSGDH,LGGDH,LAFM
-  READ(5,*) TurbModel
-  READ(5,*) UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
-  READ(5,*) convective_scheme
-  READ(5,*) limiter
-  READ(5,*) (GDS(I),I=1,NPHI)
-  READ(5,*) (URF(I),I=1,NPHI)
-  READ(5,*) (SOR(I),I=1,NPHI)
-  READ(5,*) (NSW(I),I=1,NPHI)
-  READ(5,*) NUMSTEP,TIMESTEP,NZAPIS,MAXIT
-  READ(5,*) lstsq, lstsq_qr, lstsq_dm, gauss
-  READ(5,*) NPCOR, NIGRAD
-  READ(5,*) BDF,CN
-  READ(5,*) SIMPLE,PISO,PIMPLE,ncorr
-  READ(5,*) const_mflux
-  READ(5,*) CoNumFix, CoNumFixValue
-!.END: READ INPUT FILE.............................................!
-  CLOSE (5)
-
-!.Create an input file reading log:
-  WRITE(6,'(a)') '  Input file log: '
-  WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
-  WRITE(6,'(a70)') TITLE
-  WRITE(6,'(3(L1,1x),5x,a)') LREAD,LWRITE,LTEST,'READ3,WRIT3,LTEST'
-  WRITE(6,'(10(L1,1x),5x,a)') (LCAL(I),I=1,NPHI),'(LCAL(I),I=1,NPHI),IP=4,ITE=5,IED=6,IEN=7,IVIS=8,IVART=9,ICON=10'
-  WRITE(6,'(3(i3,1x),5x,a)') monCell,pRefCell,MPoints,'monCell,pRefCell,MPoints'
-  WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
-  WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
-  WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
-  WRITE(6,'(L1,1x,3f6.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
-  WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
-  WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
-  WRITE(6,'(L1,1x,f4.2,1x,a)') LTRANSIENT,BTIME,'LTRANSIENT,BTIME'
-  WRITE(6,'(3(L1,1x),a)') LEVM,LASM,LLES,'LEVM,LASM,LLES'
-  WRITE(6,'(3(L1,1x),a)') LSGDH,LGGDH,LAFM,'LSGDH,LGGDH,LAFM'
-  WRITE(6,'(i2,1x,a)') TurbModel, 'Turbulence Model'
-  WRITE(6,'(8(es11.4,1x),a)') UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN,'UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN'
-  WRITE(6,'(a,a)') convective_scheme, 'Convective scheme'
-  WRITE(6,'(a,1x,a)') limiter, 'Gradient limiter'
-  WRITE(6,'(10(f4.2,1x),a)') (GDS(I),I=1,NPHI),'(GDS(I),I=1,NPHI)'
-  WRITE(6,'(10(f4.2,1x),a)') (URF(I),I=1,NPHI),'(URF(I),I=1,NPHI)'
-  WRITE(6,'(10(es9.2,1x),a)') (SOR(I),I=1,NPHI),'(SOR(I),I=1,NPHI)'
-  WRITE(6,'(10(i3,1x),a)') (NSW(I),I=1,NPHI),'(NSW(I),I=1,NPHI)'
-  WRITE(6,'(i5,1x,es9.2,1x,i5,1x,i4,1x,a)') NUMSTEP,TIMESTEP,NZAPIS,MAXIT,'NUMSTEP,TIMESTEP,NZAPIS,MAXIT'
-  WRITE(6,'(4(L1,1x),a)') lstsq, lstsq_qr, lstsq_dm, gauss,'lstsq, lstsq_qr, lstsq_dm, gauss'
-  WRITE(6,'(i1,1x,i1,1x,a)') NPCOR, NIGRAD,'NPCOR, NIGRAD'
-  WRITE(6,'(2(L1,1x),1x,a)') BDF,CN,'BDF,CN'
-  WRITE(6,'(3(L1,1x),i1,1x,a)') SIMPLE,PISO,PIMPLE,ncorr,'SIMPLE,PISO,PIMPLE,ncorr'
-  WRITE(6,'(1(L1,1x),5x,a)') const_mflux,'const_mflux'
-  WRITE(6,'(L1,es11.4,5x,a)') CoNumFix, CoNumFixValue,'CoNumFix, CoNumFixValue'
-  WRITE(6,'(a)') '---cut here-----------------------------------------------------------------------------'
-  WRITE(6,'(a)') ' '
-
-
-  ! Turbulent flow computation condition
-  lturb = levm.or.lasm.or.lles
+! 1.1) Parameter Initialisation
 
   ! Switches which define wether we look for some files in folder 0.
   if (lturb) then
@@ -158,29 +72,6 @@ subroutine init
   if ( solveOmega ) chvarSolver(6) = 'Omega  '
 
 
-!
-! 2)  Open & Read mesh file, calculate mesh geometrical quantities, allocate arrays
-!
-  call mesh_geometry
-
-  call allocate_arrays
-
-  call allocate_gradients
-
-!
-! 3) Index arrays of matrix elements stored in CSR format
-!
-  call create_CSR_matrix_from_mesh_data
-
-
-!
-! 4) Various initialisations
-!
-
-
-! 4.1) Parameter Initialisation
-
-
   ! Reciprocal values of underrelaxation factors
   do i=1,nphi
     urfr(i)=1.0_dp / urf(i)
@@ -197,7 +88,7 @@ subroutine init
   magUbar = uin
 
 
-! 4.2)  Field Initialisation
+! 1.2)  Field Initialisation
   
   write(*,'(a)') ' '
   write(*,'(a)') '  Initializing internal field and boundaries (reading 0/.. ):'
@@ -205,7 +96,7 @@ subroutine init
 
   ! 
   ! > Velocity
-  ! 
+
 
   call get_unit ( input_unit )
   open ( unit = input_unit, file = '0/U')
@@ -371,6 +262,7 @@ subroutine init
   
   enddo
 
+  close ( input_unit )
 
   ! What is left are dose boudaries that are not in 0
 
@@ -557,8 +449,10 @@ subroutine init
 
     endif  
 
-  
-  enddo
+
+    enddo
+
+    close ( input_unit )
 
     ! What is left are dose boudaries that are not in 0
 
@@ -735,6 +629,8 @@ subroutine init
   
   enddo
 
+  close ( input_unit )
+
   ! What is left are dose boudaries that are not in 0
 
   ! Symmetry
@@ -745,13 +641,13 @@ subroutine init
     ed(ijs) = ed(ijp)
   enddo
 
-    ! OC faces
-    do i=1,noc
-      ioc = iOCStart+i
-      ijp = ijl(i)
-      ijn = ijr(i)
-      ed(ioc) = ed(ijp)*(1.0_dp-foc(i)) + ed(ijn)*foc(i)
-    enddo
+  ! OC faces
+  do i=1,noc
+    ioc = iOCStart+i
+    ijp = ijl(i)
+    ijn = ijr(i)
+    ed(ioc) = ed(ijp)*(1.0_dp-foc(i)) + ed(ijn)*foc(i)
+  enddo
 
   ! ! Pressure Outlet
   ! do i=1,npru
@@ -908,6 +804,8 @@ subroutine init
   
   enddo
 
+  close ( input_unit )
+
   ! What is left are dose boudaries that are not in 0
 
   ! Symmetry
@@ -954,6 +852,7 @@ subroutine init
   ! do i=1,numCells
   !   read(input_unit,*) vis(i)
   ! enddo
+  ! close (input_unit)
 
   ! Temperature
   if(lcal(ien)) t = tin
@@ -982,7 +881,7 @@ subroutine init
   endif
 
   ! Reynolds stress anisotropy
-  if(lasm) bij = 0.0_dp
+  if(lturb.and.lasm) bij = 0.0_dp
 
   ! Pressure and pressure correction
   p = 0.0_dp
@@ -1004,7 +903,7 @@ subroutine init
 
   enddo
 
-  ! O-C- bounaries
+  ! Mass flow for domain (O-C-) and cyclic bounaries
   do i=1,noc
     ioc = iOCStart+i
     ijp = ijl(i)
@@ -1016,16 +915,13 @@ subroutine init
   enddo
 
 !
-! 5)  Read Restart File And Set Field Values
+! 2)  Read Restart File And Set Field Values
 !
-  if(lread) then
-    call readfiles
-    pp = p
-  end if
+  if(lread) call readfiles
 
 
 !
-! 6)  Initial Gradient Calculation
+! 3)  Initial Gradient Calculation
 !
   dUdxi = 0.0_dp
   dVdxi = 0.0_dp
@@ -1039,59 +935,10 @@ subroutine init
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
 
-  ! Convective scheme:
-
-  if(adjustl(convective_scheme) == 'central') then
-    lcds = .true.
-  elseif(adjustl(convective_scheme) == 'linear') then
-    lluds = .true.
-  elseif(adjustl(convective_scheme) == 'smart') then
-    lsmart = .true.
-  elseif(adjustl(convective_scheme) == 'avl-smart') then
-    lavl = .true.
-  elseif(adjustl(convective_scheme) == 'muscl') then
-    lmuscl = .true.
-  elseif(adjustl(convective_scheme) == 'umist') then
-    lumist = .true.
-  elseif(adjustl(convective_scheme) == 'gamma') then
-    lgamma = .true.
-  elseif(adjustl(convective_scheme) == 'central-f') then
-    lcds_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'linear-f') then
-    l2nd_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'limited-linear') then
-    l2ndlim_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'muscl-f') then
-    lmuscl_flnt = .true.
-  else
-    write(*,'(a)') '  Convective scheme not chosen, assigning default muscl-f scheme'
-    convective_scheme = 'muscl-f'
-  endif
-  
-  write(*,'(a)') ' '
-  write(*,'(2a)') '  Convective scheme: ', adjustl(convective_scheme)
-  write(*,'(a)') ' '
-
-
-  ! Gradient limiter:
-  if(adjustl(limiter) == 'Barth-Jespersen') then
-    write(*,*) ' Gradient limiter: Barth-Jespersen'
-  elseif(adjustl(limiter) == 'Venkatakrishnan') then
-    write(*,*) ' Gradient limiter: Venkatakrishnan'
-  elseif(adjustl(limiter) == 'MVenkatakrishnan') then
-    write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
-  elseif(adjustl(limiter) == 'no-limit') then
-    write(*,*) ' Gradient limiter: no-limit'
-  else
-    write(*,*) ' Gradient limiter type not chosen, assigning default Venkatakrishnan limiter'
-    limiter = 'Venkatakrishnan'
-  endif
-
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
  
-
 
 ! print*,'gradijenti:'
 ! do i=1,numCells
@@ -1102,7 +949,7 @@ subroutine init
 ! stop
 
 !
-! 7) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
+! 4) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
 !
 
   ! Loop over wall boundaries to calculate normal distance from cell center dnw.
@@ -1150,7 +997,7 @@ subroutine init
 
 
   !
-  ! 8) Distance to the nearest wall (needed for some turbulence models).
+  ! 5) Distance to the nearest wall (needed for some turbulence models).
   !
 
   write(*,*) ' '
@@ -1190,9 +1037,7 @@ subroutine init
 
   ! Solve system
   call iccg(p,ip) 
-  ! call gaussSeidel(p,ip) 
   ! call bicgstab(p,ip) 
-  ! call dpcg(p,ip)
   ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
 
   ! Update values at constant gradient bc faces - we need these values for correct gradients

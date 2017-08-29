@@ -25,11 +25,11 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
   implicit none
 
-  !**Arguments************************************************************
+  ! Arguments
   real(dp), dimension(numTotal), intent(in) :: u
   real(dp), dimension(numCells), intent(inout) :: dudx,dudy,dudz
 
-  !**Locals***************************************************************
+  ! Local
   integer :: i,ijp,ijn,ijb,lc,iface
   real(dp) :: volr
   real(dp), dimension(numCells) :: dfxo,dfyo,dfzo
