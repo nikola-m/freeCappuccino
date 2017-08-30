@@ -56,6 +56,7 @@ subroutine correct_turbulence_spalart_allmaras()
   implicit none
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve nu_tilda eq.
+ 
   call modify_mu_eff()
 
 end subroutine
@@ -533,6 +534,11 @@ subroutine modify_mu_eff()
     Vis(ijb) = Vis(ijp)
   enddo
   !----------------------------------------------------------------------------
+
+
+  ! MPI exchange
+  call exchange(vis)
+
 
 end subroutine
 

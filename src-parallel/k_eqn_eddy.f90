@@ -41,7 +41,11 @@ subroutine correct_turbulence_k_eqn_eddy()
   implicit none
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve turbulence kinetic energy eq.
+ 
   call modify_mu_eff()
+
+  ! MPI exchange
+  call exchange(vis)
 
 end subroutine
 

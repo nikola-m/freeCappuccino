@@ -70,6 +70,7 @@ subroutine correct_turbulence_k_omega_sst()
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve turbulence kinetic energy eq.
   call calcsc(ED,dEDdxi,ied) ! Assemble and solve specific dissipation rate (omega [1/s]) of tke eq.
+  
   call modify_mu_eff()
 
 end subroutine
@@ -856,6 +857,11 @@ subroutine modify_mu_eff()
   enddo
   !----------------------------------------------------------------------------
 
+
+  ! MPI exchange
+  call exchange(vis)
+
+  
 end subroutine modify_mu_eff
 
 

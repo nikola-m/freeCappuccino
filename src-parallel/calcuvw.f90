@@ -557,4 +557,9 @@ subroutine calcuvw
   wmin = minval(w(1:numCells))
   wmax = maxval(w(1:numCells))
 
+  ! MPI exchange:
+  call exchange(U)
+  call exchange(V)
+  call exchange(W)
+
 end subroutine

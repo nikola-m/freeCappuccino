@@ -669,6 +669,11 @@ subroutine modify_mu_eff()
   enddo
   !----------------------------------------------------------------------------
 
+
+
+  ! MPI exchange
+  call exchange(vis)
+
 end subroutine modify_mu_eff
 
 

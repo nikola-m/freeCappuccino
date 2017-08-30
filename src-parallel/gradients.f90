@@ -12,6 +12,7 @@ implicit none
 
 logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization approach
 character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
+character(len=20) :: sngrad_corr                   ! Surface normal gradient correction scheme. Options: Skewness, Offset, Uncorrected.
 
 real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
 real(dp),dimension(:,:,:), allocatable ::  dmatqr  !  when using qr version of the subroutine size(3,6,nxyz)!
@@ -30,7 +31,7 @@ end interface
 
 private
 
-public :: lstsq, lstsq_qr, lstsq_dm, gauss,limiter
+public :: lstsq, lstsq_qr, lstsq_dm, gauss,limiter,sngrad_corr
 public :: grad,sngrad,allocate_gradients,create_lsq_gradients_matrix
 
 
@@ -101,8 +102,13 @@ implicit none
   real(dp), dimension(numTotal), intent(in) :: phi
   real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
 
-  dPhidxi = 0.0_dp
   
+  ! MPI exchange:
+  call exchange(phi)
+
+  ! Initialize gradient:
+  dPhidxi = 0.0_dp
+
   if (lstsq) then 
     call grad_lsq(phi,dPhidxi,2,dmat)
   elseif (lstsq_qr) then 
@@ -145,6 +151,12 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
   real(dp), dimension(numTotal), intent(in) :: U,V,W
   real(dp), dimension(3,numCells), intent(inout) :: dUdxi,dVdxi,dWdxi
 
+  ! MPI exchange:
+  call exchange(U)
+  call exchange(V)
+  call exchange(W)
+
+  ! Initialize gradient:
   dUdxi=0.0_dp
   dVdxi=0.0_dp
   dWdxi=0.0_dp
