@@ -69,9 +69,11 @@ subroutine correct_turbulence_k_omega_sst()
   if(.not.allocated(fsst)) allocate(fsst(numTotal))
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve turbulence kinetic energy eq.
+  
   call calcsc(ED,dEDdxi,ied) ! Assemble and solve specific dissipation rate (omega [1/s]) of tke eq.
   
-  call modify_mu_eff()
+  call modify_mu_eff()       ! Update effective viscosity.
+
 
 end subroutine
 
@@ -91,7 +93,7 @@ end subroutine
 
 subroutine calcsc(Fi,dFidxi,ifi)
 !
-!
+! Ansemble and solve scalar transport equation.
 !
   use types
   use parameters
@@ -697,10 +699,19 @@ subroutine calcsc(Fi,dFidxi,ifi)
 ! Report range of scalar values and clip if negative
   fimin = minval(fi)
   fimax = maxval(fi)
-  write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
 
 ! These field values cannot be negative
   if(fimin.lt.0.0_dp) fi = max(fi,small)
+
+  call global_min(fimin)
+  call global_max(fimax)
+
+  if( myid .eq. 0 )
+    write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+
+
+  ! MPI exchange
+  call exchange(fi)
 
 end subroutine calcsc
 

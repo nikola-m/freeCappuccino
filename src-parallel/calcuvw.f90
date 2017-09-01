@@ -48,6 +48,8 @@ subroutine calcuvw
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
+
+  ! It can also be called with components of vector field
   ! call grad(U,V,W,dUdxi,dVdxi,dWdxi)
 
   ! Pressure gradient
@@ -436,6 +438,9 @@ subroutine calcuvw
   umin = minval(u(1:numCells))
   umax = maxval(u(1:numCells))
 
+  call global_min(umin)
+  call global_max(umax)
+
   !
   !.....Assemble and solve system for V component of velocity
   !
@@ -496,6 +501,9 @@ subroutine calcuvw
   vmin = minval(v(1:numCells))
   vmax = maxval(v(1:numCells))
  
+  call global_min(vmin)
+  call global_max(vmax)
+
   !
   !.....Assemble and solve system for W component of velocity
   !
@@ -556,6 +564,9 @@ subroutine calcuvw
 
   wmin = minval(w(1:numCells))
   wmax = maxval(w(1:numCells))
+
+  call global_min(wmin)
+  call global_max(wmax)
 
   ! MPI exchange:
   call exchange(U)

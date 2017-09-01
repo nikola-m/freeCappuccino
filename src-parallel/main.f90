@@ -56,7 +56,7 @@ program cappuccino
     
     this = myid + 1
 
-    if(nproc == 1) then
+    if(nproc .eq. 1) then
       nproc = 0
       this = 0
     endif

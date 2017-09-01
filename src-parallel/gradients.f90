@@ -12,7 +12,7 @@ implicit none
 
 logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization approach
 character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
-character(len=20) :: sngrad_corr                   ! Surface normal gradient correction scheme. Options: Skewness, Offset, Uncorrected.
+character(len=12) :: sngrad_corr                   ! Surface normal gradient correction scheme. Options: Skewness, Offset, Uncorrected.
 
 real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
 real(dp),dimension(:,:,:), allocatable ::  dmatqr  !  when using qr version of the subroutine size(3,6,nxyz)!
@@ -102,7 +102,8 @@ implicit none
   real(dp), dimension(numTotal), intent(in) :: phi
   real(dp), dimension(3,numCells), intent(inout) :: dPhidxi
 
-  
+  ! Before the calculation of the gradients we exchange the information
+  ! between processes to make sure that the freshest field values are in the buffer.
   ! MPI exchange:
   call exchange(phi)
 
@@ -151,6 +152,8 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
   real(dp), dimension(numTotal), intent(in) :: U,V,W
   real(dp), dimension(3,numCells), intent(inout) :: dUdxi,dVdxi,dWdxi
 
+  ! Before the calculation of the gradients we exchange the information
+  ! between processes to make sure that the freshest field values are in the buffer.
   ! MPI exchange:
   call exchange(U)
   call exchange(V)
@@ -569,7 +572,7 @@ subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
 
 
   !-- Skewness correction -->
-  if (adjustl(approach) == 'skewness') then
+  if (adjustl(trim(approach)) == 'skewness') then
 
     ! Overrelaxed correction vector d2, where s=dpn+d2
     d1x = costn
@@ -588,7 +591,7 @@ subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
   ! |-- Intersection point offset and skewness correction -->
 
 
-  elseif (adjustl(approach) == 'offset') then
+  elseif (adjustl(trim(approach)) == 'offset') then
 
     ! Find points P' and Pj'
     xpp=xf-(xf-xc(ijp))*nxx
@@ -627,7 +630,7 @@ subroutine sngrad_scalar_field(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
     dfizii = dfizi*d1z + arz/volep*( fi(ijn)+nablaFIxdnnp-fi(ijp)-nablaFixdppp-dfixi*xpnp-dfiyi*ypnp-dfizi*zpnp ) 
  
   !-- Uncorrected -->
-  elseif (adjustl(approach) == 'uncorrected') then
+  elseif (adjustl(trim(approach)) == 'uncorrected') then
     
     dfixii = dfixi
     dfiyii = dfiyi

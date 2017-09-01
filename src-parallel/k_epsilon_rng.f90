@@ -44,8 +44,10 @@ subroutine correct_turbulence_k_epsilon_rng()
   implicit none
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve turbulence kinetic energy eq.
+  
   call calcsc(ED,dEDdxi,ied) ! Assemble and solve specific dissipation rate (omega [1/s]) of tke eq.
-  call modify_mu_eff()
+  
+  call modify_mu_eff()       ! Update effective viscosity
 
 end subroutine correct_turbulence_k_epsilon_rng
 
@@ -535,10 +537,18 @@ subroutine calcsc(Fi,dFidxi,ifi)
 ! Report range of scalar values and clip if negative
   fimin = minval(fi)
   fimax = maxval(fi)
-  write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
 
 ! These field values cannot be negative
   if(fimin.lt.0.0_dp) fi = max(fi,small)
+
+  call global_min(fimin)
+  call global_max(fimax)
+
+  if( myid .eq. 0 )
+    write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+
+  ! MPI exchange
+  call exchange(fi)
 
 end subroutine calcsc
 
@@ -669,11 +679,9 @@ subroutine modify_mu_eff()
   enddo
   !----------------------------------------------------------------------------
 
-
-
   ! MPI exchange
   call exchange(vis)
-
+  
 end subroutine modify_mu_eff
 
 
