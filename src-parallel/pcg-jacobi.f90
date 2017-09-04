@@ -60,13 +60,13 @@ subroutine dpcg(fi,ifi)
     res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
   end do
 
-  ! L^1-norm of residual
+  ! L1-norm of residual
   res0=sum(abs(res))
     if( res0.lt.sor(ifi) ) return
 !
 ! If ltest=true, print the norm 
 !
-  if(ltest) write(66,'(20x,a,1pe10.3)') 'res0 = ',res0
+  if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 
   s0=1.e20
 !

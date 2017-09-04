@@ -21,7 +21,7 @@ subroutine writefiles
   integer :: output_unit
   character(len=6) :: timechar
 
-  ! Write in a char variable current timestep number and create a folder with this name
+  ! Write in a char variable the current timestep number and create a folder with this name
   write(timechar,'(i6)') itime
   call execute_command_line("mkdir "//trim(out_folder_path)//"/"//adjustl(timechar))
 

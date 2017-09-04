@@ -10,53 +10,63 @@ subroutine readfiles
   use variables
   use title_mod
   use statistics 
+  use utils
 
   implicit none  
+
+  integer :: restart_unit
+  character( len = 5) :: nproc_char 
+
 !
 !***********************************************************************
 !
 
-  open(unit=3,file=restart_file,form='unformatted')
-  rewind 3
+  ! NOTE: nproc_char <- this (=myid + 1) written as left aligned string.
+  call i4_to_s_left ( this, nproc_char )
 
-  read(3) itime,time
-  if(const_mflux) read(3) gradpcmf
-  read(3) flmass
-  read(3) u
-  read(3) v
-  read(3) w
-  read(3) p
-  read(3) te
-  read(3) ed
-  read(3) t
-  read(3) vis
-  !read(3) vart
-  !read(3) edd
-  !read(3) ret
-  !read(3) den
-  !read(3) utt
-  !read(3) vtt
-  !read(3) wtt
-  read(3) uu
-  read(3) vv
-  read(3) ww
-  read(3) uv
-  read(3) uw
-  read(3) vw
-  read(3) uo
-  read(3) vo
-  read(3) wo
-  !read(3) to
-  read(3) teo
-  read(3) edo
-  !read(3) varto
-  !read(3) con
-  !read(3) cono
-  !read(3) alph
+  call get_unit ( restart_unit )
 
-  rewind 3
-  
-  close (3)
+  open ( unit = restart_unit,file=adjustl(trim(restart_file))//'-'//trim(nproc_char),form='unformatted')
+  write(*,'(a,i4)') '  Reading restart file at: ',myid
+  rewind restart_unit
+
+  read(restart_unit) itime,time
+  if(const_mflux) read(restart_unit) gradpcmf
+  read(restart_unit) flmass
+  read(restart_unit) u
+  read(restart_unit) v
+  read(restart_unit) w
+  read(restart_unit) p
+  read(restart_unit) te
+  read(restart_unit) ed
+  read(restart_unit) t
+  read(restart_unit) vis
+  !      read(restart_unit) vart
+  !      read(restart_unit) edd
+  !      read(restart_unit) ret
+  !      read(restart_unit) den
+  !      read(restart_unit) utt
+  !      read(restart_unit) vtt
+  !      read(restart_unit) wtt
+  read(restart_unit) uu
+  read(restart_unit) vv
+  read(restart_unit) ww
+  read(restart_unit) uv
+  read(restart_unit) uw
+  read(restart_unit) vw
+  read(restart_unit) uo
+  read(restart_unit) vo
+  read(restart_unit) wo
+  !      read(restart_unit) to
+  read(restart_unit) teo
+  read(restart_unit) edo
+  !      read(restart_unit) varto
+  !      read(restart_unit) con
+  !      read(restart_unit) cono
+  !      read(restart_unit) alph
+
+  rewind restart_unit
+  close (restart_unit)
 
   ! Initialize pressure correction with current pressure field.
   pp = p
