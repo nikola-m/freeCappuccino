@@ -27,7 +27,7 @@ subroutine dpcg(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
+  integer :: i, k, ns, l, iOtherProc
   real(dp), dimension(numCells) :: pk,zk
   real(dp) :: rsm, resmax, res0, resl
   real(dp) :: s0, sk, alf, bet, pkapk
@@ -55,14 +55,27 @@ subroutine dpcg(fi,ifi)
     enddo
   enddo
 
+  ! Residual contribution for cells at OC-cut boundary
   do i=1,noc
     res(ijl(i)) = res(ijl(i)) - ar(i)*fi(ijr(i))
     res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
   end do
 
+  ! Residual contribution for cells at processor boundary.
+  ! Discussion:
+  ! bufind(i) - Index of cell at this processor's boundary
+  ! iOtherProcCell = iProcStart+i - Where the exchanged values of the boundary cells at 'other' processors are written.
+  ! apr(i) - Matrix coefficients for cells that are on the processor boundary. Contributions from a cell that is in 'other' domain.
+  do i=1,npro
+    k = bufind( i )
+    iOtherProc = iProcStart+i
+    res( k ) = res( k ) - apr( i )*fi( iOtherProc )
+  end do
+
   ! L1-norm of residual
   res0=sum(abs(res))
-    if( res0.lt.sor(ifi) ) return
+  call global_sum(res0)
+  if( res0.lt.sor(ifi) ) return
 !
 ! If ltest=true, print the norm 
 !

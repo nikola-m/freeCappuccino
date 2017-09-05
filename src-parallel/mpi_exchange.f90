@@ -41,7 +41,8 @@ module mpi_exchange
 
   include 'mpif.h'
 
-  integer :: i,iDomain,iDFriend,iStart,iEnd
+  integer :: i,k
+  integer :: iDomain,iDFriend,iStart,iEnd
   integer :: rectag,sendtag,iarbitr
   integer :: length
   integer :: status(mpi_status_size)
@@ -87,12 +88,12 @@ module mpi_exchange
     length = ioffset_buf(iDomain+1)-ioffset_buf(iDomain) ! ...also iEnd-iStart+1
 
     call MPI_SENDRECV_REPLACE & 
-     (buffer(iStart),   &   ! buffer  salje donju vrednost jer je ona najjniza negativna odatle ide u plus za jedan po jedan, ali vrednosti mora da su contiguous u phi
+     (buffer(iStart),   &     ! buffer  salje donju vrednost jer je ona najjniza negativna odatle ide u plus za jedan po jedan, ali vrednosti mora da su contiguous u phi
       length,           &     ! length   
       MPI_DOUBLE_PRECISION, & ! datatype  
       iDFriend,          &    ! dest,      
       sendtag,          &     ! sendtag,    
-      iDFriend,         &    ! source,      
+      iDFriend,         &     ! source,      
       rectag,           &     ! recvtag,      
       MPI_COMM_WORLD,   &     ! communicator
       status,           &     ! status
@@ -100,9 +101,10 @@ module mpi_exchange
 
   end do
 
-  ! Prebaci iz buffera u phi polje 
+  ! Prebaci iz buffera u phi polje na odgovarajuce mesto 
   do i=1,lenbuf
-    phi( bufind(i) ) = buffer(i)
+    k = iProcStart+i
+    phi( k ) = buffer(i)
   enddo
  
   end subroutine exchange

@@ -22,7 +22,8 @@
 
   include 'mpif.h'
 
-  integer :: i,iDomain,iDFriend,iStart,iEnd
+  integer :: i,k
+  integer :: iDomain,iDFriend,iStart,iEnd
   integer :: rectag,sendtag,iarbitr
   integer :: length
   integer :: status(mpi_status_size)
@@ -83,7 +84,8 @@
 
   ! Prebaci iz buffera u phi polje 
   do i=1,lenbuf
-    phi( bufind(i) ) = buffer(i)
+    k = iProcStart+i
+    phi( k ) = buffer(i)
   enddo
  
   end subroutine exchange

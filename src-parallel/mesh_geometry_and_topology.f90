@@ -24,6 +24,7 @@ integer :: nwal                               ! No. of wall boundary faces
 integer :: npru                               ! No. of pressure outlet boundary faces
 integer :: noc                                ! No. of O-C- domain cut boundary faces
 integer :: ncyc                               ! No. of cyclic boundary faces
+integer :: npro                               ! No. of processor boundary faces
 integer :: nwali,nwala,nwalf                  ! No. of isothermal,adiabatic,heatflux boundary faces (for temperature eq.)
 integer :: iOCBoundaries                      ! No. of O-C- boundaries, they come in pair
 integer :: iCycBoundaries                     ! No. of cyclic boundaries, they come in pair
@@ -40,7 +41,8 @@ integer :: iSymmetryStart
 integer :: iWallStart                        
 integer :: iPressOutletStart                  
 integer :: iOCStart                           
-integer :: iCycStart                          
+integer :: iCycStart
+integer :: iProcStart                          
 
 ! Where the faces pertinet to certain boundary types are located:
 
@@ -50,7 +52,8 @@ integer :: iSymmetryFacesStart
 integer :: iWallFacesStart                    
 integer :: iPressOutletFacesStart             
 integer :: iOCFacesStart                      
-integer :: iCycFacesStart                     
+integer :: iCycFacesStart    
+integer :: iProcFacesStart                 
 
 integer, parameter :: nomax = 24              ! Max no. of nodes in face - determines size of some arrays, just change this if necessary.
 
@@ -426,6 +429,8 @@ subroutine mesh_geometry
   nwal = 0
   npru = 0
   noc = 0
+  ncyc = 0
+  npro = 0
 
   ! Different types of walls: isothermal, adiabatic, flux.
   nwali = 0
@@ -490,6 +495,11 @@ subroutine mesh_geometry
         if (ncyc==0) iCycFacesStart = startFace
         iCycBoundaries = iCycBoundaries + 1
         ncyc = ncyc + nfaces
+
+      case ('processor')
+        if (npro==0) iProcFacesStart = startFace
+        ! iProcBoundaries = iProcBoundaries + 1
+        npro = npro + nfaces
 
       case default
         write(*,*) "Non-existing boundary type in polymesh/boundary file!"
@@ -632,6 +642,8 @@ if (native_mesh_files)  then
   
   iCycStart = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc
 
+  iProcStart = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc+Ncyc
+
 
 !
 ! > Write report on mesh size into log file
@@ -716,6 +728,11 @@ if (native_mesh_files)  then
     write ( *, '(a,i8)' ) '  Number of cyclic boundaries  = ', iCycBoundaries
     write ( *, '(a)' ) ' '
     write ( *, '(a,i8)' ) '  Number of cyclic faces  = ', ncyc
+  endif
+
+  if( npro.gt.0 ) then
+    write ( *, '(a)' ) ' '
+    write ( *, '(a,i8)' ) '  Number of precessor boundary faces  = ', npro
   endif
 
 !
