@@ -31,6 +31,7 @@ subroutine fvm_laplacian(mu,phi)
 
   ! Initialize matrix array
   a = 0.0_dp
+  apr = 0.0_dp
 
   ! > Assemble Laplacian system matrix
 
@@ -83,6 +84,28 @@ subroutine fvm_laplacian(mu,phi)
     ! (jcell,jcell) main diagonal element
     k = diag(ijn)
     a(k) = a(k) - al(i)
+
+  end do
+
+
+  ! Faces at processor boundaries
+  do i=1,noc
+
+    iface = iProcFacesStart+i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    call facefluxlaplacian(ijp, ijn, arx(iface), ary(iface), arz(iface), fpro(i), mu, cap, can)
+  
+      ! > Off-diagonal elements:
+
+    ! (icell,jcell) matrix element:
+    apr(i) = can
+
+    ! > Elements on main diagonal:
+
+    k = diag(ijp)
+    a(k) = a(k) - can
 
   end do
 

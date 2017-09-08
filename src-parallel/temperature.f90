@@ -112,8 +112,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
         ijp = owner(i)
         ijn = neighbour(i)
 
-        call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-         fi, dFidxi, prtr, cap, can, suadd, fimin, fimax)
+        call facefluxsc( ijp, ijn, &
+                         xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                         flmass(i), facint(i), gam, &
+                         fi, dFidxi, prtr, cap, can, suadd, fimin, fimax )
 
         ! > Off-diagonal elements:
 
@@ -151,8 +153,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
         ijp=ijl(i)
         ijn=ijr(i)
 
-        call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-         fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
+        call facefluxsc( ijp, ijn, &
+                         xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                         fmoc(i), foc(i), gam, &
+                         fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax )
 
         sp(ijp) = sp(ijp) - ar(i)
         sp(ijn) = sp(ijn) - al(i)
@@ -161,6 +165,28 @@ subroutine calcsc(Fi,dFidxi,ifi)
         su(ijn) = su(ijn) - suadd
 
   end do
+
+  ! Faces on processor boundary
+  do i=1,npro
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmpro(i), fpro(i), gam, &
+                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+
+    ! > Off-diagonal elements:    
+    apr(i) = can
+
+    ! > Elements on main diagonal:
+    sp(ijp) = sp(ijp) - can
+
+    ! > Sources:
+    su(ijp) = su(ijp) + suadd
+
+  enddo
 
   !
   ! Boundary conditions
@@ -232,6 +258,21 @@ subroutine calcsc(Fi,dFidxi,ifi)
             k = jcell_icell_csr_value_index(i)
             su(ijn) = su(ijn) - a(k)*to(ijp)
         enddo
+
+        ! Processor boundary
+        do i = 1,npro
+            iface = iProcFacesStart + i 
+            ijp = owner( iface )
+            ijn = iProcStart + i
+
+            ! This is relevant to previous loop over faces
+            su(ijp) = su(ijp) - apr(i)*to(ijn)
+
+            ! This is relevant to next loop over cells
+            su(ijp) = su(ijp) + apr(i)*to(ijp)
+
+        enddo  
+
         do ijp=1,numCells
             apotime=den(ijp)*vol(ijp)/timestep
             off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) !- a(diag(ijp))
@@ -245,11 +286,15 @@ subroutine calcsc(Fi,dFidxi,ifi)
   urfrs=urfr(ifi)
   urfms=urfm(ifi)
 
-  ! Main diagonal term assembly:
+  ! Main diagonal term assembly and underrelaxation:
   do inp = 1,numCells
+
         ! Main diagonal term assembly:
         ! Sum all coefs in a row of a sparse matrix, but since we also included diagonal element 
         ! we substract it from the sum, to eliminate it from the sum.
+        ! NOTE for parallel:
+        ! Contributions to main diagonal term from neighbour cells that are in other process domain
+        ! are aleady in sp at this stage.
         off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) !- a(diag(ijp)) because = 0
         a(diag(inp)) = sp(inp) - off_diagonal_terms
 

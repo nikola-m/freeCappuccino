@@ -30,10 +30,11 @@ subroutine dpcg(fi,ifi)
   integer :: i, k, ns, l
   real(dp), dimension(numCells) :: pk,zk
   real(dp) :: rsm, resmax, res0, resl
-  real(dp) :: s0, sk, alf, bet, pkapk
+  real(dp) :: s0, sk, alf, bet, pkapk, tol
 
 ! residual tolerance
   resmax = sor(ifi)
+  tol=1e-13
 
 !
 ! Initalize working arrays
@@ -62,7 +63,7 @@ subroutine dpcg(fi,ifi)
 
   ! L^1-norm of residual
   res0=sum(abs(res))
-    if( res0.lt.sor(ifi) ) return
+    if( res0.lt.tol ) return
 !
 ! If ltest=true, print the norm 
 !

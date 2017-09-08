@@ -5,7 +5,7 @@ module mpi_exchange
 !	
   use types
   use parameters
-  use geometry, only: numTotal
+  use geometry, only: numTotal,iProcStart
 
   implicit none
 
@@ -48,7 +48,7 @@ module mpi_exchange
   integer :: status(mpi_status_size)
 
 
-  real(dp), dimension(numTotal) :: phi
+  real(dp), intent(inout) :: phi(:) ! size numTotal, numCells+npro..
 
   iarbitr = 20 ! Helps create message tag (an integer btw)
  

@@ -58,13 +58,13 @@ subroutine calcstress
 !==============================================
     if(levm) then
 
-      uu(inp)=twothirds*te(inp)-vist*(dudx+dudx)
-      vv(inp)=twothirds*te(inp)-vist*(dvdy+dvdy)
-      ww(inp)=twothirds*te(inp)-vist*(dwdz+dwdz)
+      uu(inp) = twothirds*te(inp)-vist*(dudx+dudx)
+      vv(inp) = twothirds*te(inp)-vist*(dvdy+dvdy)
+      ww(inp) = twothirds*te(inp)-vist*(dwdz+dwdz)
 
-      uv(inp)=-vist*(dudy+dvdx)
-      uw(inp)=-vist*(dudz+dwdx)
-      vw(inp)=-vist*(dvdz+dwdy)
+      uv(inp) = -vist*(dudy+dvdx)
+      uw(inp) = -vist*(dudz+dwdx)
+      vw(inp) = -vist*(dvdz+dwdy)
 !
 !==============================================
 
@@ -108,13 +108,13 @@ subroutine calcstress
     ww(inp)=max(ww(inp),small)
 
     ! Underrelax using facnap factor
-    uu(inp)=facnap*uu(inp)+facnapm*uuold
-    vv(inp)=facnap*vv(inp)+facnapm*vvold
-    ww(inp)=facnap*ww(inp)+facnapm*wwold
+    uu(inp) = facnap*uu(inp)+facnapm*uuold
+    vv(inp) = facnap*vv(inp)+facnapm*vvold
+    ww(inp) = facnap*ww(inp)+facnapm*wwold
 
-    uv(inp)=facnap*uv(inp)+facnapm*uvold
-    uw(inp)=facnap*uw(inp)+facnapm*uwold
-    vw(inp)=facnap*vw(inp)+facnapm*vwold
+    uv(inp) = facnap*uv(inp)+facnapm*uvold
+    uw(inp) = facnap*uw(inp)+facnapm*uwold
+    vw(inp) = facnap*vw(inp)+facnapm*vwold
 
 
   end do ! cell-loop

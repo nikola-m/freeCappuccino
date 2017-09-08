@@ -32,7 +32,7 @@ integer :: iCycBoundaries                     ! No. of cyclic boundaries, they c
 ! In variable arrays, field variables defined at cell centres are written in positions from 1 to numCells, after that we write
 ! variable values for boundary faces. We need to know where are values defined at boundary faces in these arrays.
 ! That is the purpose of variables defined below.
-! We have foe example that inlet values for u-velocity component can be found at u( iInletStart+1 : iInletStart+ninl ), 
+! We have for example that inlet values for u-velocity component can be found at u( iInletStart+1 : iInletStart+ninl ), 
 ! Temperature at wall for aexample can be found at positions t( iWallStart+1 : iWallStart+nwal ), and so on...
 
 integer :: iInletStart                        
@@ -90,7 +90,8 @@ real(dp), dimension(:), allocatable :: facint          ! Interpolation factor
 real(dp), dimension(:), allocatable :: srds,dns    ! srds = |are|/|dns|, dns = normal distance to cell center from face |dpn*face_normal_unit_vec|
 real(dp), dimension(:), allocatable :: srdw,dnw    ! srdw = |are|/|dnw|, dnw = normal distance to cell center from face |dpn*face_normal_unit_vec|
 real(dp), dimension(:), allocatable :: srdoc       ! srdoc = |are|/|dpn*face_normal_unit_vec| 
-real(dp), dimension(:), allocatable :: foc         ! Interpolation factor for faces at block boundaries (known as o-c- faces in structured code)
+real(dp), dimension(:), allocatable :: foc         ! Interpolation factor for faces at boundaries (known as o-c- faces in structured code)
+real(dp), dimension(:), allocatable :: fpro        ! Interpolation factor for faces at processor boundaries
 
 ! Mesh topology information - connectivity of cells trough faces
 integer, dimension(:), allocatable :: owner     ! Index of the face owner cell
@@ -428,7 +429,7 @@ subroutine mesh_geometry
   nsym = 0
   nwal = 0
   npru = 0
-  noc = 0
+  noc  = 0
   ncyc = 0
   npro = 0
 
@@ -614,35 +615,39 @@ if (native_mesh_files)  then
 
   endif
 
+  ! IMPORTANT:
   ! Number of non-zero elements in sparse matrix: nnz
   nnz = 2*numInnerFaces + numCells
 
+  ! IMPORTANT:
   ! Number of boundary faces
   numBoundaryFaces = numFaces - numInnerFaces
 
+  ! IMPORTANT:
   ! Size of arrays storing variables numCells+numBoundaryFaces
   numTotal = numCells + numBoundaryFaces
 
+  ! IMPORTANT:
   ! Where in variable arrays, the boundary face values are stored, 
   ! e.g. for inlet faces it is: (iInletStart+1, iInletStart+Ninl),
   ! for outlet faces it is: (iOutletStart+1, iOutletStart+Nout) etc.
   ! Having all values of a variable, incuding those of volume field (defined in cell centers)
   ! and those of boundary surface field in a single array is helpful.
-  iInletStart = numCells
+  iProcStart = numCells
 
-  iOutletStart = numCells+Ninl
+  iInletStart = numCells+Npro
 
-  iSymmetryStart = numCells+Ninl+Nout
+  iOutletStart = numCells+Npro+Ninl
 
-  iWallStart = numCells+Ninl+Nout+Nsym
+  iSymmetryStart = numCells+Npro+Ninl+Nout
 
-  iPressOutletStart = numCells+Ninl+Nout+Nsym+Nwal
+  iWallStart  = numCells+Npro+Ninl+Nout+Nsym
 
-  iOCStart = numCells+Ninl+Nout+Nsym+Nwal+Npru
+  iPressOutletStart = numCells+Npro+Ninl+Nout+Nsym+Nwal
   
-  iCycStart = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc
+  iOCStart = numCells+Npro+Ninl+Nout+Nsym+Nwal+Npru
 
-  iProcStart = numCells+Ninl+Nout+Nsym+Nwal+Npru+Noc+Ncyc
+  iCycStart = numCells+Npro+Ninl+Nout+Nsym+Nwal+Npru+Noc
 
 
 !
@@ -743,11 +748,11 @@ if (native_mesh_files)  then
   allocate ( y(numNodes) )
   allocate ( z(numNodes) )
 
-  allocate ( xc(numCells) )
-  allocate ( yc(numCells) )
-  allocate ( zc(numCells) )
+  allocate ( xc(numCells+Npro) )
+  allocate ( yc(numCells+Npro) )
+  allocate ( zc(numCells+Npro) )
 
-  allocate ( vol(numCells) )
+  allocate ( vol(numCells+Npro) )
 
   allocate ( wallDistance(numCells) )
 
@@ -776,7 +781,9 @@ if (native_mesh_files)  then
   allocate ( ijrFace(noc+ncyc) ) 
 
   allocate ( srdoc(noc+ncyc) ) 
-  allocate ( foc(noc+ncyc) )                               
+  allocate ( foc(noc+ncyc) )
+
+  allocate ( fpro(npro) )                               
 
 
 !

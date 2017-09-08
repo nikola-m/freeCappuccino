@@ -53,17 +53,26 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
     do i=1,numInnerFaces
       ijp = owner(i)
       ijn = neighbour(i)
-      call gradco(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), &
-                  u, dfxo, dfyo, dfzo, dudx, dudy, dudz)
+      call gradco( ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), &
+                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz )
     enddo
 
     ! Contribution from O- and C-grid cuts
     do i=1,noc
-      iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
+      iface = ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
       ijp = ijl(i)
       ijn = ijr(i)
-      call gradco(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), &
-                  u, dfxo, dfyo, dfzo, dudx, dudy, dudz)
+      call gradco( ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), &
+                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz )
+    end do
+
+    ! Contribution from processor boundaries
+    do i=1,npro
+      iface = iProcFacesStart + i
+      ijp = owner( iface ) ! ( = buffind(i) )
+      ijn = iProcStart + i
+      call gradco( ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), &
+                   u, dfxo, dfyo, dfzo, dudx, dudy, dudz )
     end do
 
     ! Contribution from boundaries

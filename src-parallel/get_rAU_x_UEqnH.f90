@@ -24,7 +24,7 @@ subroutine get_rAU_x_UEqnH()
 !
 
 ! Local variables
-  integer :: i, k, ijp, ijn, inp
+  integer :: i, k, ijp, ijn, inp, iface
   real(dp) :: apotime,sut,svt,swt
   real(dp) :: heat
   real(dp) :: off_diagonal_terms
@@ -105,6 +105,20 @@ subroutine get_rAU_x_UEqnH()
 
       enddo
 
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        su(ijp) = su(ijp) - apr(i)*uo(ijn)
+
+        ! This is relevant to next loop over cells
+        su(ijp) = su(ijp) + apr(i)*uo(ijp)
+
+    enddo 
+
       do ijp=1,numCells
           apotime=den(ijp)*vol(ijp)/timestep
           off_diagonal_terms = sum( h( ioffset(ijp) :  ioffset(ijp+1)-1 ) ) - h(diag(ijp))
@@ -126,6 +140,17 @@ subroutine get_rAU_x_UEqnH()
 
   enddo
 
+  ! Processor boundary
+  do i = 1,npro
+      iface = iProcFacesStart + i 
+      ijp = owner( iface )
+      ijn = iProcStart + i
+
+      su(ijp) = su(ijp) + apr(i)*u(ijn)
+
+  enddo 
+
+
   !
   ! V component
   !
@@ -142,6 +167,20 @@ subroutine get_rAU_x_UEqnH()
           sv(ijn) = sv(ijn) - h(k)*vo(ijp)
 
       enddo
+
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        su(ijp) = su(ijp) - apr(i)*vo(ijn)
+
+        ! This is relevant to next loop over cells
+        su(ijp) = su(ijp) + apr(i)*vo(ijp)
+
+    enddo 
 
       do ijp=1,numCells
           apotime=den(ijp)*vol(ijp)/timestep
@@ -164,6 +203,16 @@ subroutine get_rAU_x_UEqnH()
 
   enddo
 
+  ! Processor boundary
+  do i = 1,npro
+      iface = iProcFacesStart + i 
+      ijp = owner( iface )
+      ijn = iProcStart + i
+
+      su(ijp) = su(ijp) + apr(i)*v(ijn)
+
+  enddo 
+
   !
   ! W component
   !
@@ -180,6 +229,20 @@ subroutine get_rAU_x_UEqnH()
           sw(ijn) = sw(ijn) - h(k)*wo(ijp)
 
       enddo
+
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        su(ijp) = su(ijp) - apr(i)*wo(ijn)
+
+        ! This is relevant to next loop over cells
+        su(ijp) = su(ijp) + apr(i)*wo(ijp)
+
+    enddo 
 
       do ijp=1,numCells
           apotime=den(ijp)*vol(ijp)/timestep
@@ -202,11 +265,19 @@ subroutine get_rAU_x_UEqnH()
 
   enddo
 
+  ! Processor boundary
+  do i = 1,npro
+      iface = iProcFacesStart + i 
+      ijp = owner( iface )
+      ijn = iProcStart + i
 
+      su(ijp) = su(ijp) + apr(i)*w(ijn)
+
+  enddo 
 
   ! Finally U = rAU*UEqnH()
-  u(1:numCells)= apu*su
-  v(1:numCells)= apv*sv
-  w(1:numCells)= apw*sw
+  u( 1:numCells ) = apu*su
+  v( 1:numCells ) = apv*sv
+  w( 1:numCells ) = apw*sw
 
 end subroutine

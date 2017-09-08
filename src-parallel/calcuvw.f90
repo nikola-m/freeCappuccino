@@ -154,8 +154,10 @@ subroutine calcuvw
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxuvw(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gds(iu), &
-      cap, can, sup, svp, swp)
+    call facefluxuvw( ijp, ijn, &
+                      xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                      flmass(i), facint(i), gds(iu), &
+                      cap, can, sup, svp, swp )
 
     ! > Off-diagonal elements:
 
@@ -185,8 +187,10 @@ subroutine calcuvw
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxuvw(ijp, ijn,  xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gds(iu), &
-      srdoc(i), al(i), ar(i), sup, svp, swp)  
+    call facefluxuvw( ijp, ijn, &
+                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                      fmoc(i), foc(i), gds(iu), &
+                      srdoc(i), al(i), ar(i), sup, svp, swp)  
 
     ! > Matrix coefficient contribution:
     
@@ -211,6 +215,36 @@ subroutine calcuvw
   end do
 
 
+  ! Faces on processor boundary
+  do i=1,npro
+
+    iface = iProcFacesStart + i
+    ijp = owner( iface ) ! ( = buffind(i) )
+    ijn = iProcStart + i
+
+    call facefluxuvw( ijp, ijn, &
+                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                      fmpro(i), fpro(i), gds(iu), &
+                      cap, can, sup, svp, swp )
+
+    ! > Off-diagonal elements:    
+    apr(i) = can
+
+    ! > Matrix coefficient contribution:
+    
+    spu(ijp) = spu(ijp) - can
+    spv(ijp) = spv(ijp) - can
+    sp(ijp)  = sp(ijp)  - can
+
+   ! > Sources: 
+
+    su(ijp) = su(ijp) + sup
+    sv(ijp) = sv(ijp) + svp
+    sw(ijp) = sw(ijp) + swp
+
+  enddo
+
+
       
   ! Implement boundary conditions
 
@@ -223,8 +257,10 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-      cp, cb, sup, svp, swp)
+    call facefluxuvw( ijp, ijb, &
+                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                      fmi(i), &
+                      cp, cb, sup, svp, swp )
 
     spu(ijp) = spu(ijp) - cb
     spv(ijp) = spv(ijp) - cb
@@ -245,8 +281,10 @@ subroutine calcuvw
     ijp = owner(iface)
     ijb = iOutletStart+i
 
-    call facefluxuvw(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-      cp, cb, sup, svp, swp)  
+    call facefluxuvw( ijp, ijb, &
+                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                      fmo(i), &
+                      cp, cb, sup, svp, swp )  
 
     spu(ijp) = spu(ijp) - cb
     spv(ijp) = spv(ijp) - cb
@@ -375,7 +413,12 @@ subroutine calcuvw
 
   ! Modify coefficients for Crank-Nicolson
   if (cn) then
+    
     a = 0.5_dp*a ! Doesn't affect the main diagonal because it's still zero.
+
+    ! Modify coefs resulting from processor boundary faces
+    apr = 0.5_dp*apr
+
   endif
 
 
@@ -396,6 +439,20 @@ subroutine calcuvw
         k = jcell_icell_csr_value_index(i)
         su(ijn) = su(ijn) - a(k)*uo(ijp)
     enddo
+
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        su(ijp) = su(ijp) - apr(i)*uo(ijn)
+
+        ! This is relevant to next loop over cells
+        su(ijp) = su(ijp) + apr(i)*uo(ijp)
+
+    enddo    
 
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
@@ -418,7 +475,11 @@ subroutine calcuvw
     ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
     ! a(diag(inp)) = spu(inp) - sum_off_diagonal_terms
 
+    ! NOTE for parallel:
+    ! Contributions to main diagonal term from neighbour cells that are in other process domain
+    ! are aleady in spu at this stage.
     a(diag(inp)) = spu(inp) 
+
     do k = ioffset(inp),ioffset(inp+1)-1
       if (k.eq.diag(inp)) cycle
       a(diag(inp)) = a(diag(inp)) -  a(k)
@@ -459,6 +520,20 @@ subroutine calcuvw
         sv(ijn) = sv(ijn) - a(k)*vo(ijp)
     enddo
 
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        sv(ijp) = sv(ijp) - apr(i)*vo(ijn)
+
+        ! This is relevant to next loop over cells
+        sv(ijp) = sv(ijp) + apr(i)*vo(ijp)
+
+    enddo
+
     do ijp=1,numCells
         apotime=den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
@@ -482,7 +557,11 @@ subroutine calcuvw
     ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp))
     ! a(diag(inp)) = spv(inp) - sum_off_diagonal_terms
 
+    ! NOTE for parallel:
+    ! Contributions to main diagonal term from neighbour cells that are in other process domain
+    ! are aleady in spv at this stage.
     a(diag(inp)) = spv(inp) 
+
     do k = ioffset(inp),ioffset(inp+1)-1
       if (k.eq.diag(inp)) cycle
       a(diag(inp)) = a(diag(inp)) -  a(k)
@@ -522,6 +601,20 @@ subroutine calcuvw
         sw(ijn) = sw(ijn) - a(k)*wo(ijp)
     enddo
 
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        sw(ijp) = sw(ijp) - apr(i)*wo(ijn)
+
+        ! This is relevant to next loop over cells
+        sw(ijp) = sw(ijp) + apr(i)*wo(ijp)
+
+    enddo
+
     do ijp=1,numCells
         apotime = den(ijp)*vol(ijp)/timestep
         sum_off_diagonal_terms = sum( a(ioffset(ijp) : ioffset(ijp+1)-1) ) - a(diag(ijp))
@@ -545,7 +638,11 @@ subroutine calcuvw
     ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
     ! a(diag(inp)) = sp(inp) - sum_off_diagonal_terms
 
+    ! NOTE for parallel:
+    ! Contributions to main diagonal term from neighbour cells that are in other process domain
+    ! are aleady in sp at this stage.
     a(diag(inp)) = sp(inp) 
+
     do k = ioffset(inp),ioffset(inp+1)-1
       if (k.eq.diag(inp)) cycle
       a(diag(inp)) = a(diag(inp)) -  a(k)
@@ -569,8 +666,9 @@ subroutine calcuvw
   call global_max(wmax)
 
   ! MPI exchange:
-  call exchange(U)
-  call exchange(V)
-  call exchange(W)
+  call exchange( u )
+  call exchange( v )
+  call exchange( w )
+  call exchange( apu )
 
 end subroutine

@@ -114,6 +114,20 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
       
   end do
 
+  ! Faces on processor boundaries                                             
+  do i=1,npro      
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+      neighbour_index(ijp) = neighbour_index(ijp) + 1
+      l = neighbour_index(ijp)
+      D(1,l,ijp) = xc(ijn)-xc(ijp)
+      D(2,l,ijp) = yc(ijn)-yc(ijp)
+      D(3,l,ijp) = zc(ijn)-zc(ijp)
+      
+  end do
+
   ! Boundary faces:
 
   ! Inlet: 
@@ -265,6 +279,18 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
         neighbour_index(ijn) = neighbour_index(ijn) + 1        
         l = neighbour_index(ijn)   
         b(l,ijn) = fi(ijp)-fi(ijn)
+ 
+  end do
+
+  ! Faces on processor boundaries                                             
+  do i=1,npro      
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+        neighbour_index(ijp) = neighbour_index(ijp) + 1
+        l = neighbour_index(ijp)
+        b(l,ijp) = fi(ijn)-fi(ijp)
  
   end do
 

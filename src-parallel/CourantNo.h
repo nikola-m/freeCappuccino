@@ -25,8 +25,14 @@
   do i=1,noc
     ijp = ijl(i)
     ijn = ijr(i)
-    su(ijp)=su(ijp)+abs(fmoc(i))
-    su(ijn)=su(ijn)+abs(fmoc(i))
+    su(ijp) = su(ijp)+abs(fmoc(i))
+    su(ijn) = su(ijn)+abs(fmoc(i))
+  end do
+
+  ! Faces on processor boundaries
+  do i=1,npro
+    ijp = owner( iProcFacesStart + i )
+    su(ijp) = su(ijp)+abs(fmpro(i))
   end do
 
   !// Mozda ne idu jer ide samo internal field...
@@ -54,14 +60,15 @@
 
   enddo
 
+  ! AllReduce using sum, values of suma and MeanCoNum.
+  call global_sum(MeanCoNum)
+  call global_sum(suma)
+
   CoNum = 0.5*CoNum*timestep
 
   ! Find global maximum Courant number in the whole field.
   call global_max(CoNum)
 
-  ! AllReduce using sum, values of suma and MeanCoNum.
-  call global_sum(suma)
-  call global_sum(MeanCoNum)
 
   ! Now use it to calculate mean Courant number
   meanCoNum = 0.5*meanCoNum/suma*timestep

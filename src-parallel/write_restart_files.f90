@@ -90,6 +90,6 @@ subroutine write_restart_files
 
   endif
 
-  write(6,*)'=*=*= Simulation restart files have been written! =*=*='
+  if( myid.eq.0 ) write(6,*)'=*=*= Simulation restart files have been written! =*=*='
 
 end subroutine

@@ -27,6 +27,12 @@
     res(ijn)=res(ijn)+fmoc(i)
   end do
 
+  ! Faces along processor boundaries
+  do i=1,npro
+    ijp = owner( iProcFacesStart + i )
+    res(ijp)=res(ijp)-fmpro(i)
+  end do
+
   ! Inlet boundaries (mass fluxes prescribed in routine 'bcin')
   do i=1,ninl
     ijp = owner(iInletFacesStart+i)
@@ -42,12 +48,16 @@
 
   sumLocalContErr = sum( abs( res ) ) 
 
+  call global_sum( sumLocalContErr )
+
   globalContErr = sum( res )
+
+  call global_sum( globalContErr )
 
   cumulativeContErr = cumulativeContErr + globalContErr
 
 
-  write(6,'(3(a,es10.3))') "  time step continuity errors : sum local = ", sumLocalContErr, &
- &                          ", global = ", globalContErr, &
- &                          ", cumulative = ", cumulativeContErr
+  if ( myid .eq. 0 ) write(6,'(3(a,es10.3))') "  time step continuity errors : sum local = ", sumLocalContErr, &
+ &                                            ", global = ", globalContErr, &
+ &                                            ", cumulative = ", cumulativeContErr
 

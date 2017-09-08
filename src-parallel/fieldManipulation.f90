@@ -7,7 +7,7 @@
 
     contains
 
-    pure function volumeWeightedAverage(U) result(wAvgU)
+    function volumeWeightedAverage(U) result(wAvgU)
     use types
     use parameters
     use geometry, only:numTotal,numCells,vol
@@ -34,6 +34,9 @@
           sumvol = sumvol + vol(inp)
       enddo
     
+    call global_sum( wAvgU )
+    call global_sum( sumvol )
+
     wAvgU = wAvgU / sumvol
 
     end function

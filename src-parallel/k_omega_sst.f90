@@ -484,9 +484,45 @@ subroutine calcsc(Fi,dFidxi,ifi)
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
 
+    ! > Sources:
     su(ijp) = su(ijp) + suadd
     su(ijn) = su(ijn) - suadd
+
   end do
+
+
+  ! Faces on processor boundary
+  do i=1,npro
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+
+    ! In SST model the Effective diffusivity is a field variable:
+    if(ifi.eq.ite) then
+      prtr_ijp = fsst(ijp)*(1./sigmk1)  + (1.0_dp-fsst(ijp))*(1./sigmk2)
+      prtr_ijn = fsst(ijn)*(1./sigmk1)  + (1.0_dp-fsst(ijn))*(1./sigmk2)
+    else
+      prtr_ijp = fsst(ijp)*(1./sigmom1) + (1.0_dp-fsst(ijp))*(1./sigmom2)
+      prtr_ijn = fsst(ijn)*(1./sigmom1) + (1.0_dp-fsst(ijn))*(1./sigmom2)
+    endif
+
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmpro(i), fpro(i), gam, &
+                     fi, dfidxi, prtr_ijp, prtr_ijn, cap, can, suadd, fimin, fimax )
+
+    ! > Off-diagonal elements:    
+    apr(i) = can
+
+    ! > Elements on main diagonal:
+    sp(ijp) = sp(ijp) - can
+
+    ! > Sources:
+    su(ijp) = su(ijp) + suadd
+
+  enddo
+
 
   !
   ! Boundary conditions
@@ -624,6 +660,21 @@ subroutine calcsc(Fi,dFidxi,ifi)
             k = jcell_icell_csr_value_index(i)
             su(ijn) = su(ijn) - a(k)*teo(ijp)
         enddo
+
+        ! Processor boundary
+        do i = 1,npro
+            iface = iProcFacesStart + i 
+            ijp = owner( iface )
+            ijn = iProcStart + i
+
+            ! This is relevant to previous loop over faces
+            su(ijp) = su(ijp) - apr(i)*teo(ijn)
+
+            ! This is relevant to next loop over cells
+            su(ijp) = su(ijp) + apr(i)*teo(ijp)
+
+        enddo  
+
         do ijp=1,numCells
             apotime=den(ijp)*vol(ijp)/timestep
             off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) - a(diag(ijp))
@@ -643,6 +694,21 @@ subroutine calcsc(Fi,dFidxi,ifi)
             k = jcell_icell_csr_value_index(i)
             su(ijn) = su(ijn) - a(k)*edo(ijp)
         enddo
+
+        ! Processor boundary
+        do i = 1,npro
+            iface = iProcFacesStart + i 
+            ijp = owner( iface )
+            ijn = iProcStart + i
+
+            ! This is relevant to previous loop over faces
+            su(ijp) = su(ijp) - apr(i)*edo(ijn)
+
+            ! This is relevant to next loop over cells
+            su(ijp) = su(ijp) + apr(i)*edo(ijp)
+
+        enddo  
+
         do ijp=1,numCells
             apotime=den(ijp)*vol(ijp)/timestep
             off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) - a(diag(ijp))
@@ -658,11 +724,14 @@ subroutine calcsc(Fi,dFidxi,ifi)
   urfrs=urfr(ifi)
   urfms=urfm(ifi)
 
-  ! Main diagonal term assembly:
+  ! Main diagonal term assembly and underrelaxation:
   do inp = 1,numCells
 
-        ! Main diagonal term assembly:
+        ! NOTE for parallel:
+        ! Contributions to main diagonal term from neighbour cells that are in other process domain
+        ! are aleady in sp at this stage.
         a(diag(inp)) = sp(inp) 
+        
         do k = ioffset(inp),ioffset(inp+1)-1
           if (k.eq.diag(inp)) cycle
           a(diag(inp)) = a(diag(inp)) -  a(k)
@@ -706,8 +775,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
   call global_min(fimin)
   call global_max(fimax)
 
-  if( myid .eq. 0 )
-    write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+  if( myid .eq. 0 ) write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
 
 
   ! MPI exchange

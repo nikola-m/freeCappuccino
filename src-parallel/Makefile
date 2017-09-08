@@ -113,7 +113,7 @@ all: caffa3d-mpi poisson-mpi #rk4ProjectionCaffa
 
 caffa3d-mpi: ${MODS} ${MPI} ${TURBULENCE} ${LINEAR_SOLVERS} ${CAFFAOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${CAFFAOBJS} ${MODS} ${MPI} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS} ${INCS} -o caffa3d-mpi 
+	${F90} ${CAFFAOBJS} ${MODS} ${MPI} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS} ${INCS} -o ../bin/caffa3d-mpi 
 
 rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS} ${MPI} 
 	@echo  "Linking" $@ "... "

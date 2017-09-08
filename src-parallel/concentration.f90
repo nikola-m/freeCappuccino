@@ -86,10 +86,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     if(bdf) then
 
       apotime=den(inp)*vol(inp)/timestep
-      sut=apotime*(1+btime)*to(inp)
+      sut=apotime*(1+btime)*cono(inp)
 
       if (btime > 0.99) then ! bdf2 scheme btime=1.
-        sut = sut - apotime*(0.5*btime*too(inp))
+        sut = sut - apotime*(0.5*btime*conoo(inp))
       endif
 
       su(inp)=su(inp)+sut
@@ -108,8 +108,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr, cap, can, suadd,  fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd,  fimin, fimax )
 
     ! > Off-diagonal elements:
 
@@ -147,16 +149,42 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr, al(i), ar(i), suadd,  fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax )
 
+    ! > Elements on main diagonal:
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
 
+    ! > Sources:
     su(ijp) = su(ijp) + suadd
     su(ijn) = su(ijn) - suadd
 
   end do
+
+  ! Faces on processor boundary
+  do i=1,npro
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmpro(i), fpro(i), gam, &
+                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+
+    ! > Off-diagonal elements:    
+    apr(i) = can
+
+    ! > Elements on main diagonal:
+    sp(ijp) = sp(ijp) - can
+
+    ! > Sources:
+    su(ijp) = su(ijp) + suadd
+
+  enddo
 
   !
   ! Boundary conditions
@@ -229,17 +257,31 @@ subroutine calcsc(Fi,dFidxi,ifi)
       ijn = neighbour(i)
 
       k = icell_jcell_csr_value_index(i)
-      su(ijp) = su(ijp) - a(k)*to(ijn)
+      su(ijp) = su(ijp) - a(k)*cono(ijn)
 
       k = jcell_icell_csr_value_index(i)
-      su(ijn) = su(ijn) - a(k)*to(ijp)
+      su(ijn) = su(ijn) - a(k)*cono(ijp)
 
     enddo
+
+    ! Processor boundary
+    do i = 1,npro
+        iface = iProcFacesStart + i 
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        ! This is relevant to previous loop over faces
+        su(ijp) = su(ijp) - apr(i)*cono(ijn)
+
+        ! This is relevant to next loop over cells
+        su(ijp) = su(ijp) + apr(i)*cono(ijp)
+
+    enddo  
 
     do ijp=1,numCells
       apotime=den(ijp)*vol(ijp)/timestep
       off_diagonal_terms = sum( a( ioffset(ijp) : ioffset(ijp+1)-1 ) ) !- a(diag(ijp))
-      su(ijp) = su(ijp) + (apotime + off_diagonal_terms)*to(ijp)
+      su(ijp) = su(ijp) + (apotime + off_diagonal_terms)*cono(ijp)
       sp(ijp) = sp(ijp)+apotime
 
     enddo

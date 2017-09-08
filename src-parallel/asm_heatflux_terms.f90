@@ -9,7 +9,7 @@ subroutine Additional_algebraic_heatflux_terms
 !***********************************************************************
   use types, only: dp
   use parameters, only: viscos
-  use geometry, only: numInnerFaces,facint,arx,ary,arz,owner,neighbour
+  use geometry, only: numInnerFaces,npro,facint,fpro,arx,ary,arz,owner,neighbour,iProcFacesStart,iProcStart
   use sparse_matrix, only: su
   use variables, only: vis,den, dTdxi, utt,vtt,wtt
 
@@ -21,7 +21,7 @@ subroutine Additional_algebraic_heatflux_terms
 !
 !     Local variables
 !
-  integer :: i, ijp, ijn
+  integer :: i, ijp, ijn, iface
   real(dp) :: term1i, term2i,term3i
   real(dp) :: fxp, fxn
   real(dp) :: prant,prtr
@@ -54,7 +54,7 @@ do i=1,numInnerFaces
   ijn = neighbour(i)
 
   fxn = facint(ijp)
-  fxp = 1.0_dp-facint(ijp)
+  fxp = 1.0_dp-fxn
 
         ! Interpolate term1:
         term1i = (den(ijn)*utt(ijn)+dTdxi(1,ijn)*prtr*(vis(ijn)-viscos))*fxn+ &
@@ -73,5 +73,29 @@ do i=1,numInnerFaces
         su(ijn) = su(ijn) + ( term1i * arx(i) + term2i * ary(i) + term3i * arz(i) )
 enddo
 
+! Faces at process boundaries
+do i=1,npro
+  iface = iProcFacesStart + i
+  ijp = owner(iface)
+  ijn = iProcStart + i
+
+  fxn = fpro(ijp)
+  fxp = 1.0_dp-fxn
+
+        ! Interpolate term1:
+        term1i = (den(ijn)*utt(ijn)+dTdxi(1,ijn)*prtr*(vis(ijn)-viscos))*fxn+ &
+                 (den(ijp)*utt(ijp)+dTdxi(1,ijp)*prtr*(vis(ijp)-viscos))*fxp
+
+        ! Interpolate term2:
+        term2i = (den(ijn)*vtt(ijn)+dTdxi(2,ijn)*prtr*(vis(ijn)-viscos))*fxn+ &
+                 (den(ijp)*vtt(ijp)+dTdxi(2,ijp)*prtr*(vis(ijp)-viscos))*fxp
+
+        ! Interpolate term3:
+        term3i = (den(ijn)*wtt(ijn)+dTdxi(3,ijn)*prtr*(vis(ijn)-viscos))*fxn+ &
+                 (den(ijp)*wtt(ijp)+dTdxi(3,ijp)*prtr*(vis(ijp)-viscos))*fxp
+
+        su(ijp) = su(ijp) - ( term1i * arx(iface) + term2i * ary(iface) + term3i * arz(iface) )
+
+enddo
 
 end subroutine

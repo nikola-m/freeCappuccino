@@ -13,7 +13,7 @@ subroutine iccg(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: numCells,numTotal,ijl,ijr
+  use geometry, only: numCells,numTotal,npro,noc,ijl,ijr,iProcFacesStart,iProcStart
   use sparse_matrix
   use title_mod
 
@@ -27,20 +27,22 @@ subroutine iccg(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
-  real(dp), dimension(numCells) :: pk,zk,d
-  real(dp) :: rsm, resmax, res0, resl
+  integer :: i, k, ns, l, iOtherProc
+  real(dp), dimension(numCells) :: zk,d
+  real(dp), dimension(numCells+npro) :: pk
+  real(dp) :: rsm, resmax, res0, resl, tol
   real(dp) :: s0, sk, alf, bet, pkapk
 
 ! residual tolerance
   resmax = sor(ifi)
+  tol = 1e-13
 !
 ! Initalize working arrays
 !
-  pk(:) = 0.0_dp
-  zk(:) = 0.0_dp
-  d(:) = 0.0_dp
-  res(:) = 0.0_dp
+  pk = 0.0_dp
+  zk = 0.0_dp
+  d = 0.0_dp
+  res = 0.0_dp
 !
 ! Calculate initial residual vector and the norm
 !
@@ -50,18 +52,38 @@ subroutine iccg(fi,ifi)
   do i=1,numCells
     res(i) = su(i) 
     do k = ioffset(i),ioffset(i+1)-1
-      res(i) = res(i) -  a(k) * fi(ja(k)) 
+      res(i) = res(i) -  a(k) * fi( ja(k) ) 
     enddo
   enddo
 
+  ! Residual contribution for cells at OC-cut boundary
   do i=1,noc
     res(ijl(i)) = res(ijl(i)) - ar(i)*fi(ijr(i))
     res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
   end do
 
-  ! L^1-norm of residual
+  ! Residual contribution for cells at processor boundary.
+  ! Discussion:
+  ! owner( iProcFacesStart + i ) - Index of cell at this processor's boundary
+  ! iOtherProc = iProcStart+i - Where the exchanged values of the boundary cells at 'other' processors are written.
+  ! apr(i) - Matrix coefficients for cells that are on the processor boundary. Contributions from a cell that is in 'other' domain.
+  do i=1,npro
+    k = owner( iProcFacesStart + i )
+    iOtherProc = iProcStart+i
+    res( k ) = res( k ) - apr( i )*fi( iOtherProc )
+  end do
+
+  ! L1-norm of residual
   res0=sum(abs(res))
   call global_sum(res0)
+
+  if(res0.lt.tol) then
+    write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
+    ', Initial residual = ',RES0,', Final residual = ',RES0,', No Iterations ',0
+    return
+  endif
+
+  ! if( res0.lt.sor(ifi) ) return
 !
 ! If ltest=true, print the norm 
 !
@@ -119,6 +141,8 @@ subroutine iccg(fi,ifi)
 !
   pk = zk + bet*pk
 
+  call exchange( pk )
+
 !
 ! Calculate scalar product (pk.a pk) and alpha (overwrite zk)
 !
@@ -129,10 +153,17 @@ subroutine iccg(fi,ifi)
     enddo
   enddo
 
-  ! block-boundaries
+  ! OC-cut boundaries
   do i=1,noc
     zk(ijl(i)) = zk(ijl(i)) + ar(i)*pk(ijr(i))
     zk(ijr(i)) = zk(ijr(i)) + al(i)*pk(ijl(i))
+  end do
+
+  ! Processor boundaries
+  do i=1,npro
+    k = owner( iProcFacesStart + i )
+    iOtherProc = iProcStart+i
+    zk( k ) = zk( k ) + apr( i )*pk( iOtherProc )
   end do
 
   ! Inner product
@@ -147,13 +178,14 @@ subroutine iccg(fi,ifi)
   ! Update residual vector
   res = res - alf*zk
 
+
   ! L^1-norm of residual
   resl = sum(abs(res))
   call global_sum(resl)
   
   s0=sk
 !
-! Check convergence
+! Check convergence 
 !
   if(l.eq.1) resor(ifi) = res0
   rsm = resl/(resor(ifi)+small)
@@ -164,8 +196,11 @@ subroutine iccg(fi,ifi)
 !
   end do
 
+  ! MPI exchange
+  call exchange( fi )
+
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
+  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
   ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
 
 end subroutine

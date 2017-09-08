@@ -127,6 +127,7 @@ module parameters
   integer :: TurbModel ! Turbulence model case selector
 
   logical :: roughWall                                            ! Is aerodynamically rough wall assumed
+  integer :: iPrefProcess                                         ! ID of a process where pressure reference point is located.
   real(dp) :: magUbar, gradPcmf                                   ! Magnitude of the bulk velocity,and pressure grad that will drive the constant mass-flux flow (cmf)
   real(dp) :: sumLocalContErr, globalContErr, cumulativeContErr   ! Continuity errors
 
@@ -160,7 +161,7 @@ module variables
 
     ! These are cellwise defined variables, that is - the fields
     real(dp), dimension(:), allocatable :: u,v,w              ! Velocity components
-    real(dp), dimension(:), allocatable :: flmass             ! Mass fluxes
+    real(dp), dimension(:), allocatable :: flmass             ! Mass fluxes trough inner faces
     real(dp), dimension(:), allocatable :: p,pp               ! Pressure, Press. correction,  
     real(dp), dimension(:), allocatable :: te,ed              ! Turb. kin. energy, Dissipation,
     real(dp), dimension(:), allocatable :: vis                ! Effective viscosity
@@ -174,7 +175,7 @@ module variables
     real(dp), dimension(:), allocatable :: con                ! Concentration
     real(dp), dimension(:), allocatable :: uu,vv,ww,uv,uw,vw  ! Reynolds stress tensor components
     real(dp), dimension(:,:), allocatable :: bij              ! Reynolds stress anisotropy tensor
-    real(dp), dimension(:), allocatable :: fmi, fmo, fmoc     ! Mass fluxes trough boundary faces
+    real(dp), dimension(:), allocatable :: fmi,fmo,fmoc,fmpro ! Mass fluxes trough boundary faces
     real(dp), dimension(:), allocatable :: visw,ypl           ! Effective visc. for boundary face, the y+ non-dimensional distance from wall
   
     ! values from n-1 timestep

@@ -19,7 +19,7 @@ subroutine PISO_multiple_correction
 !***********************************************************************
 !
 !
-  integer :: i, k, inp, iface, istage
+  integer :: i, k, inp, iface, iOtherProc, istage
   integer :: ijp, ijn
   real(dp) :: cap, can
   real(dp) :: sum
@@ -119,6 +119,31 @@ subroutine PISO_multiple_correction
     end do
 
 
+    ! Faces on processor boundary
+    do i=1,npro
+
+      iface = iProcFacesStart + i
+      ijp = owner( iface )
+      ijn = iProcStart + i
+
+      call facefluxmass_piso(ijp,ijn,xf(iface),yf(iface),zf(iface),arx(iface),ary(iface),arz(iface),fpro(i),cap,can,fmpro(i))
+
+      ! > Off-diagonal elements:    
+      apr(i) = can
+
+      ! > Elements on main diagonal:
+
+      ! (icell,icell) main diagonal element
+      k = diag(ijp)
+      a(k) = a(k) - can
+
+      ! > Sources:
+
+      su(ijp) = su(ijp) - fmpro(i)    
+
+    end do
+
+
     !// adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
     !// problem where a solution for pressure exists.
     !     adjustPhi(phi, U, p);
@@ -132,8 +157,17 @@ subroutine PISO_multiple_correction
     a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
     a( diag(pRefCell) ) = 1.0_dp
 
+    ! ! Reference pressure at process that owns that cell
+    ! if (myid .eq. iPrefProcess) then
+
+    !   ppref = p(pRefCell)
+
+    !   call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
+
+    ! endif 
+
     ! Reference pressure
-    su(pRefCell) = p(pRefCell)
+    su(pRefCell) =  p(pRefCell)
 
 
     !=====Multiple pressure corrections======================================================.
@@ -204,15 +238,24 @@ subroutine PISO_multiple_correction
             ! (icell,jcell) matrix element:
             k = icell_jcell_csr_value_index(iface)
 
-            flmass(iface) = flmass(iface) + a(k) * (pp(ijn)-pp(ijp))
+            flmass(iface) = flmass(iface) + a(k) * ( pp(ijn) - pp(ijp) )
       
         enddo
 
         ! Correct mass fluxes at faces along O-C grid cuts.
         do i=1,noc
-          fmoc(i) = fmoc(i) + ar(i) * ( pp(ijr(i)) - pp(ijl(i)) )
+          fmoc(i) = fmoc(i) + ar(i) * ( pp( ijr(i) ) - pp( ijl(i) ) )
         end do
 
+        ! Correct mass fluxes at processor boundaries
+        do i=1,npro 
+
+          ijp = owner( iProcFacesStart + i )
+          iOtherProc = iProcStart+i
+
+          fmpro(i) = fmpro(i) + apr(i) * ( pp( iOtherProc ) - pp( ijp ) )
+
+        enddo
 
 
         ! !
@@ -284,6 +327,10 @@ subroutine PISO_multiple_correction
 
   !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   enddo
-                                                                                                                       
+
+  call exchange( u )
+  call exchange( v )
+  call exchange( w )
+  call exchange( p )                                                                                                                       
       
 end subroutine

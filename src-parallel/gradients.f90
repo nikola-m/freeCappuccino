@@ -137,6 +137,11 @@ implicit none
     ! no-limit
   endif
 
+  ! MPI exchange:
+  call exchange( dPhidxi(1,:) )
+  call exchange( dPhidxi(2,:) )
+  call exchange( dPhidxi(3,:) )
+
 end subroutine
 
 
@@ -182,6 +187,20 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
     call grad_gauss(W,dWdxi(1,:),dWdxi(2,:),dWdxi(3,:))
   endif
 
+
+  ! MPI exchange:
+  call exchange( dUdxi(1,:) )
+  call exchange( dUdxi(2,:) )
+  call exchange( dUdxi(3,:) )
+
+  call exchange( dVdxi(1,:) )
+  call exchange( dVdxi(2,:) )
+  call exchange( dVdxi(3,:) )
+
+  call exchange( dWdxi(1,:) )
+  call exchange( dWdxi(2,:) )
+  call exchange( dWdxi(3,:) )
+
 end subroutine
 
 
@@ -218,6 +237,10 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
 
   fimin = minval(phi(1:numCells))
   fimax = maxval(phi(1:numCells))
+
+  call global_min(fimin)
+  call global_max(fimax)
+
 
   do inp = 1, numCells
 
@@ -312,6 +335,10 @@ subroutine slope_limiter_Barth_Jespersen(phi, dPhidxi)
   fimin = minval(phi(1:numCells))
   fimax = maxval(phi(1:numCells))
 
+  call global_min(fimin)
+  call global_max(fimax)
+
+
   do inp = 1, numCells
 
     ! Values at cell center:
@@ -397,15 +424,20 @@ subroutine slope_limiter_Venkatakrishnan(phi, dPhidxi)
   fimin = minval(phi(1:numCells))
   fimax = maxval(phi(1:numCells))
 
+  call global_min(fimin)
+  call global_max(fimax)
+
+  
   do inp = 1, numCells
 
     ! Values at cell center:
     phi_p = phi(inp)
 
     ! max and min values over current cell and neighbors
-    phi_max = phi(ja( ioffset(inp) ))
-    phi_min = phi(ja( ioffset(inp) ))
+    phi_max = phi( ja( ioffset(inp) ) )
+    phi_min = phi( ja( ioffset(inp) ) )
 
+    ! We used ioffset(inp), so the next one is ioffset(inp)+1
     do k=ioffset(inp)+1, ioffset(inp+1)-1
       phi_max = max( phi_max, phi(ja(k)) )
       phi_min = min( phi_max, phi(ja(k)) )      

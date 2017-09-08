@@ -1,7 +1,7 @@
 module sparse_matrix
 !%%%%%%%%%%%
   use types
-  use geometry, only:  nnz,numCells,numInnerFaces,noc,owner, neighbour
+  use geometry, only:  nnz,numCells,numInnerFaces,noc,npro,owner,neighbour
   use utils, only: csr_to_k, find_index_position, find_main_diag_element_positions, i4vec2_sort_a, i4vec_print, i4vec_print2
 
 
@@ -10,7 +10,7 @@ module sparse_matrix
     integer, dimension(:), allocatable :: ia      ! Columns [1:nnz]
     integer, dimension(:), allocatable :: ja      ! Columns [1:nnz]
     integer, dimension(:), allocatable :: diag    ! Position of diagonal elements [1:ncell]
-    real(dp), dimension(:), allocatable :: a    ! Coefficient matrix [1:nnz]
+    real(dp), dimension(:), allocatable :: a      ! Coefficient matrix [1:nnz]
 
     integer, dimension(:), allocatable :: icell_jcell_csr_value_index !(i,j) matrix element transfered to a position in an array of length (1:nnz)
     integer, dimension(:), allocatable :: jcell_icell_csr_value_index !(j,i) matrix element transfered to a position in an array of length (1:nnz)
@@ -20,7 +20,8 @@ module sparse_matrix
     real(dp), dimension(:), allocatable :: spu,spv,sp    ! Source terms for the left hand side
     real(dp), dimension(:), allocatable :: su, sv, sw    ! Source terms for the left hand side of equation
     real(dp), dimension(:), allocatable :: apu, apv, apw ! Reciprocal values of diagonal coefficients
-    real(dp), dimension(:), allocatable :: al, ar        ! Coefs along O-C grid cuts size(1:noc)
+    real(dp), dimension(:), allocatable :: al, ar        ! Coefs for faces along O-C grid cuts size(1:noc)
+    real(dp), dimension(:), allocatable :: apr           ! Coefs for faces at process boundaries(1:npro)
 
 
 !
@@ -133,20 +134,25 @@ subroutine create_CSR_matrix_from_mesh_data
 !
 ! > Residual vector
 ! 
-  allocate(res(numCells) ) 
+  allocate( res(numCells) ) 
 
 !
-! > 1./UEqn.A()
+! > 1/UEqn.A()
 !
-  allocate(apu(numCells) )
-  allocate(apv(numCells) ) 
-  allocate(apw(numCells) ) 
+  allocate( apu( numCells + npro ) )
+  allocate( apv( numCells + npro ) ) 
+  allocate( apw( numCells + npro ) ) 
 
 ! 
 ! > Left and right coef. for faces on O- or C- grid cuts
 !
-  allocate(al(noc) )
-  allocate(ar(noc) )
+  allocate( al(noc) )
+  allocate( ar(noc) )
+
+! 
+! > Coef. for faces on process boundaries [i(=buffind),j(=iProcOther)]
+!
+  allocate( apr(npro) )  
 
 !
 ! > Allocate array storing indexes of 'a' array where cell pair coefs are stored

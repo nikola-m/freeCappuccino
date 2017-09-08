@@ -86,7 +86,7 @@ subroutine bpres(p,istage)
       p(ijb) = p(ijp)
     end do
 
-    ! Pressure outlet faces
+    ! OC-cut faces
     do i=1,noc
       ijp = owner(iOCFacesStart+i)
       ijb = iOCStart+i
@@ -131,7 +131,7 @@ subroutine bpres(p,istage)
       
     end do
 
-    ! O-C grid cuts
+    ! O-C cuts
     do i=1,noc
       iface = iOCFacesStart+i
       ijp = owner(iface)

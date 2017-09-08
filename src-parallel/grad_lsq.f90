@@ -114,7 +114,7 @@ enddo
   !       Dmat(5,ijn) = Dmat(5,ijn) + (yc(ijp)-yc(ijn))*(zc(ijp)-zc(ijn))                                                                 
   ! enddo     
  
-  
+
   ! ! Faces along O-C grid cuts
   ! do i=1,noc
   !   ijp = ijl(i)
@@ -140,7 +140,29 @@ enddo
 
   ! end do
 
-  
+  ! Faces on processor boundaries                                             
+  do i=1,npro      
+      iface = iProcFacesStart + i
+      ijp = owner( iface ) ! ( = buffind(i) )
+      ijn = iProcStart + i
+
+      Dx = xc(ijn)-xc(ijp)
+      Dy = yc(ijn)-yc(ijp)
+      Dz = zc(ijn)-zc(ijp)
+
+      Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx  ! 1,1
+
+      Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy  ! 2,2 
+
+      Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz  ! 3,3 
+
+      Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy  ! 1,2  &  2,1 
+
+      Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz  ! 1,3  &  3,1  
+ 
+      Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz  ! 2,3  &  3,2                                                                 
+enddo 
+
   ! Boundary faces:
 
   do i=1,numBoundaryFaces
@@ -255,7 +277,6 @@ enddo
 
 
   ! Inner faces:
-
   do i=1,numInnerFaces                                                       
     ijp = owner(i)
     ijn = neighbour(i)
@@ -311,6 +332,28 @@ enddo
   !       b3(ijn) = b3(ijn) + (Fi(ijp)-Fi(ijn))*(zc(ijp)-zc(ijn))
   
   ! end do
+
+
+  ! Faces on processor boundaries                                             
+  do i=1,npro      
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    Dx = xc(ijn)-xc(ijp)
+    Dy = yc(ijn)-yc(ijp)
+    Dz = zc(ijn)-zc(ijp)
+
+    DPhi1 = Fi(ijn)-Fi(ijp)
+
+    dFidxi(1,ijp) = dFidxi(1,ijp) + DPhi1*(Dmat(1,ijp)*Dx+Dmat(4,ijp)*Dy+Dmat(5,ijp)*Dz)
+
+    dFidxi(2,ijp) = dFidxi(2,ijp) + DPhi1*(Dmat(4,ijp)*Dx+Dmat(2,ijp)*Dy+Dmat(6,ijp)*Dz)
+
+    dFidxi(3,ijp) = dFidxi(3,ijp) + DPhi1*(Dmat(5,ijp)*Dx+Dmat(6,ijp)*Dy+Dmat(3,ijp)*Dz)
+                                                                                                                        
+  enddo    
+
 
   ! Boundary faces:
 

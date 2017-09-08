@@ -1,4 +1,4 @@
-!***********************************************************************
+ !***********************************************************************
 !
 subroutine calcp
 !***********************************************************************
@@ -18,17 +18,19 @@ subroutine calcp
   use fieldManipulation
   use faceflux_mass
 
-
   implicit none
+
+  include 'mpif.h'
 !
 !***********************************************************************
 !
 
-  integer :: i, k, inp, iface, ijp, ijn, istage
-  real(dp) :: sum, ppref, cap, can, fmcor
+  integer :: i, k, inp, iface, ijp, ijn, iOtherProc, istage
+  real(dp) :: sum, suma, ppref, cap, can, fmcor
 
 
   a = 0.0_dp
+  apr = 0.0_dp
   su = 0.0_dp
 
   ! Tentative (!) velocity gradients used for velocity interpolation: 
@@ -101,6 +103,29 @@ subroutine calcp
   end do
 
 
+  ! Faces on processor boundary
+  do i=1,npro
+
+    iface = iProcFacesStart + i
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    call facefluxmass(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), cap, can, fmpro(i))
+
+    ! > Off-diagonal elements:    
+    apr(i) = can
+
+    ! > Elements on main diagonal:
+
+    ! (icell,icell) main diagonal element
+    k = diag(ijp)
+    a(k) = a(k) - can
+
+    ! > Sources:
+
+    su(ijp) = su(ijp) - fmpro(i)    
+
+  end do
 
   !// adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
   !// problem where a solution for pressure exists.
@@ -109,7 +134,11 @@ subroutine calcp
 
 
   ! Test continutity:
-  if(ltest) write(6,'(19x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  if(ltest) then
+    suma = sum(su)
+    call global_sum(suma)
+    if (myid .eq. 0) write(6,'(19x,a,1pe10.3)') ' Initial sum  =',suma
+  endif
 
 
 
@@ -138,7 +167,13 @@ subroutine calcp
     end do
 
     ! Reference pressure correction - p'
-    ppref = pp(pRefCell)
+    if (myid .eq. iPrefProcess) then
+
+      ppref = pp(pRefCell)
+
+      call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
+
+    endif 
 
 
     !
@@ -158,21 +193,34 @@ subroutine calcp
   
     enddo
 
-    !
     ! Correct mass fluxes at faces along O-C grid cuts.
-    !
     do i=1,noc
         fmoc(i) = fmoc(i) + ar(i) * ( pp(ijr(i)) - pp(ijl(i)) )
     end do
+
+    ! Correct mass fluxes at processor boundaries
+    do i=1,npro 
+
+        iface = iProcFacesStart + i
+        ijp = owner(iface)
+        iOtherProc = iProcStart + i
+
+        fmpro(i) = fmpro(i) + apr(i) * ( pp( iOtherProc ) - pp( ijp ) )
+
+    enddo
+
 
     !
     ! Correct velocities and pressure
     !      
     do inp=1,numCells
+
         u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
         v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
         w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
+
         p(inp) = p(inp) + urf(ip)*(pp(inp)-ppref)
+
     enddo   
 
     ! Explicit correction of boundary conditions 
@@ -190,10 +238,14 @@ subroutine calcp
       do i=1,numInnerFaces                                                      
         ijp = owner(i)
         ijn = neighbour(i)
+
         call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-        flmass(i) = flmass(i)+fmcor 
-        su(ijp) = su(ijp)-fmcor
-        su(ijn) = su(ijn)+fmcor                                                                                              
+        
+        flmass(i) = flmass(i) + fmcor 
+
+        su(ijp) = su(ijp) - fmcor
+        su(ijn) = su(ijn) + fmcor   
+
       enddo                                                              
 
       ! Faces along O-C grid cuts
@@ -201,14 +253,34 @@ subroutine calcp
         iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
         ijp = ijl(i)
         ijn = ijr(i)
+
         call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-        fmoc(i)=fmoc(i)+fmcor
-        su(ijp)=su(ijp)-fmcor
-        su(ijn)=su(ijn)+fmcor
+        
+        fmoc(i) = fmoc(i) + fmcor
+
+        su(ijp) = su(ijp) - fmcor
+        su(ijn) = su(ijn) + fmcor
       end do
+
+
+      ! Faces on processor boundary
+      do i=1,npro
+        iface = iProcFacesStart + i
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), fmcor)
+        
+        fmpro(i) = fmpro(i) + fmcor
+        
+        su(ijp) = su(ijp) - fmcor
+        su(ijn) = su(ijn) + fmcor
+
+      end do
+
     
       ! ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      ! write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
+      ! if (myid .eq. 0) write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
       !                     ipcorr,'. nonorthogonal pass:', &
       !                                   ' sum  =',sum(su(:)),    &
       !                                   '|sum| =',abs(sum(su(:)))
@@ -241,6 +313,11 @@ subroutine calcp
 
 !=END: Multiple pressure corrections loop==============================
   enddo
+
+  call exchange( u )
+  call exchange( v )
+  call exchange( w )
+  call exchange( p )
 
 !.....Write continuity error report:
   include 'continuityErrors.h'

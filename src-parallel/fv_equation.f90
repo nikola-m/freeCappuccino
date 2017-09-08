@@ -76,19 +76,20 @@ contains
 
 
 
-function new_csrMatrix( )
+function new_csrMatrix( ) result(csrMat)
     implicit none
     integer :: i
-    type(csrMatrix) :: new_csrMatrix
-    allocate(new_csrMatrix%ioffset ( numCells+1 ))
-    allocate(new_csrMatrix%ja ( nnz ))
-    allocate(new_csrMatrix%coef ( nnz ))
+    type(csrMatrix) :: csrMat
+
+    allocate( csrMat % ioffset ( numCells+1 ))
+    allocate( csrMat % ja ( nnz ))
+    allocate( csrMat % coef ( nnz ))
 
     do i=1,numCells+1
-      new_csrMatrix % ioffset(i) = ioffset(i)
+      csrMat % ioffset(i) = ioffset(i)
     enddo
     do i=1,nnz
-      new_csrMatrix % ja(i) = ja(i)
+      csrMat % ja(i) = ja(i)
     enddo
 
 end function new_csrMatrix
@@ -99,14 +100,14 @@ function new_fvEquation( ) result(fvEqn)
     integer :: i
     type(fvEquation) :: fvEqn
 
-    allocate(fvEqn % ioffset ( numCells+1 ))
-    allocate(fvEqn % ja ( nnz ))
-    allocate(fvEqn % coef ( nnz ))
+    allocate( fvEqn % ioffset ( numCells+1 ))
+    allocate( fvEqn % ja ( nnz ))
+    allocate( fvEqn % coef ( nnz ))
 
-    allocate(fvEqn % source ( numCells ))
+    allocate( fvEqn % source ( numCells ))
 
-    allocate(fvEqn % o ( numTotal ))
-    allocate(fvEqn % oo ( numTotal ))
+    allocate( fvEqn % o ( numTotal ))
+    allocate( fvEqn % oo ( numTotal ))
 
     do i=1,numCells+1
       fvEqn % ioffset(i) = ioffset(i)
@@ -122,25 +123,25 @@ function new_fvVectorEquation( ) result(fvEqn)
     integer :: i
     type(fvVectorEquation) :: fvEqn
 
-    allocate(fvEqn % ioffset ( numCells+1 ))
-    allocate(fvEqn % ja ( nnz ))
-    allocate(fvEqn % coef ( nnz ))
+    allocate( fvEqn % ioffset ( numCells+1 ))
+    allocate( fvEqn % ja ( nnz ))
+    allocate( fvEqn % coef ( nnz ))
 
-    allocate(fvEqn % su ( numCells ))
-    allocate(fvEqn % sv ( numCells ))
-    allocate(fvEqn % sw ( numCells ))
+    allocate( fvEqn % su ( numCells ))
+    allocate( fvEqn % sv ( numCells ))
+    allocate( fvEqn % sw ( numCells ))
 
-    allocate(fvEqn % spu ( numCells ))
-    allocate(fvEqn % spv ( numCells ))
-    allocate(fvEqn % spw ( numCells ))
+    allocate( fvEqn % spu ( numCells ))
+    allocate( fvEqn % spv ( numCells ))
+    allocate( fvEqn % spw ( numCells ))
 
-    allocate(fvEqn % xo ( numTotal ))
-    allocate(fvEqn % yo ( numTotal ))
-    allocate(fvEqn % zo ( numTotal ))
+    allocate( fvEqn % xo ( numTotal ))
+    allocate( fvEqn % yo ( numTotal ))
+    allocate( fvEqn % zo ( numTotal ))
 
-    allocate(fvEqn % xoo ( numTotal ))
-    allocate(fvEqn % yoo ( numTotal ))
-    allocate(fvEqn % zoo ( numTotal ))
+    allocate( fvEqn % xoo ( numTotal ))
+    allocate( fvEqn % yoo ( numTotal ))
+    allocate( fvEqn % zoo ( numTotal ))
 
     do i=1,numCells+1
       fvEqn % ioffset(i) = ioffset(i)

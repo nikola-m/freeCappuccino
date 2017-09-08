@@ -153,7 +153,7 @@ module variables
 
     ! These are cellwise defined variables, that is - the fields
     real(dp), dimension(:), allocatable :: u,v,w              ! Velocity components
-    real(dp), dimension(:), allocatable :: flmass             ! Mass fluxes
+    real(dp), dimension(:), allocatable :: flmass             ! Mass fluxes trough inner faces
     real(dp), dimension(:), allocatable :: p,pp               ! Pressure, Press. correction,  
     real(dp), dimension(:), allocatable :: te,ed              ! Turb. kin. energy, Dissipation,
     real(dp), dimension(:), allocatable :: vis                ! Effective viscosity
