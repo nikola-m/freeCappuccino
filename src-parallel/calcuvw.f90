@@ -499,8 +499,8 @@ subroutine calcuvw
   umin = minval(u(1:numCells))
   umax = maxval(u(1:numCells))
 
-  call global_min(umin)
-  call global_max(umax)
+  call global_min( umin )
+  call global_max( umax )
 
   !
   !.....Assemble and solve system for V component of velocity
@@ -580,8 +580,8 @@ subroutine calcuvw
   vmin = minval(v(1:numCells))
   vmax = maxval(v(1:numCells))
  
-  call global_min(vmin)
-  call global_max(vmax)
+  call global_min( vmin )
+  call global_max( vmax )
 
   !
   !.....Assemble and solve system for W component of velocity

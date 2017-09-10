@@ -1,7 +1,6 @@
-!
 !***********************************************************************
 !
-  subroutine exchange(phi) 
+subroutine exchange(phi) 
 !
 !***********************************************************************
 !
@@ -13,10 +12,11 @@
 !
 !***********************************************************************
 !
+
   use types
   use parameters
-  use indexes
-  use mpi_exchange
+  use geometry, only: numTotal,iProcStart
+  use my_mpi_module
 
   implicit none
 
@@ -29,7 +29,7 @@
   integer :: status(mpi_status_size)
 
 
-  real(dp), dimension(nxyza) :: phi
+  real(dp), intent(inout) :: phi(:) ! size numTotal, numCells+npro..
 
   iarbitr = 20 ! Helps create message tag (an integer btw)
  
@@ -69,12 +69,12 @@
     length = ioffset_buf(iDomain+1)-ioffset_buf(iDomain) ! ...also iEnd-iStart+1
 
     call MPI_SENDRECV_REPLACE & 
-     (buffer(iStart),   &   ! buffer  salje donju vrednost jer je ona najjniza negativna odatle ide u plus za jedan po jedan, ali vrednosti mora da su contiguous u phi
+     (buffer(iStart),   &     ! buffer  salje donju vrednost jer je ona najjniza negativna odatle ide u plus za jedan po jedan, ali vrednosti mora da su contiguous u phi
       length,           &     ! length   
       MPI_DOUBLE_PRECISION, & ! datatype  
       iDFriend,          &    ! dest,      
       sendtag,          &     ! sendtag,    
-      iDFriend,         &    ! source,      
+      iDFriend,         &     ! source,      
       rectag,           &     ! recvtag,      
       MPI_COMM_WORLD,   &     ! communicator
       status,           &     ! status
@@ -82,10 +82,10 @@
 
   end do
 
-  ! Prebaci iz buffera u phi polje 
+  ! Prebaci iz buffera u phi polje na odgovarajuce mesto 
   do i=1,lenbuf
     k = iProcStart+i
     phi( k ) = buffer(i)
   enddo
  
-  end subroutine exchange
+end subroutine exchange

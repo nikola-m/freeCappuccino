@@ -24,7 +24,7 @@
    (i,                    & ! send buffer
     isum,                 & ! recv buffer 
     1,                    & ! length     
-    mpi_int,              & ! datatype  
+    mpi_integer,          & ! datatype  
     mpi_sum,              & ! operation 
     mpi_comm_world,       & ! communicator            
     ierr) 

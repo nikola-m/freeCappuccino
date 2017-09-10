@@ -212,6 +212,8 @@ module variables
 
 end module variables
 
+
+
 module title_mod
 !%%%%%%%%%%%%
 
@@ -241,3 +243,23 @@ module statistics
     real(dp), dimension(:), allocatable :: tt_aver
                                              
 end module statistics
+
+
+
+module my_mpi_module
+!
+! Module that contains data to perform inter process exchange
+! of data in buffer cells, between processes, in parallel execution of the program.
+! 
+  use types
+  implicit none
+
+    ! MPI related 
+    integer :: lenbuf ! Buffer size, total no of faces that divide this and other domains
+    integer :: num_connections ! broj konektovanih domena na ovaj trenutni
+    integer, dimension(:), allocatable :: neighbour   ! [1,num_connections]
+    integer, dimension(:), allocatable :: ioffset_buf ! [1,num_connections+1]
+    integer, dimension(:), allocatable :: bufind      ! [1,len_buffer] indeksi granicnih celija
+    real(dp), dimension(:), allocatable :: buffer   ! [1,len_buffer]
+
+end module

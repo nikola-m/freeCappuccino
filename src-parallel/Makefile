@@ -29,10 +29,12 @@ MOD_FILES=\
 
 MPI_FILES=\
     global_max_mpi.f90 \
+    global_min_mpi.f90 \
     global_sum_mpi.f90 \
+    global_isum_mpi.f90 \
     abort_mission_mpi.f90 \
     synchronize_mpi.f90 \
-    mpi_exchange.f90
+    exchange.f90
 
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
@@ -121,7 +123,7 @@ rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS} ${MPI}
 
 poisson-mpi: ${MODS} ${MPI} ${LINEAR_SOLVERS} ${POISSONOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${POISSONOBJS} ${MODS} ${MPI} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o poisson-mpi
+	${F90} ${POISSONOBJS} ${MODS} ${MPI} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o ../bin/poisson-mpi
 
 .PHONY: clean
 clean:
