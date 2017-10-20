@@ -17,6 +17,7 @@ subroutine calcp
   use gradients
   use fieldManipulation
   use faceflux_mass
+  use LIS_linear_solver_library
 
 
   implicit none
@@ -24,6 +25,8 @@ subroutine calcp
 !***********************************************************************
 !
 
+  ! character(5) :: maxno
+  ! character(10) :: tol
   integer :: i, k, inp, iface, ijp, ijn, istage
   real(dp) :: sum, ppref, cap, can, fmcor
 
@@ -44,7 +47,7 @@ subroutine calcp
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxmass(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
+    call facefluxmass2(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
 
     ! > Off-diagonal elements:
 
@@ -81,7 +84,7 @@ subroutine calcp
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxmass(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
+    call facefluxmass2(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
     
     ! > Elements on main diagonal:
 
@@ -101,15 +104,12 @@ subroutine calcp
   end do
 
 
-
-  !// adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
-  !// problem where a solution for pressure exists.
-  !     adjustPhi(phi, U, p);
   if(.not.const_mflux) call adjustMassFlow
 
 
   ! Test continutity:
-  if(ltest) write(6,'(19x,a,1pe10.3)') ' Initial sum  =',sum(su(:))
+  ! if(ltest) 
+  write(6,'(20x,a,1pe10.3)') 'Initial sum  =',sum(su)
 
 
 
@@ -117,13 +117,19 @@ subroutine calcp
   do ipcorr=1,npcor
 
     ! Initialize pressure correction
-    pp=0.0d0
+    ! pp=0.0d0
 
     ! Solving pressure correction equation
-    ! call bicgstab(pp,ip) 
-    call iccg(pp,ip)
     ! call dpcg(pp,ip)
-    ! call gaussSeidel(pp,ip)
+    call iccg(pp,ip)
+    ! call bicgstab(pp,ip) 
+    ! write(maxno,'(i5)') nsw(ip)
+    ! write(tol,'(es9.2)') sor(ip)
+    ! write(options,'(a)') "-i cg -p ilu -ilu_fill 1 -maxiter "//adjustl(maxno)//"-tol "//adjustl(tol)
+    ! write(options,'(a)') "-i gmres -restart [20] -p ilut -maxiter "//adjustl(maxno)//"-tol "//adjustl(tol)
+    ! call solve_csr( numCells, nnz, ioffset, ja, a, su, pp )
+
+
        
     ! SECOND STEP *** CORRECTOR STAGE
    
@@ -185,15 +191,19 @@ subroutine calcp
     !
 
       ! Clean RHS vector
-      su = 0.0d0
+      su = 0.0_dp
 
       do i=1,numInnerFaces                                                      
         ijp = owner(i)
         ijn = neighbour(i)
+
         call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-        flmass(i) = flmass(i)+fmcor 
+
+        flmass(i) = flmass(i)+fmcor
+
         su(ijp) = su(ijp)-fmcor
-        su(ijn) = su(ijn)+fmcor                                                                                              
+        su(ijn) = su(ijn)+fmcor 
+
       enddo                                                              
 
       ! Faces along O-C grid cuts
@@ -201,18 +211,18 @@ subroutine calcp
         iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
         ijp = ijl(i)
         ijn = ijr(i)
+
         call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+
         fmoc(i)=fmoc(i)+fmcor
+
         su(ijp)=su(ijp)-fmcor
         su(ijn)=su(ijn)+fmcor
+
       end do
-    
-      ! ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      ! write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
-      !                     ipcorr,'. nonorthogonal pass:', &
-      !                                   ' sum  =',sum(su(:)),    &
-      !                                   '|sum| =',abs(sum(su(:)))
-                                                                                                 
+   
+      write(6,'(27x,a,1pe10.3)') 'sumc  =',sum(su)
+
     !.......................................................................................................!
     elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
     !
@@ -220,23 +230,65 @@ subroutine calcp
     ! Why not!
     !
 
-      ! ! Correct mass fluxes at inner cv-faces with second corr.                                                      
-      ! do i=1,numInnerFaces                                                      
-      !   ijp = owner(i)
-      !   ijn = neighbour(i)
-      !   call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-      !   flmass(i) = flmass(i)+fmcor                                                                                              
-      ! enddo                                                             
+      ! Correct mass fluxes at inner cv-faces with second corr.                                                      
+      do i=1,numInnerFaces                                                      
+        ijp = owner(i)
+        ijn = neighbour(i)
+
+        call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+
+        flmass(i) = flmass(i) + fmcor  
+
+      enddo                                                             
                                                             
-      !  ! Faces along O-C grid cuts
-      ! do i=1,noc
-      !   iface = iOCFacesStart+i
-      !   call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-      !   fmoc(i)=fmoc(i)+fmcor
-      ! end do
+      ! Faces along O-C grid cuts
+      do i=1,noc
+        iface = iOCFacesStart+i
+
+        call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+
+        fmoc(i) = fmoc(i) + fmcor
+        
+      end do
 
     endif                                                             
     !.......................................................................................................!
+
+
+
+    ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
+
+    ! res = 0.0_dp
+
+    ! ! Internal faces:
+    ! do i = 1,numInnerFaces
+
+    !   ijp = owner(i)
+    !   ijn = neighbour(i)
+
+    !   res(ijp) = res(ijp) - flmass(i)
+    !   res(ijn) = res(ijn) + flmass(i) 
+
+    ! end do
+
+
+    ! ! o- and c-grid cuts
+    ! do i=1,noc
+
+    !   iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
+    !   ijp=ijl(i)
+    !   ijn=ijr(i)
+
+    !   res(ijp) = res(ijp) - fmoc(i)
+    !   res(ijn) = res(ijn) + fmoc(i)
+
+    ! end do
+
+    ! write(6,'(20x,i1,a,/,20x,a,1pe10.3,1x,a,1pe10.3)')  &
+    !                     ipcorr,'. press. correction pass:', &
+    !                                   'sum  =',sum(res(:)),    &
+    !                                   '|sum| =',abs(sum(res(:)))
+
 
 
 !=END: Multiple pressure corrections loop==============================

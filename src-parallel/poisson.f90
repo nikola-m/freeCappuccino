@@ -17,6 +17,8 @@ program poisson
   use LIS_linear_solver_library
 
   implicit none
+
+  include 'mpif.h' 
 !
 !***********************************************************************
 !
@@ -32,11 +34,25 @@ program poisson
 !***********************************************************************
 !
 
+! MPI start up
+
+  call MPI_INIT(ierr)                   
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD, & 
+                               nproc,&  
+                               ierr  )  
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD, & 
+                               myid, &  
+                               ierr  )  
+
 !
 ! > Open log file
 ! 
-  open(unit=6,file='log_poisson')
-  rewind 6
+  if (myid .eq. 0) then
+    open(unit=6,file='log_poisson')
+    rewind 6
+  endif
 ! 
 ! > Print code logo and timestamp in log file
 !
@@ -63,7 +79,7 @@ program poisson
   su(1:numCells) = 8*pi**2*sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells))*Vol(1:numCells)
 
   ! Initialize solution
-  p(1:numTotal) = 0.0_dp
+  p = 0.0_dp
 
   do i=1,numBoundaryFaces
   iface = numInnerFaces+i
@@ -75,24 +91,22 @@ program poisson
   sv = -1.0_dp       
 
   ! Laplacian operator and BCs         
-  call fvm_laplacian(sv,p) 
+  call laplacian(sv,p) 
 
-  sor(ip) = 1e-16
+  sor(ip) = 1e-13
   nsw(ip) = 1000
 
   ! Solve system
-  write(*,'(a)') ' '
   ! 1)
-  ! call iccg(p,ip) 
+  call iccg(p,ip) 
   ! 2)
   ! call gaussSeidel(p,ip)
   ! 3)
-  call solve_csr(numCells,nnz,ioffset,ja,a,su,p) 
-  write(*,'(a)') ' '
+  ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p) 
 
-  do i=1,numCells
-    write(6,'(es11.4)') p(i)
-  enddo 
+  ! do i=1,numCells
+  !   write(6,'(es11.4)') p(i)
+  ! enddo 
 
   ! Cell size
   ijp = owner(1)
@@ -100,8 +114,12 @@ program poisson
   lh = abs(xc(ijp)-xc(ijn))
   
   ! L_inf error norm: 
-  write(*,'(a)') ' '
-  write(*,'(2es11.4)') lh , maxval( abs( p(1:numCells)-sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells)) ) )
+  if( myid .eq. 0 ) then
+    write(6,'(a)') ' '
+    write(6,'(2es11.4)') lh , maxval( abs( p(1:numCells)-sin(2*pi*xc(1:numCells))*sin(2*pi*yc(1:numCells)) ) )
+  endif
 
+  ! MPI final call
+  call MPI_Finalize(ierr)
 
 end program

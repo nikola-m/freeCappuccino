@@ -5,7 +5,7 @@ subroutine allocate_arrays
 !***********************************************************************
 !
   use parameters
-  use geometry, only: numTotal,numCells,numInnerFaces,nnz,ninl,nout,nwal,noc,npro
+  use geometry, only: numTotal,numCells,numPCells,numInnerFaces,nnz,ninl,nout,nwal,noc,npro
   use variables
   use hcoef
   use title_mod
@@ -42,11 +42,11 @@ subroutine allocate_arrays
             if(ierr /= 0)write(*,*)"allocation error: woo" 
   endif
 
-  allocate( dUdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dUdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dUdxi"
-  allocate( dVdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dVdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dVdxi"
-  allocate( dWdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dWdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dWdxi"
 
   if (ltransient) then
@@ -65,7 +65,7 @@ subroutine allocate_arrays
           if(ierr /= 0)write(*,*)"allocation error: p" 
   allocate( pp( numTotal ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: pp" 
-  allocate( dPdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dPdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dPdxi"
 
 
@@ -88,9 +88,9 @@ subroutine allocate_arrays
             if(ierr /= 0)write(*,*)"allocation error: edoo" 
   endif
 
-  allocate( dTEdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dTEdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dTEdxi"
-  allocate( dEDdxi( 3,numCells+npro ), stat=ierr) 
+  allocate( dEDdxi( 3,numPCells ), stat=ierr) 
           if(ierr /= 0)write(*,*)"allocation error: dEDdxi"
 
   if (ltransient) then
@@ -114,8 +114,8 @@ subroutine allocate_arrays
     allocate( to( numTotal ), stat=ierr) 
             if(ierr /= 0)write(*,*)"allocation error: to"
 
-          if( bdf .and. btime.gt.0.99 ) then
-      allocate( too( numTotal ), stat=ierr) 
+    if( bdf .and. btime.gt.0.99 ) then
+            allocate( too( numTotal ), stat=ierr) 
               if(ierr /= 0)write(*,*)"allocation error: too" 
     endif
 
@@ -143,7 +143,7 @@ subroutine allocate_arrays
               if(ierr /= 0)write(*,*)"allocation error: conoo" 
     endif
 
-    allocate( dCondxi( 3,numCells+npro ), stat=ierr) 
+    allocate( dCondxi( 3,numPCells ), stat=ierr) 
             if(ierr /= 0)write(*,*)"allocation error: dCondxi"
 
   endif
@@ -162,7 +162,7 @@ subroutine allocate_arrays
               if(ierr /= 0)write(*,*)"allocation error: vartoo" 
     endif
 
-    allocate( dVartdxi( 3,numCells+npro ), stat=ierr) 
+    allocate( dVartdxi( 3,numPCells ), stat=ierr) 
             if(ierr /= 0)write(*,*)"allocation error: dVartdxi"
 
     if (ltransient) then
@@ -286,5 +286,9 @@ subroutine allocate_arrays
             if(ierr /= 0)write(*,*)"allocation error: h" 
   endif
 
+  allocate( phimax( numCells ), stat=ierr) 
+          if(ierr /= 0)write(*,*)"allocation error: phimax" 
+  allocate( phimin( numCells ), stat=ierr) 
+          if(ierr /= 0)write(*,*)"allocation error: phimin" 
 
 end subroutine

@@ -1,0 +1,1 @@
+mpirun -np 2 caffa3d-mpi input monitor restart .

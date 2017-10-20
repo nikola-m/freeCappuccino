@@ -22,7 +22,7 @@ subroutine PISO_multiple_correction
   integer :: i, k, inp, iface, istage
   integer :: ijp, ijn
   real(dp) :: cap, can
-  real(dp) :: sum
+  ! real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
   h = a  

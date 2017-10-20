@@ -219,7 +219,7 @@ subroutine calcuvw
   do i=1,npro
 
     iface = iProcFacesStart + i
-    ijp = owner( iface ) ! ( = buffind(i) )
+    ijp = owner( iface )
     ijn = iProcStart + i
 
     call facefluxuvw( ijp, ijn, &
@@ -422,9 +422,9 @@ subroutine calcuvw
   endif
 
 
-  !
-  !.....Assemble and solve system for U component of velocity
-  !
+!
+!.....Assemble and solve system for U component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if (cn) then
@@ -496,15 +496,9 @@ subroutine calcuvw
   ! Solve fvm equations
   call bicgstab(u,iu)
 
-  umin = minval(u(1:numCells))
-  umax = maxval(u(1:numCells))
-
-  call global_min( umin )
-  call global_max( umax )
-
-  !
-  !.....Assemble and solve system for V component of velocity
-  !
+!
+!.....Assemble and solve system for V component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if(cn) then
@@ -575,17 +569,12 @@ subroutine calcuvw
   enddo
 
   ! Solve fvm equations
+  ! call jacobi(v,iv)
   call bicgstab(v,iv)
 
-  vmin = minval(v(1:numCells))
-  vmax = maxval(v(1:numCells))
- 
-  call global_min( vmin )
-  call global_max( vmax )
-
-  !
-  !.....Assemble and solve system for W component of velocity
-  !
+!
+!.....Assemble and solve system for W component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if(cn) then
@@ -659,16 +648,13 @@ subroutine calcuvw
   ! Solve fvm equations
   call bicgstab(w,iw)
 
-  wmin = minval(w(1:numCells))
-  wmax = maxval(w(1:numCells))
-
-  call global_min(wmin)
-  call global_max(wmax)
-
   ! MPI exchange:
   call exchange( u )
   call exchange( v )
   call exchange( w )
-  call exchange( apu )
+
+  ! Used in Rhie-Chow where it's interpolated to boundary, so we need it in buffer:
+  call exchange( apu ) 
+
 
 end subroutine

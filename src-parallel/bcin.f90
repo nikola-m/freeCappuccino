@@ -41,7 +41,7 @@ subroutine bcin
 
       flomom = flomom + abs(fmi(i))*sqrt(u(ini)**2+v(ini)**2+w(ini)**2)
 
-      flowen = flowen + abs(fmi(i)*t(ini))
+      ! flowen = flowen + abs(fmi(i)*t(ini))
 
       flowte = flowte + abs(fmi(i)*te(ini))
 
@@ -106,15 +106,16 @@ subroutine bcin
 
   totalNumInlets = ninl 
   call global_isum( totalNumInlets )
+  
 
   if ( totalNumInlets .eq. 0 ) then
    ! No inflow into the domain: eg. natural convection case, etc.
 
-    flomas=1.0_dp
-    flomom=1.0_dp
+    flomas = 1.0_dp
+    flomom = 1.0_dp
     flowen = 1.0_dp
-    flowte=1.0_dp
-    flowed=1.0_dp
+    flowte = 1.0_dp
+    flowed = 1.0_dp
 
   endif
 

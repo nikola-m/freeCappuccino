@@ -17,7 +17,7 @@
     ijn = neighbour(i)
     res(ijp) = res(ijp)-flmass(ijp)
     res(ijn) = res(ijn)+flmass(ijp)
-  enddo     
+  enddo  
   
   ! Faces along O-C grid cuts
   do i=1,noc
@@ -27,22 +27,28 @@
     res(ijn)=res(ijn)+fmoc(i)
   end do
 
+
   ! Inlet boundaries (mass fluxes prescribed in routine 'bcin')
   do i=1,ninl
     ijp = owner(iInletFacesStart+i)
     res(ijp)=res(ijp)+fmi(i)
   end do
 
-  ! Correct mass flux to satisfy global mass conservation & add to source
+
+  ! Correct mass flux to satisfy global mass conservation
   do i=1,nout
     ijp = owner(iOutletFacesStart+i)
     res(ijp)=res(ijp)-fmo(i)
   end do
 
+  ! The way it is done in OpenFOAM:
+  sumLocalContErr = timestep*volumeWeightedAverage( abs(res) )
 
-  sumLocalContErr = sum( abs( res ) ) 
+  globalContErr = timestep*volumeWeightedAverage( res )
 
-  globalContErr = sum( res )
+  ! sumLocalContErr = sum( abs( res ) ) 
+  
+  ! globalContErr = sum( res )
 
   cumulativeContErr = cumulativeContErr + globalContErr
 

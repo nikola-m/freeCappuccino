@@ -8,7 +8,7 @@ subroutine bicgstab(fi,ifi)
 !
   use types
   use parameters
-  use geometry, only: numCells,numTotal,npro,ijl,ijr,iProcFacesStart,iProcStart
+  use geometry, only: numCells,numTotal,noc,npro,ijl,ijr,iProcFacesStart,iProcStart
   use sparse_matrix
   use title_mod
 
@@ -22,9 +22,9 @@ subroutine bicgstab(fi,ifi)
 !
 !     Local variables
 !
-  integer :: i, k, ns, l, iOtherProc
+  integer :: i, k, ns, l, itr_used, iOtherProc
   real(dp), dimension(numCells) :: reso,pk,uk,vk,d
-  real(dp), dimension(numCells+npro) :: zk
+  real(dp), dimension(numPCells) :: zk
   real(dp) :: rsm, resmax, res0, resl, tol
   real(dp) :: alf, beto, gam, bet, om, ukreso, svkres, svkvk
 
@@ -32,11 +32,11 @@ subroutine bicgstab(fi,ifi)
   resmax = sor(ifi)
   tol = 1e-13
 
+  itr_used = 0
+
 !
 ! Calculate initial residual vector and the norm
 !
-
-! res(:) = su(:) - sum( a(ioffset(1:numCells):ioffset(2:numCells+1)-1) * fi(ja(ioffset(1:numCells):ioffset(2:numCells+1)-1)) )
   
   res = 0.0_dp
 
@@ -55,10 +55,6 @@ subroutine bicgstab(fi,ifi)
   end do
 
   ! Residual contribution for cells at processor boundary.
-  ! Discussion:
-  ! owner( iProcFacesStart + i ) - Index of cell at this processor's boundary
-  ! iOtherProc = iProcStart+i - Where the exchanged values of the boundary cells at 'other' processors are written.
-  ! apr(i) - Matrix coefficients for cells that are on the processor boundary. Contributions from a cell that is in 'other' domain.
   do i=1,npro
     k = owner( iProcFacesStart + i )
     iOtherProc = iProcStart+i
@@ -68,20 +64,19 @@ subroutine bicgstab(fi,ifi)
 
   ! L1-norm of residual
   res0=sum(abs(res))
+
   call global_sum(res0)
 
   if(res0.lt.tol) then
-    write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
-    ', Initial residual = ',RES0,', Final residual = ',RES0,', No Iterations ',0
+    if (myid .eq. 0) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(ifi)), &
+    ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
     return
   endif
-!
-! If ltest=true, print the norm 
-!
+
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 
 !
-! Calculate elements of diagonal preconditioning matrix
+! Calculate elements of preconditioning matrix diagonal
 !
   do i=1,numCells
     d(i) = a( diag(i) )
@@ -95,6 +90,7 @@ subroutine bicgstab(fi,ifi)
     end do
     d(i) = 1.0_dp / d(i)
   enddo 
+
 
 !
 ! Initialize working arrays and parameters
@@ -115,12 +111,14 @@ subroutine bicgstab(fi,ifi)
 ! Start iterations
 !
   ns=nsw(ifi)
+
   do l=1,ns
 
 !
 ! Calculate beta and omega
 !
   bet = sum(res*reso)
+
   call global_sum(bet)
 
   om = bet*gam/(alf*beto+small)
@@ -143,8 +141,9 @@ subroutine bicgstab(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk = zk/(d+small)
-
+  do i=1,numCells
+    zk(i) = zk(i) / (d(i)+small) 
+  enddo 
 
 !
 ! Backward substitution
@@ -156,7 +155,7 @@ subroutine bicgstab(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  call exchange ( zk )
+  call exchange( zk )
 
 !
 ! Matvec 1: Uk = A*pk
@@ -180,6 +179,7 @@ subroutine bicgstab(fi,ifi)
 ! Calculate scalar product uk*reso, and gamma
 !
   ukreso = sum(uk*reso)
+
   call global_sum(ukreso)
 
   gam = bet/ukreso
@@ -188,8 +188,10 @@ subroutine bicgstab(fi,ifi)
 !
 ! Update 'fi' and calculate 'w' (overwrite 'res; - it is res-update)
 !
-  fi(1:numCells) = fi(1:numCells) + gam*zk
-  res            = res            - gam*uk   ! <- W
+  fi(1:numCells) = fi(1:numCells) + gam*zk(1:numCells)
+
+  ! Update residual vector
+  res = res - gam*uk   ! <- W
 
 
 !
@@ -203,7 +205,9 @@ subroutine bicgstab(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk = zk/(d+small)
+  do i=1,numCells
+    zk(i) = zk(i) / (d(i)+small) 
+  enddo 
 
 !
 ! Backward substitution
@@ -247,14 +251,17 @@ subroutine bicgstab(fi,ifi)
   alf = svkres / (svkvk+small)
 
   ! Update solution vector
-  fi(1:numCells) = fi(1:numCells) + alf*zk
+  fi(1:numCells) = fi(1:numCells) + alf*zk(1:numCells)
 
   ! Update residual vector
   res = res - alf*vk
 
   ! L1-norm of residual
   resl = sum(abs(res))
+
   call global_sum(resl)
+
+  itr_used = itr_used + 1
 
 !
 ! Check convergence
@@ -263,6 +270,7 @@ subroutine bicgstab(fi,ifi)
   rsm = resl/(resor(ifi)+small)
   if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
+
 
 !
 ! End of iteration loop
@@ -273,8 +281,8 @@ subroutine bicgstab(fi,ifi)
   call exchange( fi )
 
 ! Write linear solver report:
-  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
+  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used
 
 end subroutine
 

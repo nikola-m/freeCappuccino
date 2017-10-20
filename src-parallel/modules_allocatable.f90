@@ -51,9 +51,9 @@ module parameters
   real(dp) :: facflx   ! Underelaxation factor for turbulent heat fluxes
   real(dp) :: uin,vin,win,tein,edin,tin,vartin,conin ! Inlet values (assumed constant accross inlet)
 
-  real(dp) :: pranl     ! (= 0.7_dp for air, 7.0_dp for water, read it from input file.)
   logical :: lbuoy      ! Bouyancy effects - are they included in momentum and turbulence eqns. If yes we calculate heat fluxes.
   logical :: boussinesq ! Is Boussinesq hypothesis evoked yes=1/no=0, read from input file.
+  real(dp) :: pranl     ! (= 0.7_dp for air, 7.0_dp for water, read it from input file.)
   real(dp) :: tref      ! Reference temperature, read from input file
   real(dp) :: beta      ! Thermal expansion coefficient, read from input file
   real(dp) :: phit      ! Parameter used for GGDH and AFM in calcheatflux subroutine, read from input file.
@@ -89,7 +89,7 @@ module parameters
 
 
   ! Choosing discretization scheme cds, luds, smart,muscl, gamma, etc.
-  ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist...,lcds_flnt,l2nd_flnt,l2ndlim_flnt,lmuscl_flnt
+  ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist...,lcds_flnt,l2nd_flnt,lmuscl_flnt
   logical :: lcds = .false.
   logical :: lcdsc = .false.
   logical :: lluds = .false.
@@ -102,7 +102,6 @@ module parameters
   logical :: lospre = .false.
   logical :: lcds_flnt = .false.
   logical :: l2nd_flnt = .false.
-  logical :: l2ndlim_flnt = .false.
   logical :: lmuscl_flnt = .false.
 
   logical :: flux_limiter = .false.
@@ -206,9 +205,7 @@ module variables
     real(dp), dimension(:), allocatable :: magStrain          ! Strain magnitude
     real(dp), dimension(:), allocatable :: Vorticity          ! Vorticity magnitude
 
-    real(dp) :: umin, umax
-    real(dp) :: vmin, vmax
-    real(dp) :: wmin, wmax
+    real(dp), dimension(:), allocatable :: phimax,phimin      ! Arrays to store min and max values of a field, counting each cell and its neighbours.
 
 end module variables
 
@@ -256,10 +253,10 @@ module my_mpi_module
 
     ! MPI related 
     integer :: lenbuf ! Buffer size, total no of faces that divide this and other domains
-    integer :: num_connections ! broj konektovanih domena na ovaj trenutni
-    integer, dimension(:), allocatable :: neighbour   ! [1,num_connections]
-    integer, dimension(:), allocatable :: ioffset_buf ! [1,num_connections+1]
-    integer, dimension(:), allocatable :: bufind      ! [1,len_buffer] indeksi granicnih celija
-    real(dp), dimension(:), allocatable :: buffer   ! [1,len_buffer]
+    integer :: numConnections ! broj konektovanih domena na ovaj trenutni
+    integer, dimension(:), allocatable :: neighbProcNo      ! [1,num_connections]
+    integer, dimension(:), allocatable :: neighbProcOffset  ! [1,num_connections+1]
+    integer, dimension(:), allocatable :: bufind            ! [1,len_buffer] indeksi granicnih celija
+    real(dp), dimension(:), allocatable :: buffer           ! [1,len_buffer]
 
 end module

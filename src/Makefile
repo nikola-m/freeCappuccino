@@ -31,7 +31,8 @@ MOD_FILES=\
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
     bicgstab.f90 \
-    pcg-jacobi.f90 \
+    dpcg.f90 \
+    mgmres.f90 \
     gauss-seidel.f90
 
 TURBULENCE_FILES=\
@@ -54,7 +55,6 @@ CAFFA_FILES=\
     faceflux_velocity.f90 \
     facefluxmass.f90 \
     facefluxmass_piso.f90 \
-    facefluxMassCorr.f90 \
     calcheatflux.f90 \
     calcp-multiple_correction_SIMPLE.f90 \
     calcstress.f90 \
@@ -106,7 +106,7 @@ all: caffa3d poisson #rk4ProjectionCaffa
 
 caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${CAFFAOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${CAFFAOBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS} ${INCS} -o caffa3d 
+	${F90} ${CAFFAOBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS} ${INCS} -o ../bin/caffa3d 
 
 rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 	@echo  "Linking" $@ "... "
@@ -114,11 +114,11 @@ rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 
 poisson: ${MODS} ${LINEAR_SOLVERS} ${POISSONOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${POISSONOBJS} ${MODS} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o poisson 
+	${F90} ${POISSONOBJS} ${MODS} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o ../bin/poisson 
 
 .PHONY: clean
 clean:
-	@rm  *.o *.mod caffa3d poisson
+	@rm  *.o *.mod ../bin/caffa3d ../bin/poisson
 
 ##################################################################
 # Generic rules

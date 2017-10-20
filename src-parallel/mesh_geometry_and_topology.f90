@@ -4,13 +4,15 @@
 module geometry
 
 use types
-use utils, only: get_unit, file_row_count, r8vec_print_some, i4vec_print2
+use parameters, only: myid
+use utils, only: get_unit, file_row_count, r8vec_print_some, i4vec_print2, i4_to_s_left
 
 implicit none
 
 ! General mesh data
 integer :: numNodes                           ! no. of nodes in mesh
 integer :: numCells                           ! no. of cells in the mesh
+integer :: numPCells                          ! no. of cells in the mesh + buffer cells
 integer :: numFaces                           ! no. of INNER+BOUNDARY faces in the mesh
 integer :: numInnerFaces                      ! no. of INNER cells faces in the mesh
 integer :: numBoundaryFaces                   ! self explanatory
@@ -61,8 +63,10 @@ integer, parameter :: nomax = 24              ! Max no. of nodes in face - deter
 logical :: native_mesh_files
 
 ! Mesh file units
-integer :: points_file, faces_file, owner_file, neighbour_file, boundary_file 
+integer :: points_file, faces_file, owner_file, neighbour_file, boundary_file, process_file
 
+! Global number of nodes, cells, faces, inner faces, and boundary faces when summed from all domains
+integer :: gloNodes,gloCells, gloFaces, gloIFaces, gloBFaces
 
 
 ! Mesh geometry
@@ -359,6 +363,9 @@ subroutine mesh_geometry
 !  Author:
 !    Nikola Mirkov nmirkov@vinca.rs
 !
+ 
+  use my_mpi_module
+
   implicit none
 
   ! Locals
@@ -371,6 +378,7 @@ subroutine mesh_geometry
   character(len=15) :: char_string,char_string2
   character(len=80) :: line_string
   character(len=10) :: bctype
+  character( len = 5) :: nproc_char
 
   integer, dimension(nomax) :: node  ! It will store global node numbers of cell vertexes
   integer :: nnodes                  ! no. of nodes in face
@@ -392,25 +400,33 @@ subroutine mesh_geometry
 ! > OPEN polyMesh format files: 'points', 'faces', 'owner', 'neighbour'.
 !
 
+  ! nproc_char <- myid zapisan levo u vidu stringa.
+  call i4_to_s_left ( myid, nproc_char )
+
+
   call get_unit( points_file )
-  open( unit = points_file,file = 'polyMesh/points' )
+  open( unit = points_file,file = 'processor'//trim(nproc_char)//'/constant/polyMesh/points' )
   rewind points_file
 
   call get_unit( faces_file )
-  open( unit = faces_file, file='polyMesh/faces' )
+  open( unit = faces_file, file = 'processor'//trim(nproc_char)//'/constant/polyMesh/faces' )
   rewind faces_file
 
   call get_unit( owner_file )
-  open( unit = owner_file, file='polyMesh/owner' )
+  open( unit = owner_file, file = 'processor'//trim(nproc_char)//'/constant/polyMesh/owner' )
   rewind owner_file
 
   call get_unit( neighbour_file )
-  open( unit = neighbour_file, file='polyMesh/neighbour' )
+  open( unit = neighbour_file, file = 'processor'//trim(nproc_char)//'/constant/polyMesh/neighbour' )
   rewind neighbour_file
 
   call get_unit( boundary_file )
-  open( unit = boundary_file, file='polyMesh/boundary' )
+  open( unit = boundary_file, file = 'processor'//trim(nproc_char)//'/constant/polyMesh/boundary' )
   rewind boundary_file
+
+  call get_unit( process_file )
+  open( unit = process_file, file = 'processor'//trim(nproc_char)//'/constant/polyMesh/process' )
+  rewind process_file
 
 
   native_mesh_files = .true.
@@ -419,6 +435,7 @@ subroutine mesh_geometry
   read(points_file,'(a)') ch
   backspace(points_file)
   if(ch == '/')  native_mesh_files = .false.
+
 
 !
 ! > Find out number of faces belonging to a specific boundary condition.
@@ -444,8 +461,11 @@ subroutine mesh_geometry
   ! Initialize no. of cyclic boundaries
   iCycBoundaries  = 0
 
+  ! Number of rows in the file excluding #comment in header
+  call file_row_count ( boundary_file, numBoundaries )
+
   read(boundary_file,'(a)') line_string
-  read(boundary_file,*) numBoundaries
+  ! read(boundary_file,*) numBoundaries
 
   do i=1,numBoundaries
   read(boundary_file,*) bctype,nfaces,startFace
@@ -497,11 +517,6 @@ subroutine mesh_geometry
         iCycBoundaries = iCycBoundaries + 1
         ncyc = ncyc + nfaces
 
-      case ('processor')
-        if (npro==0) iProcFacesStart = startFace
-        ! iProcBoundaries = iProcBoundaries + 1
-        npro = npro + nfaces
-
       case default
         write(*,*) "Non-existing boundary type in polymesh/boundary file!"
         stop
@@ -509,6 +524,32 @@ subroutine mesh_geometry
     end select 
 
   enddo  
+
+!
+! > Read 'process' file with domain connectivity information for MPI
+!
+
+  ! Number of rows in the file excluding #comment in header
+  call file_row_count ( process_file, numConnections)
+
+  read(process_file,'(a)') line_string
+  ! read(process_file,*) numConnections
+  
+  ! Allocate domain connectivity arrays
+  allocate ( neighbProcNo( numConnections ) )
+  allocate ( neighbProcOffset( numConnections+1 ) )
+
+  neighbProcOffset(1) = 1
+
+  do i=1,numConnections
+    read(process_file,*) neighbProcNo(i),nfaces,startFace
+        if (npro==0) iProcFacesStart = startFace
+        npro = npro + nfaces
+        neighbProcOffset(i+1) = neighbProcOffset(i) + nfaces
+  enddo
+
+  ! This denotes position of the last plus one. 
+  ! neighbProcOffset( numConnections+1 ) = npro + 1
 
 
 !
@@ -533,19 +574,19 @@ if (native_mesh_files)  then
 
     ! 'points' file
 
-    do i=1,16
-      read(points_file,*) ch
-    end do
-
-    ! do
+    ! do i=1,16
     !   read(points_file,*) ch
-    !   if (ch == "(") then
-    !     ! Return two lines
-    !     backspace(points_file)
-    !     backspace(points_file)
-    !     exit
-    !   endif
     ! end do
+
+    do
+      read(points_file,*) ch
+      if (ch == "(") then
+        ! Return two lines
+        backspace(points_file)
+        backspace(points_file)
+        exit
+      endif
+    end do
 
     read(points_file,*) numNodes
     read(points_file,*) ch ! reads "("
@@ -604,11 +645,12 @@ if (native_mesh_files)  then
     !   read(faces_file,*) ch
     !   if (ch == "(") then
     !     ! Return two lines
-    !     backspace(faces_file)
-    !     backspace(faces_file)
+    !     ! backspace(faces_file)
+    !     ! backspace(faces_file)
     !     exit
     !   endif
     ! end do
+
     ! read(faces_file, *) numFaces
     ! read(faces_file,*) ch ! reads "("
 
@@ -626,6 +668,9 @@ if (native_mesh_files)  then
   ! IMPORTANT:
   ! Size of arrays storing variables numCells+numBoundaryFaces
   numTotal = numCells + numBoundaryFaces
+
+  ! Size of array for gradients etc. which are numCells plus No. of buffer cells npro
+  numPCells = numCells + npro
 
   ! IMPORTANT:
   ! Where in variable arrays, the boundary face values are stored, 
@@ -653,29 +698,50 @@ if (native_mesh_files)  then
 !
 ! > Write report on mesh size into log file
 !
+
+  gloNodes = numNodes
+  call global_isum( gloNodes )
+
+  gloCells = numCells
+  call global_isum( gloCells )
+
+  gloFaces = numFaces
+  call global_isum( gloFaces )
+
+  gloIFaces = numInnerFaces
+  call global_isum( gloIFaces )
+ 
+  gloBFaces = numBoundaryFaces
+  call global_isum( gloBFaces )  
+
+  if ( myid .eq. 0) then
+
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) '  Mesh data: '
 
-  write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of nodes, numNodes = ', numNodes
+
 
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of cells, numCells = ', numCells
+  write ( *, '(a,i8)' ) '  Number of nodes, numNodes = ', gloNodes
+
 
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of cell-faces, numFaces = ', numFaces
+  write ( *, '(a,i8)' ) '  Number of cells, numCells = ', gloCells
+
 
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of inner cell-faces, numInnerFaces = ', numInnerFaces
+  write ( *, '(a,i8)' ) '  Number of cell-faces, numFaces = ', gloFaces
+
 
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of nonzero coefficients, nnz (= 2*numInnerFaces + numCells)  = ', nnz
+  write ( *, '(a,i8)' ) '  Number of inner cell-faces, numInnerFaces = ', gloIFaces
+
 
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) '  Boundary information:'
   write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of cell-faces on boundary, numBoundaryFaces = ', numBoundaryFaces
+  write ( *, '(a,i8)' ) '  Number of cell-faces on boundary, numBoundaryFaces = ', gloBFaces
 
 
   if( ninl.gt.0 ) then 
@@ -737,8 +803,11 @@ if (native_mesh_files)  then
 
   if( npro.gt.0 ) then
     write ( *, '(a)' ) ' '
-    write ( *, '(a,i8)' ) '  Number of precessor boundary faces  = ', npro
+    write ( *, '(a,i8)' ) '  Number of processor boundary faces  = ', npro
   endif
+
+endif
+
 
 !
 ! > Allocate arrays for Mesh description
@@ -785,9 +854,16 @@ if (native_mesh_files)  then
 
   allocate ( fpro(npro) )                               
 
-
 !
-! > Read and process Mesh files 
+! Allocate parameters for MPI communication
+!
+  lenbuf = npro
+  allocate ( bufind(lenbuf) )
+  allocate ( buffer(lenbuf) )
+
+
+
+! > Read and process Mesh files, fill owner, neighbour arrays
 !
 
   if (native_mesh_files) then
@@ -836,6 +912,12 @@ if (native_mesh_files)  then
   endif
 
 
+  ! Array of buffer cell indexes for MPI exchange
+  do i=1,npro
+    bufind(i) = owner(iProcFacesStart+i)
+  enddo
+
+
   !
   ! Rewind boundary file for one more sweep - to read O-C- and cyclic boundaries
   !
@@ -847,7 +929,7 @@ if (native_mesh_files)  then
     rewind( boundary_file )
 
     read(boundary_file,'(a)') line_string
-    read(boundary_file,*) numBoundaries
+    ! read(boundary_file,*) numBoundaries
 
     ioc = 1
     icyc = 1
@@ -911,7 +993,7 @@ if (native_mesh_files)  then
 
     inp = owner(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then
@@ -979,7 +1061,7 @@ if (native_mesh_files)  then
     !     yf(iface) = yf(iface) / (ay+1e-30)
     !     zf(iface) = zf(iface) / (az+1e-30)
     ! else   
-        ! > Because I could have not resolve the problem, these line are inserted 
+        ! > Because I could have not resolved the problem, these line are inserted 
         !   where face centroid is calculated by arithmetic average.  
         xf(iface) = 0.0_dp
         yf(iface) = 0.0_dp
@@ -999,13 +1081,22 @@ if (native_mesh_files)  then
   enddo
 
 
-
   ! Rewind 'faces' file for one more sweep
   rewind( faces_file )
+
   if (.not.native_mesh_files) then
+
     do i=1,18
       read(faces_file,*) ch
     end do
+
+    ! do
+    !   read(faces_file,*) ch
+    !   if (ch == "(") then
+    !     exit
+    !   endif
+    ! end do  
+
   endif
 
   !
@@ -1016,7 +1107,7 @@ if (native_mesh_files)  then
 
     inp = owner(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then
@@ -1054,14 +1145,29 @@ if (native_mesh_files)  then
   enddo
 
 
+  ! We need some geometry in the buffer cells, we fill these by exchanging info with other processes
+  call exchange( xc )
+  call exchange( yc )
+  call exchange( zc )
+  call exchange( Vol )
 
 
   ! Rewind 'faces' file for one more sweep
   rewind( faces_file )
+
   if (.not.native_mesh_files) then
+
     do i=1,18
       read(faces_file,*) ch
     end do
+
+    ! do
+    !   read(faces_file,*) ch
+    !   if (ch == "(") then
+    !     exit
+    !   endif
+    ! end do 
+
   endif
 
   !
@@ -1073,7 +1179,7 @@ if (native_mesh_files)  then
     inp = owner(iface)
     inn = neighbour(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then
@@ -1110,6 +1216,77 @@ if (native_mesh_files)  then
     facint(iface) = djn/dpn
     
   enddo
+
+
+  !
+  ! > Interpolation factor > faces on process boundaries
+  !
+
+  ! Rewind 'faces' file for one more sweep
+  rewind( faces_file )
+  if (.not.native_mesh_files) then
+
+    do i=1,18
+      read(faces_file,*) ch
+    end do
+
+    ! do
+    !   read(faces_file,*) ch
+    !   if (ch == "(") then
+    !     exit
+    !   endif
+    ! end do 
+
+  endif
+  
+  ! Fast forward to place where processor faces start
+  do i=1,iProcFacesStart
+    read(faces_file,*) ch
+  enddo
+
+  do i=1,npro
+    iface = iProcFacesStart + i
+    inp = owner( iface )
+    inn = iProcStart + i
+
+    node = 0
+
+    ! Read line in 'faces' file
+    if (native_mesh_files) then
+      read( faces_file, * ) nnodes, (node(k), k=1,nnodes)
+    else ! OpenFOAM polyMesh
+      call read_line_faces_file_polyMesh(faces_file,nnodes,node,nomax)
+    endif
+
+    xpn = xc(inn)-xc(inp)
+    ypn = yc(inn)-yc(inp)
+    zpn = zc(inn)-zc(inp)
+
+    dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+    ! > > Intersection point j' of line connecting centers with cell face, we are taking only three points assuming that other are co-planar
+    call find_intersection_point( &
+                                 ! plane defined by three face vertices:
+                                 x(node(1)),y(node(1)),z(node(1)),&
+                                 x(node(2)),y(node(2)),z(node(2)), &
+                                 x(node(3)),y(node(3)),z(node(3)), &
+                                 ! line defined by cell center and neighbour center:
+                                 xc(inp),yc(inp),zc(inp), &
+                                 xc(inn),yc(inn),zc(inn), &
+                                 ! intersection point (output):
+                                 xjp,yjp,zjp &
+                                )
+    xpn = xjp - xc(inp)
+    ypn = yjp - yc(inp)
+    zpn = zjp - zc(inp)
+
+    djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+
+    ! Interpolation factor |P Pj'|/|P Pj| where P is cell center, Pj neighbour cell center and j' intersection point.
+    fpro(i) = djn/dpn
+
+  enddo
+
 
   !
   ! > Interpolation factor > O-C boundaries
@@ -1198,6 +1375,8 @@ if (native_mesh_files)  then
 ! > Report on geometrical quantities
 !
 
+  if (myid .eq. 0 ) then
+
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) '  Cell data: '
 
@@ -1239,16 +1418,20 @@ if (native_mesh_files)  then
   call r8vec_print_some ( numInnerFaces, facint, 1, 10, &
       '  First 10 elements of interpolation factor (facint) array:' )
 
+  endif
+
 
 !
-!  > CLOSE polyMesh format file: 'points', 'faces', 'owner', 'neighbour', 'boundary'.
+!  > CLOSE polyMesh format file: 'points', 'faces', 'owner', 'neighbour', 'boundary', 'process'.
 !
   close ( points_file )
   close ( faces_file )
   close ( owner_file )
   close ( neighbour_file)
   close ( boundary_file)
+  close ( process_file)
 !+-----------------------------------------------------------------------------+
+
 
 end subroutine mesh_geometry
 

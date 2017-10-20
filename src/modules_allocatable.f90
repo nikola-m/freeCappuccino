@@ -53,7 +53,7 @@ module parameters
 
   real(dp) :: pranl     ! (= 0.7_dp for air, 7.0_dp for water, read it from input file.)
   logical :: lbuoy      ! Bouyancy effects - are they included in momentum and turbulence eqns. If yes we calculate heat fluxes.
-  integer :: boussinesq ! Is Boussinesq hypothesis evoked yes=1/no=0, read from input file.
+  logical :: boussinesq ! Is Boussinesq hypothesis evoked yes=1/no=0, read from input file.
   real(dp) :: tref      ! Reference temperature, read from input file
   real(dp) :: beta      ! Thermal expansion coefficient, read from input file
   real(dp) :: phit      ! Parameter used for GGDH and AFM in calcheatflux subroutine, read from input file.
@@ -95,7 +95,6 @@ module parameters
   logical :: lospre = .false.
   logical :: lcds_flnt = .false.
   logical :: l2nd_flnt = .false.
-  logical :: l2ndlim_flnt = .false.
   logical :: lmuscl_flnt = .false.
 
   logical :: flux_limiter = .false.
@@ -197,10 +196,6 @@ module variables
 
     real(dp), dimension(:), allocatable :: magStrain          ! Strain magnitude
     real(dp), dimension(:), allocatable :: Vorticity          ! Vorticity magnitude
-
-    real(dp) :: umin, umax
-    real(dp) :: vmin, vmax
-    real(dp) :: wmin, wmax
 
 end module variables
 

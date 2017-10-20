@@ -14,7 +14,7 @@ subroutine find_strain_rate
 !
   integer :: inp
   real(dp) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz 
-  real(dp) :: s11,s12,s13,s21,s22,s23,s31,s32,s33,w12,w13,w23
+  real(dp) :: s11,s12,s13,s22,s23,s33,w12,w13,w23
 
 
   ! Velocity gradients: 
@@ -44,9 +44,6 @@ subroutine find_strain_rate
     s22=dvdy
     s23=0.5*(dvdz+dwdy) 
     s33=dwdz
-    s21=s12  ! symmetry
-    s31=s13
-    s32=s23
 
     ! Find antisymmetric part of velocity gradient tensor
     ! [om_ij]: |om_ij|=sqrt[2 om_ij om_ij] 
@@ -56,10 +53,10 @@ subroutine find_strain_rate
 
 
     ! Find strain rate s = sqrt (2*sij*sij)
-    magStrain(inp)=dsqrt(2*(s11**2+s22**2+s33**2 + 2*(s12**2+s13**2+s23**2)))
+    magStrain(inp)=sqrt(2*(s11**2+s22**2+s33**2 + 2*(s12**2+s13**2+s23**2)))
 
     ! Find scalar invariant of antisymmetric part of velocity gradient tensor
-    vorticity(inp) = dsqrt(w12**2 + w23**2 + w13**2)
+    vorticity(inp) = sqrt(w12**2 + w23**2 + w13**2)
 
   enddo
 

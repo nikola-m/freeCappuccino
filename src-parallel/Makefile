@@ -39,8 +39,8 @@ MPI_FILES=\
 LINEAR_SOLVER_FILES=\
     iccg.f90 \
     bicgstab.f90 \
-    pcg-jacobi.f90 \
-    gauss-seidel.f90
+    dpcg.f90 \
+    jacobi.f90
 
 TURBULENCE_FILES=\
     temperature.f90 \
@@ -62,7 +62,6 @@ CAFFA_FILES=\
     faceflux_velocity.f90 \
     facefluxmass.f90 \
     facefluxmass_piso.f90 \
-    facefluxMassCorr.f90 \
     calcheatflux.f90 \
     calcp-multiple_correction_SIMPLE.f90 \
     calcstress.f90 \
@@ -127,7 +126,7 @@ poisson-mpi: ${MODS} ${MPI} ${LINEAR_SOLVERS} ${POISSONOBJS}
 
 .PHONY: clean
 clean:
-	@rm  *.o *.mod caffa3d-mpi poisson-mpi
+	@rm  *.o *.mod ../bin/caffa3d-mpi ../bin/poisson-mpi
 
 ##################################################################
 # Generic rules

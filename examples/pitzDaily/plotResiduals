@@ -4,9 +4,8 @@ set ylabel 'Residual'
 set xlabel 'Iteration'
 plot "< cat monitor | grep 'Solving for U,' | cut -d' ' -f12 | tr -d ','" title 'Ux' with lines,\
      "< cat monitor | grep 'Solving for V,' | cut -d' ' -f12 | tr -d ','" title 'Uy' with lines,\
-     "< cat monitor | grep 'Solving for W,' | cut -d' ' -f12 | tr -d ','" title 'Uz' with lines,\
      "< cat monitor | grep 'Solving for p' | cut -d' ' -f12 | tr -d ','" title 'p' with lines, \
      "< cat monitor | grep 'Solving for k' | cut -d' ' -f12 | tr -d ','" title 'k' with lines, \
-     "< cat monitor | grep 'Solving for Omega' | cut -d' ' -f12 | tr -d ','" title 'omega' with lines
+     "< cat monitor | grep 'Solving for epsilon' | cut -d' ' -f12 | tr -d ','" title 'omega' with lines
 pause 5
 reread

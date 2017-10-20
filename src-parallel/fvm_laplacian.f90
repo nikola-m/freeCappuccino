@@ -1,4 +1,4 @@
-subroutine fvm_laplacian(mu,phi)
+subroutine laplacian(mu,phi)
 !  
 !******************************************************************************
 !
@@ -18,7 +18,7 @@ subroutine fvm_laplacian(mu,phi)
   implicit none
 
   real(dp), dimension(numTotal), intent(in) :: phi
-  real(dp), dimension(numCells), intent(in) :: mu
+  real(dp), dimension(numPCells), intent(in) :: mu
 
   !
   ! Local variables
@@ -32,6 +32,8 @@ subroutine fvm_laplacian(mu,phi)
   ! Initialize matrix array
   a = 0.0_dp
   apr = 0.0_dp
+
+  call exchange( mu )
 
   ! > Assemble Laplacian system matrix
 
@@ -89,7 +91,7 @@ subroutine fvm_laplacian(mu,phi)
 
 
   ! Faces at processor boundaries
-  do i=1,noc
+  do i=1,npro
 
     iface = iProcFacesStart+i
     ijp = owner( iface )

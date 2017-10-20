@@ -1,4 +1,8 @@
 module utils
+!
+! Contains useful code for Cappuccino, and some general fortran utils 
+! written by John Burkardt, Ondrej Certik, John E Pask.
+!
 use types
 
 public
@@ -259,7 +263,7 @@ subroutine timestamp ( )
 
 end subroutine
 
-subroutine file_row_count ( input_file_name, row_num )
+subroutine file_row_count ( input_unit, row_num )
 
 !*****************************************************************************80
 !
@@ -277,14 +281,19 @@ subroutine file_row_count ( input_file_name, row_num )
 !  Modified:
 !
 !    06 March 2003
+!    11 October 2017
 !
 !  Author:
 !
 !    John Burkardt
 !
+!  Modified:
+!
+!    Nikola Mirkov
+!
 !  Parameters:
 !
-!    Input, character ( len = * ) INPUT_FILE_NAME, the name of the input file.
+!    Input, integer ( kind = 4 ) INPUT_UNIT, the name of the input file.
 !
 !    Output, integer ( kind = 4 ) ROW_NUM, the number of rows found.
 !
@@ -293,27 +302,27 @@ subroutine file_row_count ( input_file_name, row_num )
   integer ( kind = 4 ) bad_num
   integer ( kind = 4 ) comment_num
   integer ( kind = 4 ) ierror
-  character ( len = * ) input_file_name
+  ! character ( len = * ) input_file_name
   integer ( kind = 4 ) input_status
   integer ( kind = 4 ) input_unit
   character ( len = 255 ) line
   integer ( kind = 4 ) record_num
   integer ( kind = 4 ) row_num
 
-  call get_unit ( input_unit )
+  ! call get_unit ( input_unit )
 
-  open ( unit = input_unit, file = input_file_name, status = 'old', &
-    iostat = input_status )
+  ! open ( unit = input_unit, file = input_file_name, status = 'old', &
+  !   iostat = input_status )
 
-  if ( input_status /= 0 ) then
-    row_num = -1;
-    ierror = 1
-    write ( *, '(a)' ) ' '
-    write ( *, '(a)' ) 'FILE_ROW_COUNT - Fatal error!'
-    write ( *, '(a,i8)' ) '  Could not open the input file "' // &
-      trim ( input_file_name ) // '" on unit ', input_unit
-    stop
-  end if
+  ! if ( input_status /= 0 ) then
+  !   row_num = -1;
+  !   ierror = 1
+  !   write ( *, '(a)' ) ' '
+  !   write ( *, '(a)' ) 'FILE_ROW_COUNT - Fatal error!'
+  !   write ( *, '(a,i8)' ) '  Could not open the input file "' // &
+  !     trim ( input_file_name ) // '" on unit ', input_unit
+  !   stop
+  ! end if
 
   comment_num = 0
   row_num = 0
@@ -345,7 +354,8 @@ subroutine file_row_count ( input_file_name, row_num )
 
   end do
 
-  close ( unit = input_unit )
+  ! close ( unit = input_unit )
+  rewind input_unit
 
   return
 end
@@ -1095,5 +1105,23 @@ subroutine i4_to_s_left ( i4, s )
   return
 end
 
+
+pure integer function str_int_len(i) result(sz)
+! Returns the length of the string representation of 'i'
+integer, intent(in) :: i
+integer, parameter :: MAX_STR = 100
+character(MAX_STR) :: s
+! If 's' is too short (MAX_STR too small), Fortan will abort with:
+! "Fortran runtime error: End of record"
+write(s, '(i0)') i
+sz = len_trim(s)
+end function
+
+pure function str_int(i) result(s)
+! Converts integer "i" to string
+integer, intent(in) :: i
+character(len=str_int_len(i)) :: s
+write(s, '(i0)') i
+end function
 
 end module

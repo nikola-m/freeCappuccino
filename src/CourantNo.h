@@ -58,7 +58,7 @@
   meanCoNum = 0.5*meanCoNum/suma*timestep
 
   !// If we keep the value of Courant Number fixed
-  if(CoNumFix) then
+  if( CoNumFix .and. itime.ne.itimes ) then
       dt = timestep
       timestep = CoNumFixValue/CoNum * timestep
 

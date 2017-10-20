@@ -64,7 +64,7 @@ subroutine read_input_file
   WRITE(6,'(2(es11.4,1x),5x,a)') SLARGE,SORMAX,'SLARGE,SORMAX'
   WRITE(6,'(2(es11.4,1x),a)') DENSIT,VISCOS,'DENSIT,VISCOS'
   WRITE(6,'(3(es11.4,1x),a)') PRANL,TREF,BETA,'PRANL,TREF,BETA'
-  WRITE(6,'(L1,1x,3f6.2,1x,i1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
+  WRITE(6,'(L1,1x,3f6.2,1x,l1,1x,a)') LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ,'LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ'
   WRITE(6,'(L1,1x,f5.2,1x,es11.4,1x,a)') roughWall,EROUGH,ZZERO,'roughWall,EROUGH,ZZERO'
   WRITE(6,'(2(f4.2,1x),a)') FACNAP,FACFLX,'FACNAP,FACFLX'
   WRITE(6,'(L1,1x,L1,1x,f4.2,1x,L1,1x,a)') LTRANSIENT,BDF,BTIME,CN,'LTRANSIENT,BDF,BTIME,CN'
@@ -118,8 +118,6 @@ subroutine read_input_file
     lcds_flnt = .true.
   elseif(adjustl(convective_scheme) == 'linear-f') then
     l2nd_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'limited-linear') then
-    l2ndlim_flnt = .true.
   elseif(adjustl(convective_scheme) == 'muscl-f') then
     lmuscl_flnt = .true.
   else
@@ -142,16 +140,45 @@ subroutine read_input_file
   ! Gradient limiter:
   !
   if(adjustl(limiter) == 'Barth-Jespersen') then
+
     write(*,*) ' Gradient limiter: Barth-Jespersen'
+
   elseif(adjustl(limiter) == 'Venkatakrishnan') then
+
     write(*,*) ' Gradient limiter: Venkatakrishnan'
-  elseif(adjustl(limiter) == 'MVenkatakrishnan') then
+
+  elseif(adjustl(limiter) == 'mVenkatakrishnan') then
+
     write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
+
   elseif(adjustl(limiter) == 'no-limit') then
+
     write(*,*) ' Gradient limiter: no-limit'
+
   else
+
     write(*,*) ' Gradient limiter type not chosen, assigning default Venkatakrishnan limiter'
     limiter = 'Venkatakrishnan'
+    
+  endif
+
+  write(*,'(a)') ' '
+  
+  !
+  ! Time stepping algorithm:
+  !
+  if( bdf ) then
+
+    if (btime < 1.) then
+      write(*,*) ' Time stepping method: Euler Implicit'
+    else
+      write(*,*) ' Time stepping method: Three Level Implicit Time Integration (BDF2)'
+    endif
+
+  elseif( cn ) then
+
+       write(*,*) ' Time stepping method: Crank-Nicolson'   
+
   endif
 
   !

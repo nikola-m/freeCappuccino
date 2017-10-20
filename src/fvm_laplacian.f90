@@ -1,4 +1,4 @@
-subroutine fvm_laplacian(mu,phi)
+subroutine laplacian(mu,phi)
 !  
 !******************************************************************************
 !

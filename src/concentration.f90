@@ -46,6 +46,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use variables
   use sparse_matrix
   use gradients
+  use title_mod
+
   implicit none
 
   integer, intent(in) :: ifi
@@ -108,8 +110,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr, cap, can, suadd,  fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -147,8 +151,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr, al(i), ar(i), suadd,  fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
@@ -289,8 +295,14 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   end do
 
-  ! These field values cannot be negative
-  fi(1:numCells)=max(fi(1:numCells),small)
+! Report range of scalar values and clip if negative
+  fimin = minval(fi(1:numCells))
+  fimax = maxval(fi(1:numCells))
+  
+  write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+
+! These field values cannot be negative
+  if(fimin.lt.0.0_dp) fi(1:numCells) = max(fi(1:numCells),small)
 
 end subroutine calcsc
 

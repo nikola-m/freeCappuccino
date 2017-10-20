@@ -120,9 +120,6 @@ subroutine calcsc(Fi,dFidxi,ifi)
   if(ifi.eq.ite) prtr=1.0_dp/sigma_k
   if(ifi.eq.ied) prtr=1.0_dp/sigma_epsilon
 
-  fimin = minval(fi(1:numCells))
-  fimax = maxval(fi(1:numCells))
-
 ! Calculate gradient: 
   call grad(fi,dfidxi)
 
@@ -299,8 +296,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
     call facefluxsc( ijp, ijn, &
                      xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
-                    flmass(i), facint(i), gam, &
-                    fi, dFidxi, prtr, cap, can, suadd, fimin, fimax )
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -339,7 +336,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmoc(i), foc(i), gam, &
-                     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax )
+                     fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     ! > Elements on main diagonal:
     sp(ijp) = sp(ijp) - ar(i)
@@ -354,13 +351,13 @@ subroutine calcsc(Fi,dFidxi,ifi)
   ! Faces on processor boundary
   do i=1,npro
     iface = iProcFacesStart + i
-    ijp = owner( iface ) ! ( = buffind(i) )
+    ijp = owner( iface )
     ijn = iProcStart + i
 
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmpro(i), fpro(i), gam, &
-                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+                     fi, dfidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -383,8 +380,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     fi, dfidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -396,8 +395,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                    xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                    fmo(i), &
+                    fi, dfidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -578,6 +579,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
   enddo
 
   ! Solve linear system:
+  ! call jacobi(fi,ifi)
   call bicgstab(fi,ifi)
 
 !

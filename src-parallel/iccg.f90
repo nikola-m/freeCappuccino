@@ -13,7 +13,8 @@ subroutine iccg(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: numCells,numTotal,npro,noc,ijl,ijr,iProcFacesStart,iProcStart
+  use geometry, only: numCells,numPCells,numTotal,npro,noc,ijl,ijr,iProcFacesStart,iProcStart
+  use my_mpi_module
   use sparse_matrix
   use title_mod
 
@@ -27,15 +28,18 @@ subroutine iccg(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l, iOtherProc
+  integer :: i, k, ns, l, itr_used, iOtherProc
   real(dp), dimension(numCells) :: zk,d
-  real(dp), dimension(numCells+npro) :: pk
+  real(dp), dimension(numPCells) :: pk
   real(dp) :: rsm, resmax, res0, resl, tol
   real(dp) :: s0, sk, alf, bet, pkapk
 
 ! residual tolerance
   resmax = sor(ifi)
   tol = 1e-13
+
+  itr_used = 0
+
 !
 ! Initalize working arrays
 !
@@ -46,8 +50,6 @@ subroutine iccg(fi,ifi)
 !
 ! Calculate initial residual vector and the norm
 !
-
-! res(:) = su(:) - sum( a(ioffset(1:numCells):ioffset(2:numCells+1)-1) * fi(ja(ioffset(1:numCells):ioffset(2:numCells+1)-1)) )
 
   do i=1,numCells
     res(i) = su(i) 
@@ -75,35 +77,35 @@ subroutine iccg(fi,ifi)
 
   ! L1-norm of residual
   res0=sum(abs(res))
+
   call global_sum(res0)
 
   if(res0.lt.tol) then
-    write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
-    ', Initial residual = ',RES0,', Final residual = ',RES0,', No Iterations ',0
+    if (myid .eq. 0) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(ifi)), &
+    ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
     return
   endif
 
-  ! if( res0.lt.sor(ifi) ) return
-!
-! If ltest=true, print the norm 
-!
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
+
 !
-! Calculate elements of diagonal preconditioning matrix
+! Calculate elements of preconditioning matrix diagonal
 !
   do i=1,numCells
     d(i) = a( diag(i) )
     do k = ioffset(i), diag(i)-1
-      d(i) = d(i) - a( k )**2 * d( ja( k )) 
+      d(i) = d(i) - a( k ) * d( ja( k )) * a( k )
     end do
     d(i) =  1.0_dp / d(i)
   enddo
+
 
   s0=1.e20
 !
 ! Start iterations
 !
   ns=nsw(ifi)
+
   do l=1,ns
 !
 ! Solve for zk(ijk) -- forward substitution
@@ -116,7 +118,10 @@ subroutine iccg(fi,ifi)
     zk(i) = zk(i)*d(i)
   enddo
 
-  zk = zk/(d+small)     
+
+  do i=1,numCells
+    zk(i) = zk(i) / (d(i)+small) 
+  enddo 
 !
 ! Backward substitution
 !
@@ -126,9 +131,11 @@ subroutine iccg(fi,ifi)
     end do
     zk(i) = zk(i)*d(i)
   enddo
+
   
   ! Inner product
   sk = sum(res*zk) !..or  dot_product(res,zk)
+
   call global_sum(sk)
 
 !
@@ -139,7 +146,7 @@ subroutine iccg(fi,ifi)
 !
 ! Calculate new search vector pk
 !
-  pk = zk + bet*pk
+  pk(1:numCells) = zk + bet*pk(1:numCells)
 
   call exchange( pk )
 
@@ -168,12 +175,13 @@ subroutine iccg(fi,ifi)
 
   ! Inner product
   pkapk=sum(pk*zk)
+
   call global_sum(pkapk)
 
   alf=sk/pkapk
 
   ! Update solution vector
-  fi(1:numCells) = fi(1:numCells) + alf*pk
+  fi(1:numCells) = fi(1:numCells) + alf*pk(1:numCells)
 
   ! Update residual vector
   res = res - alf*zk
@@ -181,9 +189,13 @@ subroutine iccg(fi,ifi)
 
   ! L^1-norm of residual
   resl = sum(abs(res))
+  
   call global_sum(resl)
   
   s0=sk
+
+  itr_used = itr_used + 1
+
 !
 ! Check convergence 
 !
@@ -191,6 +203,7 @@ subroutine iccg(fi,ifi)
   rsm = resl/(resor(ifi)+small)
   if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
+
 !
 ! End of iteration loop
 !
@@ -200,7 +213,7 @@ subroutine iccg(fi,ifi)
   call exchange( fi )
 
 ! Write linear solver report:
-  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
+  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used
 
 end subroutine

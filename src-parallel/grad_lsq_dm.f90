@@ -35,7 +35,7 @@ subroutine grad_lsq_dm(fi,dFidxi,istage,dmat)
 
   integer, intent(in) :: istage
   real(dp),dimension(numTotal), intent(in)   :: fi
-  real(dp),dimension(3,numCells), intent(inout) :: dFidxi
+  real(dp),dimension(3,numPCells), intent(inout) :: dFidxi
   real(dp),dimension(6,numCells), intent(inout) :: dmat
 
   !

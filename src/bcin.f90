@@ -4,7 +4,6 @@ subroutine bcin
   use parameters
   use geometry
   use variables
-  ! use title_mod, only: inlet_file
 
   implicit none
 
@@ -20,18 +19,16 @@ subroutine bcin
   flowte = 0.0_dp
   flowed = 0.0_dp
 
-
   if(ninl.gt.0) then
-
-    ! open(unit=7,file=inlet_file)
-    ! rewind 7
 
     ! Loop over inlet boundaries
     do i = 1,ninl
       iface = iInletFacesStart+i
       ini = iInletStart + i
 
-      ! read(7,*) u(ini),v(ini),w(ini),p(ini),te(ini),ed(ini),t(ini)
+      ! Example of generating inflow profile for one case (Ishihara hill)
+      ! The numbers are then copied to 0/U file, under inlet \ nonuniform \ <list of values>
+      ! write(6,'(f9.6,1x,f3.1,1x,f3.1)') 5.5d0*(zf(iface)/0.2d0)**0.135,zero,zero  
 
       vis(ini) = viscos
 
@@ -51,8 +48,6 @@ subroutine bcin
       flowed = flowed + abs(fmi(i)*ed(ini))
 
     enddo
-
-    ! close(7)
 
     ! Loop over outlet boundaries
 

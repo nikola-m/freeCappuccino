@@ -27,7 +27,7 @@ subroutine dpcg(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
+  integer :: i, k, ns, l, itr_used
   real(dp), dimension(numCells) :: pk,zk
   real(dp) :: rsm, resmax, res0, resl
   real(dp) :: s0, sk, alf, bet, pkapk, tol
@@ -35,6 +35,8 @@ subroutine dpcg(fi,ifi)
 ! residual tolerance
   resmax = sor(ifi)
   tol=1e-13
+
+  itr_used = 0
 
 !
 ! Initalize working arrays
@@ -46,9 +48,6 @@ subroutine dpcg(fi,ifi)
 !
 ! Calculate initial residual vector and the norm
 !
-
-! res(:) = su(:) - sum( a(ioffset(1:numCells):ioffset(2:numCells+1)-1) * fi(ja(ioffset(1:numCells):ioffset(2:numCells+1)-1)) )
-
   do i=1,numCells
     res(i) = su(i) 
     do k = ioffset(i),ioffset(i+1)-1
@@ -63,7 +62,12 @@ subroutine dpcg(fi,ifi)
 
   ! L^1-norm of residual
   res0=sum(abs(res))
-    if( res0.lt.tol ) return
+  
+    if(res0.lt.tol) then
+      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(Jacobi):  Solving for ',trim(chvarSolver(ifi)), &
+      ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
+      return
+    endif
 !
 ! If ltest=true, print the norm 
 !
@@ -127,6 +131,8 @@ subroutine dpcg(fi,ifi)
 
   s0=sk
 
+  itr_used = itr_used + 1
+  
 !
 ! Check convergence
 !
@@ -134,6 +140,7 @@ subroutine dpcg(fi,ifi)
   rsm = resl/(resor(ifi)+small)
   if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
+
 !
 ! End of iteration loop
 !
@@ -141,7 +148,7 @@ subroutine dpcg(fi,ifi)
 
 ! Write linear solver report:
   write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
-  'PCG(Jacobi):  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
+  'PCG(Jacobi):  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used
 
 end subroutine

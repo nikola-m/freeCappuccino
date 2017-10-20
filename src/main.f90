@@ -34,7 +34,7 @@ program cappuccino
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
-  character(len=6) :: timechar
+  character(len=9) :: timechar
 !                                                                       
 !******************************************************************************
 !
@@ -143,7 +143,8 @@ program cappuccino
 
 
       call cpu_time(finish)
-      write(6,'(a,f6.3,a)') '  ExecutionTime = ',finish-start,' s'
+      write(timechar,'(f9.3)') finish-start
+      write(6,'(3a)') '  ExecutionTime = ',trim(adjustl(timechar)),' s'
       write(6,*)
 
 

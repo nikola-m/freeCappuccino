@@ -22,21 +22,22 @@ subroutine bicgstab(fi,ifi)
 !
 !     Local variables
 !
-  integer :: i, k, ns, l
+  integer :: i, k, ns, l, itr_used
   real(dp), dimension(numCells) :: reso,pk,uk,zk,vk,d
   real(dp) :: rsm, resmax, res0, resl
-  real(dp) :: alf, beto, gam, bet, om, ukreso
+  real(dp) :: alf, beto, gam, bet, om, ukreso,tol
 
 ! residual tolerance
   resmax = sor(ifi)
+  tol = 1e-13
+
+  itr_used = 0
 
 !
 ! Calculate initial residual vector and the norm
 !
-
-! res(:) = su(:) - sum( a(ioffset(1:numCells):ioffset(2:numCells+1)-1) * fi(ja(ioffset(1:numCells):ioffset(2:numCells+1)-1)) )
   
-  res(:) = 0.0_dp
+  res = 0.0_dp
 
   do i=1,numCells
     res(i) = su(i) 
@@ -51,15 +52,14 @@ subroutine bicgstab(fi,ifi)
   end do
 
   ! L^1-norm of residual
-  res0=sum(abs(res(:)))
-    if(res0.lt.small) then
-      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
-      ', Initial residual = ',RES0,', Final residual = ',RES0,', No Iterations ',0
+  res0=sum(abs(res))
+
+    if(res0.lt.tol) then
+      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(ifi)), &
+      ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
       return
     endif
-!
-! If ltest=true, print the norm 
-!
+
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 
 !
@@ -208,6 +208,8 @@ subroutine bicgstab(fi,ifi)
   ! L^1-norm of residual
   resl = sum(abs(res))
 
+  itr_used = itr_used + 1
+  
 !
 ! Check convergence
 !
@@ -222,8 +224,8 @@ subroutine bicgstab(fi,ifi)
   end do
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  BiCGStab(ILU(0)):  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used
 
 end subroutine
 

@@ -65,9 +65,11 @@ end subroutine correct_turbulence_inlet_k_epsilon_rng
 
 
 
+!***********************************************************************
+!
 subroutine calcsc(Fi,dFidxi,ifi)
 !
-!
+!***********************************************************************
 !
   use types
   use parameters
@@ -78,7 +80,9 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use title_mod
 
   implicit none
-
+!
+!***********************************************************************
+!
   integer, intent(in) :: ifi
   real(dp), dimension(numTotal) :: fi
   real(dp), dimension(3,numCells) :: dfidxi
@@ -297,8 +301,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr, cap, can, suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -334,8 +340,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
@@ -356,7 +364,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmpro(i), fpro(i), gam, &
-                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+                     fi, dfidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -379,8 +387,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     Fi, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -392,8 +402,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmo(i), &
+                     FI, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -572,7 +584,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   enddo
 
   ! Solve linear system:
-  call bicgstab(fi,ifi)
+  call jacobi(fi,ifi)
+  ! call bicgstab(fi,ifi)
 
 !
 ! Update symmetry and outlet boundaries

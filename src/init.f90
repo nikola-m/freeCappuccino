@@ -1,4 +1,4 @@
-!***********************************************************************
+! ***********************************************************************
 !
 subroutine init
 !
@@ -20,7 +20,7 @@ subroutine init
   use variables
   use title_mod
   use gradients
-  use sparse_matrix, only: su,sv
+  use sparse_matrix
   use utils, only: get_unit
   use LIS_linear_solver_library
 
@@ -29,7 +29,9 @@ subroutine init
   ! 
   ! Local variables 
   !
-  character(80) :: key,field_type,boundary_type
+  character(len=80) :: key,field_type,boundary_type
+  ! character(len=5)  :: maxno
+  ! character(10) :: tol
   integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, ioc, iface
   integer :: nfaces,startFace,nFacesOffset
   integer :: input_unit,input_status
@@ -296,15 +298,7 @@ subroutine init
   !   ijp = owner(iface)
   !   u(ijp) = ...
   ! enddo
-
-
-  ! Initialize minimal and maximal field values for velocity
-  umin = minval(u(1:numCells))
-  umax = maxval(u(1:numCells))
-  vmin = minval(v(1:numCells))
-  vmax = maxval(v(1:numCells))
-  wmin = minval(w(1:numCells))
-  wmax = maxval(w(1:numCells))
+  
 
 
   ! 
@@ -931,6 +925,41 @@ subroutine init
   dEDdxi = 0.0_dp
 
 
+! !===================================================
+! ! Test gradients:
+! u = 0.0_dp
+! ! Inlet
+! do i=1,ninl
+!   iface = iInletFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iInletStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Outlet
+! do i=1,nout
+!   iface = iOutletFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iOutletStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Symmetry
+! do i=1,nsym
+!   iface = iSymmetryFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iSymmetryStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Wall
+! do i=1,nwal
+!   iface = iWallFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iWallStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! u(1:numCells) = xc(1:numCells)+yc(1:numCells)+zc(1:numCells)
+! !===================================================
+
+
   if (lstsq .or. lstsq_qr .or. lstsq_dm) then
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
@@ -940,13 +969,16 @@ subroutine init
   call grad(W,dWdxi)
  
 
+! !===================================================
 ! print*,'gradijenti:'
-! do i=1,numCells
-!   print*,i,':',dudxi(1,i)
-! enddo
+! ! do i=1,numCells
+! !   print*,i,':',dudxi(1,i)
+! ! enddo
 ! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
 ! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
 ! stop
+! !===================================================
+
 
 !
 ! 4) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
@@ -1027,18 +1059,24 @@ subroutine init
   sv = 1.0_dp       
 
   ! Laplacian operator and BCs         
-  call fvm_laplacian(sv,p) 
+  call laplacian(sv,p) 
 
   sor_backup = sor(ip)
   nsw_backup = nsw(ip)
 
-  sor(ip) = 1e-16
-  nsw(ip) = 1000
+  sor(ip) = 1e-10
+  nsw(ip) = 500
 
   ! Solve system
   call iccg(p,ip) 
   ! call bicgstab(p,ip) 
-  ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)
+  ! call pmgmres_ilu ( numCells, nnz, ioffset, ja, a, diag, p(1:numCells), ip, su, 100, 4, 1e-8, sor(ip) )
+  ! write(maxno,'(i5)') nsw(ip)
+  ! write(tol,'(es9.2)') sor(ip)
+  ! ! write(options,'(a)') "-i gmres -restart [20] -p ilut -maxiter "//adjustl(maxno)//"-tol "//adjustl(tol)
+  ! write(options,'(a)') "-i cg -p ilu -ilu_fill 1 -maxiter "//adjustl(maxno)//"-tol "//adjustl(tol)
+  ! call solve_csr( numCells, nnz, ioffset, ja, a, su, p )
+
 
   ! Update values at constant gradient bc faces - we need these values for correct gradients
 

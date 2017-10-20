@@ -1,7 +1,7 @@
 !     # Create and save a frame for animation
-      write(timechar,'(i5)') itime
+      write(timechar,'(i9)') itime
 
-      Open(Unit=87,File=Trim(Out_Folder_Path)//'/tecplot-vel-'//timechar//'.txt') 
+      Open(Unit=87,File=Trim(Out_Folder_Path)//'/tecplot-vel-'//adjustl(timechar)//'.txt') 
       Rewind 87
 
       do i=1,numCells

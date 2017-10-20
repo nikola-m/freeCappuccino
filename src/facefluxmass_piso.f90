@@ -24,8 +24,7 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   ! Local variables
   real(dp) :: fxn, fxp
   real(dp) :: are,dpn
-  real(dp) :: xpn,ypn,zpn,dene,smdpn
-  real(dp) :: nxx,nyy,nzz
+  real(dp) :: xpn,ypn,zpn,dene
   real(dp) :: ui,vi,wi
 
 
@@ -46,29 +45,15 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
   ! cell face area
   are=sqrt(arx**2+ary**2+arz**2)
 
-  ! Unit vectors of the normal
-  nxx=arx/are
-  nyy=ary/are
-  nzz=arz/are
-
-
   ! density at the cell face
   dene=den(ijp)*fxp+den(ijn)*fxn
 
   ! COEFFICIENTS OF PRESSURE EQUATION
-  ! sfdpnr=1./(ARX*XPN*nxx+ARY*YPN*nyy+ARZ*ZPN*nzz)
-  ! smdpn = (arx*arx+ary*ary+arz*arz)/(arx*xpn+ary*ypn+arz*zpn)
-  smdpn = are/dpn
-  cap = -dene*(fxp*vol(ijp)*apu(ijp)+fxn*vol(ijn)*apu(ijn))*smdpn
+  cap = -dene*(fxp*vol(ijp)*apu(ijp)+fxn*vol(ijn)*apu(ijn))*are/dpn
   can = cap
 
 
   ! Interpolate velocities to face center:
-
-  ! ui = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, u, dUdxi )
-  ! vi = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, v, dVdxi )
-  ! wi = face_value_cds_corrected( ijp, ijn, xf, yf, zf, lambda, w, dWdxi )
-
 
   ui = face_value_central( ijp,ijn, xf, yf, zf, u, dUdxi )
   vi = face_value_central( ijp,ijn, xf, yf, zf, v, dVdxi )
@@ -76,8 +61,7 @@ subroutine facefluxmass_piso(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, c
 
 
   ! MASS FLUX
-  !// calculate the fluxes by dotting the interpolated velocity (to cell faces) with face normals
-  !     phi = (fvc::interpolate(U) & mesh.Sf()) 
+  ! Calculate the fluxes by dotting the interpolated velocity (to cell faces) with face normals
   flmass = dene*(ui*arx+vi*ary+wi*arz)
 
 end subroutine

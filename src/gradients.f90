@@ -11,7 +11,7 @@ use sparse_matrix, only: ioffset,ja,diag
 implicit none
 
 logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization approach
-character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, MVenkatakrishnan
+character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, mVenkatakrishnan
 
 real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
 real(dp),dimension(:,:,:), allocatable ::  dmatqr  !  when using qr version of the subroutine size(3,6,nxyz)!
@@ -104,16 +104,26 @@ implicit none
   dPhidxi = 0.0_dp
   
   if (lstsq) then 
+
     call grad_lsq(phi,dPhidxi,2,dmat)
+
   elseif (lstsq_qr) then 
+
     call grad_lsq_qr(phi,dPhidxi,2,dmatqr)
+
   elseif (lstsq_dm) then 
+
     call grad_lsq_dm(phi,dPhidxi,2,dmat)
+
   else
+
     call grad_gauss(phi,dPhidxi(1,:),dPhidxi(2,:),dPhidxi(3,:))
+
   endif 
 
+  !
   ! Gradient limiter:
+  !
   if(adjustl(limiter) == 'Barth-Jespersen') then
 
     call slope_limiter_Barth_Jespersen(phi, dPhidxi)
@@ -122,7 +132,7 @@ implicit none
 
     call slope_limiter_Venkatakrishnan(phi, dPhidxi)
 
-  elseif(adjustl(limiter) == 'MVenkatakrishnan') then
+  elseif(adjustl(limiter) == 'mVenkatakrishnan') then
 
     call slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
 
@@ -194,15 +204,19 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
 
   !     Locals
   integer :: inp,ijp,ijn,k
+
+  ! Look at the reference epsprim \in [0.01,0.2]
+  real(dp), parameter :: epsprim = 0.05_dp
+
   real(dp) :: phi_p
   real(dp) :: cell_neighbour_value,gradfiXdr,slopelimit
   real(dp) :: deltam,deltap,epsi
   real(dp) :: phi_max,phi_min
-  real(dp) :: fimax,fimin
+  real(dp) :: glomax,glomin
 
 
-  fimin = minval(phi(1:numCells))
-  fimax = maxval(phi(1:numCells))
+  glomin = minval(phi(1:numCells))
+  glomax = maxval(phi(1:numCells))
 
   do inp = 1, numCells
 
@@ -242,19 +256,18 @@ subroutine slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
       endif
 
       ! Wang proposition for epsilon
-      epsi = (0.05*( fimax-fimin ))**2 
-
+      epsi =  epsprim*( glomax-glomin ) 
       slopelimit = max(                                                                          &
-                        min(                                                                     &              
+                        min(                                                                     &
                               slopelimit,                                                        &
-                              1./(deltam+small)*((deltap+epsi)*deltam+2*deltam**2*deltap)        &
-                                               /(deltap**2+2*deltam**2+deltap*deltam+epsi+small) &
+                              1./(deltam+small)*((deltap**2+epsi**2)*deltam+2*deltam**2*deltap)  &
+                                            /(deltap**2+2*deltam**2+deltap*deltam+epsi**2+small) &
                             ),                                                                   &
                         zero                                                                     &
                       )
 
     enddo
-    !print*,slopelimit
+
     dPhidxi(:,inp) = slopelimit*dPhidxi(:,inp)
 
   enddo

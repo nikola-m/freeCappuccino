@@ -13,7 +13,7 @@ subroutine GaussSeidel(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: numCells,numTotal,ijl,ijr
+  use geometry, only: numCells,numTotal!,ijl,ijr
   use sparse_matrix
   use title_mod
 
@@ -27,12 +27,15 @@ subroutine GaussSeidel(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
-  real(dp) :: rsm, resmax, res0, resl
+  integer :: i, k, ns, l, itr_used
+  real(dp) :: rsm, resmax, res0, resl, tol
 
 
 ! residual tolerance
   resmax = sor(ifi)
+  tol = 1e-13
+
+  itr_used = 0
 
 !
 ! Start iterations
@@ -51,49 +54,30 @@ subroutine GaussSeidel(fi,ifi)
     fi(i) = fi(i) + res(i)/(a(diag(i))+small)   
   enddo
 
-  do i=1,noc
-    res(ijl(i)) = res(ijl(i)) - ar(i)*fi(ijr(i))
-    res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
-  end do
+  ! do i=1,noc
+  !   res(ijl(i)) = res(ijl(i)) - ar(i)*fi(ijr(i))
+  !   res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
+  ! end do
 
-! L^1-norm of residual
+! L1-norm of residual
   if(l.eq.1)  then
     res0=sum(abs(res))
-    ! if( res0.lt.sor(ifi) ) exit
+
+    if(res0.lt.tol) then
+      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  Gauss-Seidel:  Solving for ',trim(chvarSolver(ifi)), &
+      ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
+      return
+    endif  
+
   endif
 
-!
-! If ltest=true, print the norm 
-!
-  if(ltest.and.l.eq.1) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0 
+  if(ltest.and.l.eq.1) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0  
 
-!
-! Update variable
-!
-  ! do i=1,numcells
-  !   fi(i) = fi(i) + res(i)/a(diag(i))
-  ! enddo
-
-!
-! Update residual vector
-!
-  do i=1,numCells
-    res(i) = su(i) 
-    do k = ioffset(i),ioffset(i+1)-1
-      res(i) = res(i) -  a(k) * fi(ja(k)) 
-    enddo
-  enddo
-
-  do i=1,noc
-    res(ijl(i)) = res(ijl(i)) - ar(i)*fi(ijr(i))
-    res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
-  end do
-
- 
-
-  ! L^1-norm of residual
+  ! L1-norm of residual
   resl = sum(abs(res))
 
+  itr_used = itr_used + 1
+  
 !
 ! Check convergence
 !
@@ -101,13 +85,15 @@ subroutine GaussSeidel(fi,ifi)
   rsm = resl/(resor(ifi)+small)
   if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
+
+
 !
 ! End of iteration loop
 !
   end do
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  Gauss-Seidel:  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L  
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  Gauss-Seidel:  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used 
 
 end subroutine

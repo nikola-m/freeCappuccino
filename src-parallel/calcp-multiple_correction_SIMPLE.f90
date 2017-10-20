@@ -26,7 +26,7 @@ subroutine calcp
 !
 
   integer :: i, k, inp, iface, ijp, ijn, iOtherProc, istage
-  real(dp) :: sum, suma, ppref, cap, can, fmcor
+  real(dp) :: sum, suma, ppref, cap, can, fmcor, psum
 
 
   a = 0.0_dp
@@ -46,7 +46,7 @@ subroutine calcp
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxmass(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
+    call facefluxmass2(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
 
     ! > Off-diagonal elements:
 
@@ -83,7 +83,7 @@ subroutine calcp
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxmass(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
+    call facefluxmass2(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
     
     ! > Elements on main diagonal:
 
@@ -110,7 +110,7 @@ subroutine calcp
     ijp = owner( iface )
     ijn = iProcStart + i
 
-    call facefluxmass(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), cap, can, fmpro(i))
+    call facefluxmass2(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), cap, can, fmpro(i))
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -127,9 +127,7 @@ subroutine calcp
 
   end do
 
-  !// adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
-  !// problem where a solution for pressure exists.
-  !     adjustPhi(phi, U, p);
+
   if(.not.const_mflux) call adjustMassFlow
 
 
@@ -146,13 +144,13 @@ subroutine calcp
   do ipcorr=1,npcor
 
     ! Initialize pressure correction
-    pp=0.0d0
+    ! pp=0.0d0
 
     ! Solving pressure correction equation
     ! call bicgstab(pp,ip) 
     call iccg(pp,ip)
     ! call dpcg(pp,ip)
-    ! call gaussSeidel(pp,ip)
+    ! call jacobi(pp,ip)
        
     ! SECOND STEP *** CORRECTOR STAGE
    
@@ -166,15 +164,15 @@ subroutine calcp
   
     end do
 
-    ! Reference pressure correction - p'
-    if (myid .eq. iPrefProcess) then
+    ! ! Reference pressure correction - p'
+    ! if (myid .eq. iPrefProcess) then
+    !   ppref = pp(pRefCell)
+    !   call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
+    ! endif
 
-      ppref = pp(pRefCell)
-
-      call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
-
-    endif 
-
+    psum = sum( pp(1:numCells) ) 
+    call global_sum( psum )
+    ppref = psum / gloCells
 
     !
     ! Correct mass fluxes at inner cv-faces only (only inner flux)
@@ -260,6 +258,7 @@ subroutine calcp
 
         su(ijp) = su(ijp) - fmcor
         su(ijn) = su(ijn) + fmcor
+
       end do
 
 
@@ -274,7 +273,6 @@ subroutine calcp
         fmpro(i) = fmpro(i) + fmcor
         
         su(ijp) = su(ijp) - fmcor
-        su(ijn) = su(ijn) + fmcor
 
       end do
 
@@ -282,8 +280,8 @@ subroutine calcp
       ! ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
       ! if (myid .eq. 0) write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
       !                     ipcorr,'. nonorthogonal pass:', &
-      !                                   ' sum  =',sum(su(:)),    &
-      !                                   '|sum| =',abs(sum(su(:)))
+      !                                   ' sum  =',sum(su),    &
+      !                                   '|sum| =',abs(sum(su))
                                                                                                  
     !.......................................................................................................!
     elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
@@ -292,20 +290,38 @@ subroutine calcp
     ! Why not!
     !
 
-      ! ! Correct mass fluxes at inner cv-faces with second corr.                                                      
-      ! do i=1,numInnerFaces                                                      
-      !   ijp = owner(i)
-      !   ijn = neighbour(i)
-      !   call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-      !   flmass(i) = flmass(i)+fmcor                                                                                              
-      ! enddo                                                             
+      ! Correct mass fluxes at inner cv-faces with second corr.                                                      
+      do i=1,numInnerFaces                                                      
+        ijp = owner(i)
+        ijn = neighbour(i)
+
+        call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
+
+        flmass(i) = flmass(i)+fmcor  
+
+      enddo                                                             
                                                             
-      !  ! Faces along O-C grid cuts
-      ! do i=1,noc
-      !   iface = iOCFacesStart+i
-      !   call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-      !   fmoc(i)=fmoc(i)+fmcor
-      ! end do
+       ! Faces along O-C grid cuts
+      do i=1,noc
+        iface = iOCFacesStart+i
+
+        call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
+
+        fmoc(i)=fmoc(i)+fmcor
+
+      end do
+
+      ! Faces on processor boundary
+      do i=1,npro
+        iface = iProcFacesStart + i
+        ijp = owner( iface )
+        ijn = iProcStart + i
+
+        call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fpro(i), fmcor)
+        
+        fmpro(i) = fmpro(i) + fmcor
+
+      end do
 
     endif                                                             
     !.......................................................................................................!

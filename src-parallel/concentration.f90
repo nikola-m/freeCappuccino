@@ -46,6 +46,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   use variables
   use sparse_matrix
   use gradients
+  use title_mod
+
   implicit none
 
   integer, intent(in) :: ifi
@@ -63,7 +65,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
   real(dp) :: fimax,fimin
 
 
-  ! Variable specific coefficients:
+! Variable specific coefficients:
   gam = gds(ifi)      !< first to higher order convection scheme blending parameter gamma.
   prtr = 1.0d0/sigt   !< reciprocal value of Prandtl-Schmidt number
 
@@ -111,7 +113,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
                      flmass(i), facint(i), gam, &
-                     fi, dFidxi, prtr, cap, can, suadd,  fimin, fimax )
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -152,7 +154,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmoc(i), foc(i), gam, &
-                     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax )
+                     fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     ! > Elements on main diagonal:
     sp(ijp) = sp(ijp) - ar(i)
@@ -173,7 +175,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmpro(i), fpro(i), gam, &
-                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+                     fi, dfidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -196,8 +198,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     Fi, dFidxi, prtr, cap, can, suadd )
 
     sp(ijp) = sp(ijp)-can
 
@@ -210,8 +214,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iOutletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmo(i), &
+                     FI, dFidxi, prtr, cap, can, suadd )
 
     sp(ijp) = sp(ijp)-can
 
@@ -331,8 +337,20 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   end do
 
-  ! These field values cannot be negative
-  fi(1:numCells)=max(fi(1:numCells),small)
+! Report range of scalar values and clip if negative
+  fimin = minval(fi(1:numCells))
+  fimax = maxval(fi(1:numCells))
+
+! These field values cannot be negative
+  if(fimin.lt.0.0_dp) fi = max(fi,small)
+
+  call global_min(fimin)
+  call global_max(fimax)
+
+  if( myid .eq. 0 ) write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
+
+  ! MPI exchange
+  call exchange(fi)
 
 end subroutine calcsc
 

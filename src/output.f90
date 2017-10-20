@@ -294,7 +294,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
   call i4_to_s_left ( numCells, cells_num_string )
 
   call get_unit( cells_file )
-  open( unit = cells_file, file='cells' )
+  open( unit = cells_file, file='polyMesh/cells' )
   rewind cells_file
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
@@ -411,7 +411,7 @@ subroutine vtu_write_mesh ( output_unit )
   call i4_to_s_left ( numCells, cells_num_string )
 
   call get_unit( cells_file )
-  open( unit = cells_file, file='cells' )
+  open( unit = cells_file, file='polyMesh/cells' )
   rewind cells_file
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'

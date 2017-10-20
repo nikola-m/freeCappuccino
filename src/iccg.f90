@@ -27,25 +27,27 @@ subroutine iccg(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
+  integer :: i, k, ns, l, itr_used
   real(dp), dimension(numCells) :: pk,zk,d
   real(dp) :: rsm, resmax, res0, resl
-  real(dp) :: s0, sk, alf, bet, pkapk
+  real(dp) :: s0, sk, alf, bet, pkapk, tol
 
 ! residual tolerance
   resmax = sor(ifi)
+  tol = 1e-13
+
+  itr_used = 0
+
 !
 ! Initalize working arrays
 !
-  pk(:) = 0.0_dp
-  zk(:) = 0.0_dp
-  d(:) = 0.0_dp
-  res(:) = 0.0_dp
+  pk = 0.0_dp
+  zk = 0.0_dp
+  d = 0.0_dp
+  res = 0.0_dp
 !
 ! Calculate initial residual vector and the norm
 !
-
-! res(:) = su(:) - sum( a(ioffset(1:numCells):ioffset(2:numCells+1)-1) * fi(ja(ioffset(1:numCells):ioffset(2:numCells+1)-1)) )
 
   do i=1,numCells
     res(i) = su(i) 
@@ -62,9 +64,12 @@ subroutine iccg(fi,ifi)
   ! L^1-norm of residual
   res0=sum(abs(res))
 
-!
-! If ltest=true, print the norm 
-!
+    if(res0.lt.tol) then
+      write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(ifi)), &
+      ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
+      return
+    endif  
+
   if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0
 !
 ! Calculate elements of diagonal preconditioning matrix
@@ -149,6 +154,9 @@ subroutine iccg(fi,ifi)
   resl = sum(abs(res))
 
   s0=sk
+
+  itr_used = itr_used + 1
+  
 !
 ! Check convergence
 !
@@ -156,13 +164,14 @@ subroutine iccg(fi,ifi)
   rsm = resl/(resor(ifi)+small)
   if(ltest) write(6,'(19x,3a,i4,a,1pe10.3,a,1pe10.3)') ' fi=',chvar(ifi),' sweep = ',l,' resl = ',resl,' rsm = ',rsm
   if(rsm.lt.resmax) exit
+
 !
 ! End of iteration loop
 !
   end do
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  PCG(IC0):  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used
 
 end subroutine

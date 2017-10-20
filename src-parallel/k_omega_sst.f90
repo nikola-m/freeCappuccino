@@ -107,7 +107,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 
   integer, intent(in) :: ifi
   real(dp), dimension(numTotal) :: fi
-  real(dp), dimension(3,numCells) :: dfidxi
+  real(dp), dimension(3,numPCells) :: dfidxi
 
 !
 ! Local variables
@@ -128,7 +128,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
   real(dp) :: alphast,alphasst,bettasst,domega,vist,wlog,wvis
 
 
-  ! Variable specific coefficients:
+! Variable specific coefficients:
   gam=gds(ifi)
 
 
@@ -432,8 +432,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
       prtr_ijn = fsst(ijn)*(1./sigmom1) + (1.0_dp-fsst(ijn))*(1./sigmom2)
     endif
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr_ijp, prtr_ijn, cap, can, suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr_ijp, prtr_ijn, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -478,8 +480,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
       prtr_ijn = fsst(ijn)*(1./sigmom1) + (1.0_dp-fsst(ijn))*(1./sigmom2)
     endif
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr_ijp, prtr_ijn, al(i), ar(i), suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     fi, dfidxi, prtr_ijp, prtr_ijn, al(i), ar(i), suadd )
 
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
@@ -510,7 +514,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmpro(i), fpro(i), gam, &
-                     fi, dfidxi, prtr_ijp, prtr_ijn, cap, can, suadd, fimin, fimax )
+                     fi, dfidxi, prtr_ijp, prtr_ijn, cap, can, suadd )
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -541,8 +545,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
       prtr=fsst(ijp)*(1./sigmom1) + (1.0_dp-fsst(ijp))*(1./sigmom2)
     endif
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     Fi, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -562,8 +568,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
       prtr=fsst(ijp)*(1./sigmom1) + (1.0_dp-fsst(ijp))*(1./sigmom2)
     endif
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmo(i), &
+                     FI, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -744,6 +752,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
   enddo
 
   ! Solve linear system:
+  ! call jacobi(fi,ifi)
   call bicgstab(fi,ifi)
 
 !
@@ -957,7 +966,7 @@ subroutine modify_mu_eff_inlet()
 
   integer :: i,ini
 
-    ! Loop over inlet boundaries
+  ! Loop over inlet boundaries
   do i = 1,ninl
     ini = iInletStart+i   
 

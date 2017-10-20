@@ -15,7 +15,7 @@ subroutine exchange(phi)
 
   use types
   use parameters
-  use geometry, only: numTotal,iProcStart
+  use geometry, only: iProcStart,numTotal
   use my_mpi_module
 
   implicit none
@@ -28,8 +28,7 @@ subroutine exchange(phi)
   integer :: length
   integer :: status(mpi_status_size)
 
-
-  real(dp), intent(inout) :: phi(:) ! size numTotal, numCells+npro..
+  real(dp), intent(inout) :: phi(numTotal)
 
   iarbitr = 20 ! Helps create message tag (an integer btw)
  
@@ -46,7 +45,6 @@ subroutine exchange(phi)
 
   ! enddo
 
-
   ! Moze i da se pojendostavi punjenje buffera jer je sve vec podeseno
   do i=1,lenbuf
     buffer(i) = phi( bufind(i) )
@@ -56,20 +54,23 @@ subroutine exchange(phi)
 ! >> Exchange the values
 
   ! Idi po svim domenima sa kojima je ovaj konektovan
-  do iDomain = 1,size(neighbour)
+  do iDomain = 1,numConnections
 
-    iDFriend = neighbour(iDomain)
+    iDFriend = neighbProcNo(iDomain)
 
-    sendtag = 123 + this + iDFriend !iarbitr*this + iDFriend    ! tag for sending
-    rectag  = sendtag !iarbitr*iDFriend + this    ! tag for receiving
+    ! sendtag = iarbitr*this + iDFriend    ! tag for sending
+    ! rectag  = sendtag !iarbitr*iDFriend + this    ! tag for receiving
 
-    iStart = ioffset_buf(iDomain)
-    iEnd = ioffset_buf(iDomain+1)-1
+    sendtag = 123 + this + iDFriend ! tag for sending
+    rectag  = sendtag               ! tag for receiving
 
-    length = ioffset_buf(iDomain+1)-ioffset_buf(iDomain) ! ...also iEnd-iStart+1
+    iStart = neighbProcOffset(iDomain)
+    iEnd   = neighbProcOffset(iDomain+1)-1
+
+    length = iEnd-iStart+1
 
     call MPI_SENDRECV_REPLACE & 
-     (buffer(iStart),   &     ! buffer  salje donju vrednost jer je ona najjniza negativna odatle ide u plus za jedan po jedan, ali vrednosti mora da su contiguous u phi
+     (buffer(iStart),   &     ! buffer
       length,           &     ! length   
       MPI_DOUBLE_PRECISION, & ! datatype  
       iDFriend,          &    ! dest,      
@@ -89,3 +90,94 @@ subroutine exchange(phi)
   enddo
  
 end subroutine exchange
+
+
+!***********************************************************************
+!
+subroutine exchange_short(phi) 
+!
+!***********************************************************************
+!
+!   Exchanges field values between connected processes from their
+!   respective buffers. 
+!   Executes a blocking send and receive. The same buffer is used both 
+!   for the send and for the receive, so that the message sent is 
+!   replaced by the message received.                   
+!
+!***********************************************************************
+!
+
+  use types
+  use parameters
+  use geometry, only: iProcStart,numPCells
+  use my_mpi_module
+
+  implicit none
+
+  include 'mpif.h'
+
+  integer :: i,k
+  integer :: iDomain,iDFriend,iStart,iEnd
+  integer :: rectag,sendtag,iarbitr
+  integer :: length
+  integer :: status(mpi_status_size)
+
+  real(dp), intent(inout) :: phi(numPCells)
+
+  iarbitr = 20 ! Helps create message tag (an integer btw)
+ 
+  ! >> Fill the buffers with new values
+
+  ! ! Idi po svim domenima sa kojima je ovaj konektovan
+  ! do iDomain = 1,size(neighbour)
+
+  !   len = ioffset_buf(iDomain+1)-ioffset_buf(iDomain)
+
+  !   do i=1,len
+  !     buffer(i) = phi( bufind(i) )
+  !   enddo
+
+  ! enddo
+
+  ! Moze i da se pojendostavi punjenje buffera jer je sve vec podeseno
+  do i=1,lenbuf
+    buffer(i) = phi( bufind(i) )
+  enddo 
+
+
+! >> Exchange the values
+
+  ! Idi po svim domenima sa kojima je ovaj konektovan
+  do iDomain = 1,numConnections
+
+    iDFriend = neighbProcNo(iDomain)
+
+    sendtag = 123 + this + iDFriend !iarbitr*this + iDFriend    ! tag for sending
+    rectag  = sendtag !iarbitr*iDFriend + this    ! tag for receiving
+
+    iStart = neighbProcOffset(iDomain)
+    iEnd   = neighbProcOffset(iDomain+1)-1
+
+    length = iEnd-iStart+1
+
+    call MPI_SENDRECV_REPLACE & 
+     (buffer(iStart),   &     ! buffer
+      length,           &     ! length   
+      MPI_DOUBLE_PRECISION, & ! datatype  
+      iDFriend,          &    ! dest,      
+      sendtag,          &     ! sendtag,    
+      iDFriend,         &     ! source,      
+      rectag,           &     ! recvtag,      
+      MPI_COMM_WORLD,   &     ! communicator
+      status,           &     ! status
+      ierr)                   ! error
+
+  end do
+
+  ! Prebaci iz buffera u phi polje na odgovarajuce mesto 
+  do i=1,lenbuf
+    k = iProcStart+i
+    phi( k ) = buffer(i)
+  enddo
+ 
+end subroutine exchange_short

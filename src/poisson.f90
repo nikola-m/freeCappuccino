@@ -75,7 +75,7 @@ program poisson
   sv = -1.0_dp       
 
   ! Laplacian operator and BCs         
-  call fvm_laplacian(sv,p) 
+  call laplacian(sv,p) 
 
   sor(ip) = 1e-16
   nsw(ip) = 1000
@@ -83,16 +83,16 @@ program poisson
   ! Solve system
   write(*,'(a)') ' '
   ! 1)
-  ! call iccg(p,ip) 
+  call iccg(p,ip) 
   ! 2)
   ! call gaussSeidel(p,ip)
   ! 3)
-  call solve_csr(numCells,nnz,ioffset,ja,a,su,p) 
+  ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p) 
   write(*,'(a)') ' '
 
-  do i=1,numCells
-    write(6,'(es11.4)') p(i)
-  enddo 
+  ! do i=1,numCells
+  !   write(6,'(es11.4)') p(i)
+  ! enddo 
 
   ! Cell size
   ijp = owner(1)

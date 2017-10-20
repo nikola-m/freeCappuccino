@@ -32,7 +32,7 @@ contains
 !
 subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, &
                       flmass, lambda, gam, FI, dFidxi, &
-                      prtr, cap, can, suadd, fimin, fimax)
+                      prtr, cap, can, suadd)
 !
 !***********************************************************************
 !
@@ -55,14 +55,14 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   real(dp), dimension(numTotal), intent(in) :: Fi
   real(dp), dimension(3,numCells), intent(in) :: dFidxi
   real(dp), intent(in) :: prtr
-  real(dp), intent(inout) :: cap, can, suadd, fimin, fimax
+  real(dp), intent(inout) :: cap, can, suadd
 
 
 ! Local variables
   integer  :: nrelax
   character(len=12) :: approach
   real(dp) :: are
-  real(dp) :: xpn,ypn,zpn, xi,yi,zi,r1,r2,psie,psiw
+  real(dp) :: xpn,ypn,zpn!, xi,yi,zi,r1,r2,psie,psiw
   real(dp) :: dpn
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
@@ -134,61 +134,15 @@ subroutine facefluxsc(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   !-------------------------------------------------------
   ! Explicit higher order convection
   !-------------------------------------------------------
-  ! if( flmass .ge. zero ) then 
-  !   ! Flow goes from p to pj - > p is the upwind node
-  !   fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi, fimin, fimax)
-  ! else
-  !   ! Other way, flow goes from pj, to p -> pj is the upwind node.
-  !   fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi, fimin, fimax)
-  ! endif
+  if( flmass .ge. zero ) then 
+    ! Flow goes from p to pj - > p is the upwind node
+    fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi)
+  else
+    ! Other way, flow goes from pj, to p -> pj is the upwind node.
+    fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi)
+  endif
 
-  ! fcfie = fm*fii
-
-  ! ! Interpolate gradients defined at CV centers to faces
-  ! dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
-  ! dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
-  ! dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-  
-  ! if(lcds) then
-    ! !---------------------------------------------
-    ! ! CENTRAL DIFFERENCING SCHEME (CDS) 
-    ! !---------------------------------------------
-    ! ! Interpolate variable FI defined at CV centers to face using corrected CDS:
-    ! ! Coordinates of interpolation point j'
-    ! xi=xc(ijp)*fxp+xc(ijn)*fxn
-    ! yi=yc(ijp)*fxp+yc(ijn)*fxn
-    ! zi=zc(ijp)*fxp+zc(ijn)*fxn
-    ! !   |________Ue'___________|_______________Ucorr_____________________|
-    ! fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
-
-    ! ! Explicit second order convection 
-    ! fcfie=fm*fii
-
-  ! elseif(lluds.or.l2ndlim_flnt.or.l2nd_flnt) then
-  !   !---------------------------------------------
-  !   ! 2ND ORDER UPWIND DIFFERENCING SCHEME (LUDS) 
-  !   !---------------------------------------------
-  !   fcfie = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, fi, dFidxi, fimin, fimax)+&
-  !           ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, fi, dFidxi, fimin, fimax)
-  ! else
-    !---------------------------------------------
-    ! MUSCL SCHEME (MUSCL)
-    !---------------------------------------------
-    ! Flux limiter formulation for 'r' coefficients from:
-    ! Darwish-Moukalled TVD schemes for unstructured grids, IJHMT, 2003. 
-    !---------------------------------------------
-    ! Find r's - the gradient ratio. This is universal for all schemes.
-    ! If flow goes from P to E
-    r1 = (2*dFidxi(1,ijp)*xpn + 2*dFidxi(2,ijp)*ypn + 2*dFidxi(3,ijp)*zpn)/(FI(ijn)-FI(ijp)) - 1.0_dp  
-    ! If flow goes from E to P
-    r2 = (2*dFidxi(1,ijn)*xpn + 2*dFidxi(2,ijn)*ypn + 2*dFidxi(3,ijn)*zpn)/(FI(ijp)-FI(ijn)) - 1.0_dp 
-    ! Find Psi for [ MUSCL ] :
-    psiw = max(0., min(2.*r1, 0.5*r1+0.5, 2.))
-    psie = max(0., min(2.*r2, 0.5*r2+0.5, 2.))
-    ! High order flux at cell face
-    fcfie =  ce*(fi(ijn) + fxn*psie*(fi(ijp)-fi(ijn)))+ &
-             cp*(fi(ijp) + fxp*psiw*(fi(ijn)-fi(ijp)))
-  ! endif
+  fcfie = fm*fii
 
   !-------------------------------------------------------
   ! Explicit first order convection
@@ -213,7 +167,7 @@ end subroutine
 !
 subroutine facefluxsc_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz, &
                                     flmass, lambda, gam, FI, dFidxi, &
-                                    prtr_ijp, prtr_ijn, cap, can, suadd, fimin, fimax)
+                                    prtr_ijp, prtr_ijn, cap, can, suadd)
 !
 !***********************************************************************
 !
@@ -244,14 +198,14 @@ subroutine facefluxsc_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   real(dp), dimension(numTotal), intent(in) :: Fi
   real(dp), dimension(3,numCells), intent(in) :: dFidxi
   real(dp), intent(in) :: prtr_ijp, prtr_ijn
-  real(dp), intent(inout) :: cap, can, suadd, fimin, fimax
+  real(dp), intent(inout) :: cap, can, suadd
 
 
 ! Local variables
   integer  :: nrelax
   character(len=12) :: approach
   real(dp) :: are
-  real(dp) :: xpn,ypn,zpn, xi,yi,zi,r1,r2,psie,psiw
+  real(dp) :: xpn,ypn,zpn!, xi,yi,zi,r1,r2,psie,psiw
   real(dp) :: dpn
   real(dp) :: Cp,Ce
   real(dp) :: fii,fm
@@ -323,64 +277,15 @@ subroutine facefluxsc_nonconst_prtr(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   !-------------------------------------------------------
   ! Explicit higher order convection
   !-------------------------------------------------------
-  ! if( flmass .ge. zero ) then 
-  !   ! Flow goes from p to pj - > p is the upwind node
-  !   fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi, fimin, fimax)
-  ! else
-  !   ! Other way, flow goesfrom pj, to p -> pj is the upwind node.
-  !   fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi, fimin, fimax)
-  ! endif
+  if( flmass .ge. zero ) then 
+    ! Flow goes from p to pj - > p is the upwind node
+    fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi)
+  else
+    ! Other way, flow goesfrom pj, to p -> pj is the upwind node.
+    fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi)
+  endif
 
-  ! fcfie = fm*fii
-
-  ! ! Interpolate gradients defined at CV centers to faces
-  ! dfixi = dFidxi(1,ijp)*fxp+dFidxi(1,ijn)*fxn
-  ! dfiyi = dFidxi(2,ijp)*fxp+dFidxi(2,ijn)*fxn
-  ! dfizi = dFidxi(3,ijp)*fxp+dFidxi(3,ijn)*fxn
-
-  !-------------------------------------------------------
-  ! Explicit higher order convection
-  !-------------------------------------------------------
-  ! if(lcds) then
-    ! !---------------------------------------------
-    ! ! CENTRAL DIFFERENCING SCHEME (CDS) 
-    ! !---------------------------------------------
-    ! ! Interpolate variable FI defined at CV centers to face using corrected CDS:
-    ! ! Coordinates of interpolation point j'
-    ! xi=xc(ijp)*fxp+xc(ijn)*fxn
-    ! yi=yc(ijp)*fxp+yc(ijn)*fxn
-    ! zi=zc(ijp)*fxp+zc(ijn)*fxn
-    ! !   |________Ue'___________|_______________Ucorr_____________________|
-    ! fii=fi(ijp)*fxp+fi(ijn)*fxn+dfixi*(xf-xi)+dfiyi*(yf-yi)+dfizi*(zf-zi)
-
-    ! ! Explicit second order convection 
-    ! fcfie=fm*fii
-
-  ! elseif(lluds) then
-  !   !---------------------------------------------
-  !   ! 2ND ORDER UPWIND DIFFERENCING SCHEME (LUDS) 
-  !   !---------------------------------------------
-  !   fcfie = cp*face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, fi, dFidxi, fimin, fimax)+&
-  !           ce*face_value_2nd_upwind_slope_limited(ijn, xf, yf, zf, fi, dFidxi, fimin, fimax)
-  ! else
-    !---------------------------------------------
-    ! MUSCL SCHEME (MUSCL)
-    !---------------------------------------------
-    ! Flux limiter formulation for 'r' coefficients from:
-    ! Darwish-Moukalled TVD schemes for unstructured grids, IJHMT, 2003. 
-    !---------------------------------------------
-    ! Find r's - the gradient ratio. This is universal for all schemes.
-    ! If flow goes from P to E
-    r1 = (2*dFidxi(1,ijp)*xpn + 2*dFidxi(2,ijp)*ypn + 2*dFidxi(3,ijp)*zpn)/(FI(ijn)-FI(ijp)) - 1.0_dp  
-    ! If flow goes from E to P
-    r2 = (2*dFidxi(1,ijn)*xpn + 2*dFidxi(2,ijn)*ypn + 2*dFidxi(3,ijn)*zpn)/(FI(ijp)-FI(ijn)) - 1.0_dp 
-    ! Find Psi for [ MUSCL ] :
-    psiw = max(0., min(2.*r1, 0.5*r1+0.5, 2.))
-    psie = max(0., min(2.*r2, 0.5*r2+0.5, 2.))
-    ! High order flux at cell face
-    fcfie =  ce*(fi(ijn) + fxn*psie*(fi(ijp)-fi(ijn)))+ &
-             cp*(fi(ijp) + fxp*psiw*(fi(ijn)-fi(ijp)))
-  ! endif
+  fcfie = fm*fii
 
   !-------------------------------------------------------
   ! Explicit first order convection
@@ -405,7 +310,7 @@ end subroutine
 !
 subroutine facefluxsc_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, &
                              flmass, lambda, gam, srd, FI, dFidxi, &
-                             prtr, cap, can, suadd, fimin, fimax)
+                             prtr, cap, can, suadd)
 !
 !***********************************************************************
 !
@@ -429,7 +334,7 @@ subroutine facefluxsc_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   real(dp), dimension(numTotal), intent(in) :: Fi
   real(dp), dimension(3,numCells), intent(in) :: dFidxi
   real(dp), intent(in) :: prtr
-  real(dp), intent(inout) :: cap, can, suadd, fimin, fimax
+  real(dp), intent(inout) :: cap, can, suadd
 
 
 ! Local variables
@@ -517,10 +422,10 @@ subroutine facefluxsc_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, &
   !-------------------------------------------------------
   if( flmass .ge. zero ) then 
     ! Flow goes from p to pj - > p is the upwind node
-    fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi, fimin, fimax)
+    fii = face_value(ijp, ijn, xf, yf, zf, fxp, fi, dFidxi)
   else
     ! Other way, flow goes from pj, to p -> pj is the upwind node.
-    fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi, fimin, fimax)
+    fii = face_value(ijn, ijp, xf, yf, zf, fxn, fi, dFidxi)
   endif
 
   fcfie = fm*fii

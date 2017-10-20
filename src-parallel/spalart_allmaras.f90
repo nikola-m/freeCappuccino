@@ -41,18 +41,23 @@ module Spalart_Allmaras
 
 contains
 
-
+!***********************************************************************
+!
 subroutine correct_turbulence_spalart_allmaras()
 !
-! Main module routine to solve turbulence model equations and update effective viscosity.
-! ***
-! * NOTE: We use TKE array to store nu_tilda here!
-! ***
+!***********************************************************************
 !
+! Main module routine to solve turbulence model equations and update effective viscosity.
+!
+! * NOTE: We use TKE array to store nu_tilda here!
+!
+!***********************************************************************
   use types
   use parameters
   use variables
   use gradients
+  use title_mod
+
   implicit none
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve nu_tilda eq.
@@ -62,8 +67,11 @@ subroutine correct_turbulence_spalart_allmaras()
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine correct_turbulence_inlet_spalart_allmaras()
+!
+!***********************************************************************
 !
 ! Update effective viscosity at inlet
 !
@@ -74,8 +82,11 @@ subroutine correct_turbulence_inlet_spalart_allmaras()
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine calcsc(Fi,dFidxi,ifi)
+!
+!***********************************************************************
 !
 ! Assemble and solve transport equation for scalar field.
 !
@@ -202,8 +213,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr, cap, can, suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -239,8 +252,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     ! > Elements on main diagonal:
     sp(ijp) = sp(ijp) - ar(i)
@@ -262,7 +277,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
     call facefluxsc( ijp, ijn, &
                      xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
                      fmpro(i), fpro(i), gam, &
-                     fi, dfidxi, prtr, cap, can, suadd, fimin, fimax )
+                     fi, dfidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:    
     apr(i) = can
@@ -286,8 +301,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     Fi, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -299,8 +316,11 @@ subroutine calcsc(Fi,dFidxi,ifi)
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmo(i), &
+                     FI, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -417,7 +437,8 @@ subroutine calcsc(Fi,dFidxi,ifi)
   enddo
 
   ! Solve linear system:
-  call bicgstab(fi,ifi)
+  call jacobi(fi,ifi)
+  ! call bicgstab(fi,ifi)
 
 !
 ! Update symmetry and outlet boundaries

@@ -1,7 +1,8 @@
 module sparse_matrix
 !%%%%%%%%%%%
   use types
-  use geometry, only:  nnz,numCells,numInnerFaces,noc,npro,owner,neighbour
+  use parameters, only:myid
+  use geometry, only:  nnz,numCells,numPCells,numInnerFaces,noc,npro,owner,neighbour
   use utils, only: csr_to_k, find_index_position, find_main_diag_element_positions, i4vec2_sort_a, i4vec_print, i4vec_print2
 
 
@@ -81,32 +82,32 @@ subroutine create_CSR_matrix_from_mesh_data
 !
   call i4vec2_sort_a ( nnz, ia, ja )
 
-  ! call i4vec_print2 ( 10, ia, ja, '  First 10 lines of Sorted IA and JA arrays:' )
+  if (myid .eq. 0 ) call i4vec_print2 ( 10, ia, ja, '  First 10 lines of Sorted IA and JA arrays:' )
 
 !
 ! > Find positions of diagonal elements in COO matrix format
 !
- allocate ( diag(numCells) )
+  allocate ( diag(numCells) )
 
- call find_main_diag_element_positions ( ia,ja,nnz,diag,numCells )
+  call find_main_diag_element_positions ( ia,ja,nnz,diag,numCells )
 
- ! call i4vec_print ( 10, diag, '  First 20 lines of Diagonal adjacency vector:' )
+  if (myid .eq. 0 ) call i4vec_print ( 10, diag, '  First 20 lines of Diagonal adjacency vector:' )
 
 !
 ! > Find positions of row starting in COO matrix format
 !
- allocate ( ioffset(numCells+1) )
+  allocate ( ioffset(numCells+1) )
 
- istart = 1
- iend = 1
- do icell = 1,numCells
-   call find_index_position(icell, istart, iend, ia,  nnz, ioffset(icell))
-   istart = ioffset(icell)+1
-   iend = nnz
- enddo
- ioffset(numCells+1) = nnz+1 ! poslednji element
+  istart = 1
+  iend = 1
+  do icell = 1,numCells
+    call find_index_position(icell, istart, iend, ia,  nnz, ioffset(icell))
+    istart = ioffset(icell)+1
+    iend = nnz
+  enddo
+  ioffset(numCells+1) = nnz+1 ! poslednji element
 
- ! call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
+  if (myid .eq. 0 ) call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
 
 !
 ! > Do not need row indices - information on rows is in ioffset (CSR format)
@@ -139,9 +140,9 @@ subroutine create_CSR_matrix_from_mesh_data
 !
 ! > 1/UEqn.A()
 !
-  allocate( apu( numCells + npro ) )
-  allocate( apv( numCells + npro ) ) 
-  allocate( apw( numCells + npro ) ) 
+  allocate( apu( numPCells ) )
+  allocate( apv( numPCells ) ) 
+  allocate( apw( numPCells ) ) 
 
 ! 
 ! > Left and right coef. for faces on O- or C- grid cuts

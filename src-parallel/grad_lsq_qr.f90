@@ -40,7 +40,7 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 
   integer, intent(in) :: istage
   real(dp), dimension(numTotal), intent(in)   :: fi
-  real(dp), dimension(n,numCells), intent(inout) :: dFidxi
+  real(dp), dimension(n,numPCells), intent(inout) :: dFidxi
   real(dp), dimension(n,m,numCells), intent(inout) :: D
 
   !

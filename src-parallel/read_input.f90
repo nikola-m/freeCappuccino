@@ -159,6 +159,7 @@ subroutine read_input_file
 
 
   call MPI_BCAST(convective_scheme,1,MPI_INTEGER,0,MPI_COMM_WORLD,IERR)
+  call MPI_BCAST(limiter,20,MPI_CHARACTER,0,MPI_COMM_WORLD,IERR)
 
   call MPI_BCAST(GDS(1),NPHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,IERR)
   call MPI_BCAST(URF(1),NPHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,IERR)
@@ -231,8 +232,6 @@ endif
     lcds_flnt = .true.
   elseif(adjustl(convective_scheme) == 'linear-f') then
     l2nd_flnt = .true.
-  elseif(adjustl(convective_scheme) == 'limited-linear') then
-    l2ndlim_flnt = .true.
   elseif(adjustl(convective_scheme) == 'muscl-f') then
     lmuscl_flnt = .true.
   else
@@ -253,25 +252,49 @@ endif
     write(*,'(a)') ' '
     write(*,'(2a)') '  Convective scheme: ', adjustl(convective_scheme)
     write(*,'(a)') ' '
-  endif
-
+  
   !
   ! Gradient limiter:
   !
-  if(adjustl(limiter) == 'Barth-Jespersen') then
-    write(*,*) ' Gradient limiter: Barth-Jespersen'
-  elseif(adjustl(limiter) == 'Venkatakrishnan') then
-    write(*,*) ' Gradient limiter: Venkatakrishnan'
-  elseif(adjustl(limiter) == 'MVenkatakrishnan') then
-    write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
-  elseif(adjustl(limiter) == 'no-limit') then
-    write(*,*) ' Gradient limiter: no-limit'
-  else
-    if (myid .eq. 0) then
-      write(*,*) ' Gradient limiter type not chosen, assigning default Venkatakrishnan limiter'
+    if(adjustl(limiter) == 'Barth-Jespersen') then
+
+      write(*,*) ' Gradient limiter: Barth-Jespersen'
+
+    elseif(adjustl(limiter) == 'Venkatakrishnan') then
+
+      write(*,*) ' Gradient limiter: Venkatakrishnan'
+
+    elseif(adjustl(limiter) == 'mVenkatakrishnan') then
+
+      write(*,*) ' Gradient limiter: Wang modified Venkatakrishnan'
+
+    else!if(adjustl(limiter) == 'no-limit') then
+
+      write(*,*) ' Gradient limiter: no-limit'
+      
     endif
-    limiter = 'Venkatakrishnan'
+
+    write(*,'(a)') ' '
+
+  !
+  ! Time stepping algorithm:
+  !
+    if( bdf ) then
+
+      if (btime < 1.) then
+        write(*,*) ' Time stepping method: Euler Implicit'
+      else
+        write(*,*) ' Time stepping method: Three Level Implicit Time Integration (BDF2)'
+      endif
+
+    elseif( cn ) then
+
+         write(*,*) ' Time stepping method: Crank-Nicolson'   
+
+    endif
+
   endif
+
 
   !
   ! Open files for data at monitoring points 
@@ -286,4 +309,11 @@ endif
     end do
   end if
 
+  !
+  ! Pressure reference cell
+  !
+
+  iPrefProcess = 0
+  pRefCell = 1
+  
 end subroutine

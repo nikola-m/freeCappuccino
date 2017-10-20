@@ -22,7 +22,7 @@ subroutine PISO_multiple_correction
   integer :: i, k, inp, iface, iOtherProc, istage
   integer :: ijp, ijn
   real(dp) :: cap, can
-  real(dp) :: sum
+  ! real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
   h = a  
@@ -154,20 +154,21 @@ subroutine PISO_multiple_correction
     !// one cell's pressure has to be set to produce a unique pressure solution
     !     pEqn.setReference(pRefCell, pRefValue);
     !//
+
+    ! Reference pressure at process that owns that cell
+    if (myid .eq. iPrefProcess) then
+
     a( ioffset(pRefCell):ioffset(pRefCell+1)-1 ) = 0.0_dp
     a( diag(pRefCell) ) = 1.0_dp
 
-    ! ! Reference pressure at process that owns that cell
-    ! if (myid .eq. iPrefProcess) then
+      ! ppref = p(pRefCell)
 
-    !   ppref = p(pRefCell)
-
-    !   call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
-
-    ! endif 
+      ! call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
 
     ! Reference pressure
     su(pRefCell) =  p(pRefCell)
+
+    endif 
 
 
     !=====Multiple pressure corrections======================================================.

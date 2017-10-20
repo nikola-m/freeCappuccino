@@ -27,7 +27,7 @@ subroutine grad_gauss(u,dudx,dudy,dudz)
 
   ! Arguments
   real(dp), dimension(numTotal), intent(in) :: u
-  real(dp), dimension(numCells), intent(inout) :: dudx,dudy,dudz
+  real(dp), dimension(numPCells), intent(inout) :: dudx,dudy,dudz
 
   ! Local
   integer :: i,ijp,ijn,ijb,lc,iface

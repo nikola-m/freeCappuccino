@@ -438,8 +438,11 @@ subroutine mesh_geometry
   ! Initialize no. of cyclic boundaries
   iCycBoundaries  = 0
 
+  ! Number of rows in the file excluding #comment in header
+  call file_row_count ( boundary_file, numBoundaries )
+
   read(boundary_file,'(a)') line_string
-  read(boundary_file,*) numBoundaries
+  ! read(boundary_file,*) numBoundaries
 
   do i=1,numBoundaries
   read(boundary_file,*) bctype,nfaces,startFace
@@ -522,19 +525,19 @@ if (native_mesh_files)  then
 
     ! 'points' file
 
-    do i=1,16
-      read(points_file,*) ch
-    end do
-
-    ! do
+    ! do i=1,16
     !   read(points_file,*) ch
-    !   if (ch == "(") then
-    !     ! Return two lines
-    !     backspace(points_file)
-    !     backspace(points_file)
-    !     exit
-    !   endif
     ! end do
+
+    do
+      read(points_file,*) ch
+      if (ch == "(") then
+        ! Return two lines
+        backspace(points_file)
+        backspace(points_file)
+        exit
+      endif
+    end do
 
     read(points_file,*) numNodes
     read(points_file,*) ch ! reads "("
@@ -569,6 +572,7 @@ if (native_mesh_files)  then
       read(neighbour_file,*) ch
     end do
 
+
     ! do
     !   read(neighbour_file,*) ch
     !   if (ch == "(") then
@@ -593,11 +597,12 @@ if (native_mesh_files)  then
     !   read(faces_file,*) ch
     !   if (ch == "(") then
     !     ! Return two lines
-    !     backspace(faces_file)
-    !     backspace(faces_file)
+    !     ! backspace(faces_file)
+    !     ! backspace(faces_file)
     !     exit
     !   endif
     ! end do
+
     ! read(faces_file, *) numFaces
     ! read(faces_file,*) ch ! reads "("
 
@@ -823,7 +828,7 @@ if (native_mesh_files)  then
     rewind( boundary_file )
 
     read(boundary_file,'(a)') line_string
-    read(boundary_file,*) numBoundaries
+    ! read(boundary_file,*) numBoundaries
 
     ioc = 1
     icyc = 1
@@ -887,7 +892,7 @@ if (native_mesh_files)  then
 
     inp = owner(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then
@@ -955,7 +960,7 @@ if (native_mesh_files)  then
     !     yf(iface) = yf(iface) / (ay+1e-30)
     !     zf(iface) = zf(iface) / (az+1e-30)
     ! else   
-        ! > Because I could have not resolve the problem, these line are inserted 
+        ! > Because I could have not resolve the problem, these lines are inserted 
         !   where face centroid is calculated by arithmetic average.  
         xf(iface) = 0.0_dp
         yf(iface) = 0.0_dp
@@ -978,11 +983,18 @@ if (native_mesh_files)  then
 
   ! Rewind 'faces' file for one more sweep
   rewind( faces_file )
+
   if (.not.native_mesh_files) then
     do i=1,18
       read(faces_file,*) ch
     end do
-  endif
+    ! do
+    !   read(faces_file,*) ch
+    !   if (ch == "(") then
+    !     exit
+    !   endif
+    ! end do 
+  endif 
 
   !
   ! > Cell centers
@@ -992,7 +1004,7 @@ if (native_mesh_files)  then
 
     inp = owner(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then
@@ -1034,10 +1046,17 @@ if (native_mesh_files)  then
 
   ! Rewind 'faces' file for one more sweep
   rewind( faces_file )
+
   if (.not.native_mesh_files) then
     do i=1,18
       read(faces_file,*) ch
     end do
+!     do
+!       read(faces_file,*) ch
+!       if (ch == "(") then
+!         exit
+!       endif
+!     end do 
   endif
 
   !
@@ -1049,7 +1068,7 @@ if (native_mesh_files)  then
     inp = owner(iface)
     inn = neighbour(iface)
 
-    node(:) = 0
+    node = 0
 
     ! Read line in 'faces' file
     if (native_mesh_files) then

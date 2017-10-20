@@ -32,7 +32,7 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
 
   integer, intent(in) :: istage
   real(dp),dimension(numTotal), intent(in)   :: fi
-  real(dp),dimension(3,numCells), intent(inout) :: dFidxi
+  real(dp),dimension(3,numPCells), intent(inout) :: dFidxi
   real(dp),dimension(6,numCells), intent(inout) :: Dmat
 
   !
@@ -66,10 +66,6 @@ subroutine grad_lsq(fi,dFidxi,istage,dmat)
       Dx = xc(ijn)-xc(ijp)
       Dy = yc(ijn)-yc(ijp)
       Dz = zc(ijn)-zc(ijp)
-
-      ! Dxc2 = xc(ijn)-xc(ijp)
-      ! Dyc2 = yc(ijn)-yc(ijp)
-      ! Dzc2 = zc(ijn)-zc(ijp)
 
       Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx  ! 1,1
       Dmat(1,ijn) = Dmat(1,ijn) + Dx*Dx
@@ -181,65 +177,90 @@ enddo
         Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
   end do
 
-  ! ! Inlet: 
-  ! do i=1,ninl
-  !   iface = iInletFacesStart + i
-  !   ijp = owner(iface)
-  !       Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
-  !       Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
-  !       Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
-  !       Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
-  !       Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
-  !       Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
+  ! Inlet: 
+  do i=1,ninl
+    iface = iInletFacesStart + i
+    ijp = owner(iface)
 
-  ! ! Outlet
-  ! do i=1,nout
-  ! iface = iOutletFacesStart + i
-  ! ijp = owner(iface)
-  !       Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
-  !       Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
-  !       Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
-  !       Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
-  !       Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
-  !       Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
+        Dx = xf(iface)-xc(ijp)
+        Dy = yf(iface)-yc(ijp)
+        Dz = zf(iface)-zc(ijp)
 
-  ! ! Symmetry
-  ! do i=1,nsym
-  ! iface = iSymmetryFacesStart + i
-  ! ijp = owner(iface)
-  !       Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
-  !       Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
-  !       Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
-  !       Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
-  !       Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
-  !       Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
+        Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx
+        Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy
+        Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz
+        Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy 
+        Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz 
+        Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
+  end do
 
-  ! ! Wall
-  ! do i=1,nwal
-  ! iface = iWallFacesStart + i
-  ! ijp = owner(iface)
-  !       Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
-  !       Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
-  !       Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
-  !       Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
-  !       Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
-  !       Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
+  ! Outlet
+  do i=1,nout
+  iface = iOutletFacesStart + i
+  ijp = owner(iface)
 
-  ! ! Pressure Outlet
-  ! do i=1,npru
-  ! iface = iPressOutletFacesStart + i
-  ! ijp = owner(iface)
-  !       Dmat(1,ijp) = Dmat(1,ijp) + (xf(iface)-xc(ijp))**2
-  !       Dmat(4,ijp) = Dmat(4,ijp) + (yf(iface)-yc(ijp))**2
-  !       Dmat(6,ijp) = Dmat(6,ijp) + (zf(iface)-zc(ijp))**2
-  !       Dmat(2,ijp) = Dmat(2,ijp) + (xf(iface)-xc(ijp))*(yf(iface)-yc(ijp)) 
-  !       Dmat(3,ijp) = Dmat(3,ijp) + (xf(iface)-xc(ijp))*(zf(iface)-zc(ijp)) 
-  !       Dmat(5,ijp) = Dmat(5,ijp) + (yf(iface)-yc(ijp))*(zf(iface)-zc(ijp)) 
-  ! end do
+        Dx = xf(iface)-xc(ijp)
+        Dy = yf(iface)-yc(ijp)
+        Dz = zf(iface)-zc(ijp)
+
+        Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx
+        Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy
+        Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz
+        Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy 
+        Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz 
+        Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
+  end do
+
+  ! Symmetry
+  do i=1,nsym
+  iface = iSymmetryFacesStart + i
+  ijp = owner(iface)
+
+        Dx = xf(iface)-xc(ijp)
+        Dy = yf(iface)-yc(ijp)
+        Dz = zf(iface)-zc(ijp)
+
+        Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx
+        Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy
+        Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz
+        Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy 
+        Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz 
+        Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
+  end do
+
+  ! Wall
+  do i=1,nwal
+  iface = iWallFacesStart + i
+  ijp = owner(iface)
+
+        Dx = xf(iface)-xc(ijp)
+        Dy = yf(iface)-yc(ijp)
+        Dz = zf(iface)-zc(ijp)
+
+        Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx
+        Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy
+        Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz
+        Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy 
+        Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz 
+        Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
+  end do
+
+  ! Pressure Outlet
+  do i=1,npru
+  iface = iPressOutletFacesStart + i
+  ijp = owner(iface)
+  
+        Dx = xf(iface)-xc(ijp)
+        Dy = yf(iface)-yc(ijp)
+        Dz = zf(iface)-zc(ijp)
+
+        Dmat(1,ijp) = Dmat(1,ijp) + Dx*Dx
+        Dmat(2,ijp) = Dmat(2,ijp) + Dy*Dy
+        Dmat(3,ijp) = Dmat(3,ijp) + Dz*Dz
+        Dmat(4,ijp) = Dmat(4,ijp) + Dx*Dy 
+        Dmat(5,ijp) = Dmat(5,ijp) + Dx*Dz 
+        Dmat(6,ijp) = Dmat(6,ijp) + Dy*Dz 
+  end do
 
   ! Find and store the inverse of LSQ matrix Dmat
   do inp=1,numCells 
@@ -250,19 +271,20 @@ enddo
      +   2 * Dmat(4,inp) * Dmat(5,inp) * Dmat(6,inp)                         &
      -       Dmat(5,inp) * Dmat(5,inp) * Dmat(2,inp)
 
-    Dinv(1) = +( Dmat(2,inp)*Dmat(3,inp) - Dmat(6,inp)*Dmat(6,inp) ) / (Jac+small)
-    Dinv(2) = +( Dmat(1,inp)*Dmat(3,inp) - Dmat(5,inp)*Dmat(5,inp) ) / (Jac+small)
-    Dinv(3) = +( Dmat(1,inp)*Dmat(2,inp) - Dmat(4,inp)*Dmat(4,inp) ) / (Jac+small)
+    Dinv(1) =  ( Dmat(2,inp)*Dmat(3,inp) - Dmat(6,inp)*Dmat(6,inp) ) / (Jac+small)
+    Dinv(2) =  ( Dmat(1,inp)*Dmat(3,inp) - Dmat(5,inp)*Dmat(5,inp) ) / (Jac+small)
+    Dinv(3) =  ( Dmat(1,inp)*Dmat(2,inp) - Dmat(4,inp)*Dmat(4,inp) ) / (Jac+small)
     Dinv(4) = -( Dmat(4,inp)*Dmat(3,inp) - Dmat(5,inp)*Dmat(6,inp) ) / (Jac+small)
-    Dinv(5) = +( Dmat(4,inp)*Dmat(6,inp) - Dmat(5,inp)*Dmat(2,inp) ) / (Jac+small)
+    Dinv(5) =  ( Dmat(4,inp)*Dmat(6,inp) - Dmat(5,inp)*Dmat(2,inp) ) / (Jac+small)
     Dinv(6) = -( Dmat(1,inp)*Dmat(6,inp) - Dmat(4,inp)*Dmat(5,inp) ) / (Jac+small)
+
 
     Dmat(1,inp) = Dinv(1) 
     Dmat(2,inp) = Dinv(2)
     Dmat(3,inp) = Dinv(3)
     Dmat(4,inp) = Dinv(4)
     Dmat(5,inp) = Dinv(5)
-    Dmat(6,inp) = Dinv(6)
+    Dmat(6,inp) = Dinv(6)    
 
   end do 
 

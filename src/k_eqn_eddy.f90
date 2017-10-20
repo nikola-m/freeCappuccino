@@ -30,10 +30,15 @@ module k_eqn_eddy
 contains
 
 
+!***********************************************************************
+!
 subroutine correct_turbulence_k_eqn_eddy()
+!
+!***********************************************************************
 !
 ! Main module routine to solve turbulence model equations and update effective viscosity.
 !
+!***********************************************************************
   use types
   use parameters
   use variables
@@ -46,8 +51,11 @@ subroutine correct_turbulence_k_eqn_eddy()
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine correct_turbulence_inlet_k_eqn_eddy()
+!
+!***********************************************************************  
 !
 ! Update effective viscosity at inlet
 !
@@ -58,11 +66,15 @@ subroutine correct_turbulence_inlet_k_eqn_eddy()
 end subroutine
 
 
-
+!***********************************************************************
+!
 subroutine calcsc(Fi,dFidxi,ifi)
 !
+!***********************************************************************
 !
+! Discretization of scalar equation
 !
+!***********************************************************************
   use types
   use parameters
   use geometry
@@ -150,11 +162,11 @@ subroutine calcsc(Fi,dFidxi,ifi)
         ! When bouy activated we need the freshest utt,vtt,wtt - turbulent heat fluxes
         call calcheatflux 
 
-        if(boussinesq.eq.1) then
+        if(boussinesq) then
            uttbuoy=-gravx*den(inp)*utt(inp)*vol(inp)*beta
            vttbuoy=-gravy*den(inp)*vtt(inp)*vol(inp)*beta
            wttbuoy=-gravz*den(inp)*wtt(inp)*vol(inp)*beta
-        else ! if (boussinesq.eq.0)
+        else
            uttbuoy=-gravx*den(inp)*utt(inp)*vol(inp)/(t(inp)+273.15)
            vttbuoy=-gravy*den(inp)*vtt(inp)*vol(inp)/(t(inp)+273.15)
            wttbuoy=-gravz*den(inp)*wtt(inp)*vol(inp)/(t(inp)+273.15)
@@ -204,8 +216,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxsc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), flmass(i), facint(i), gam, &
-     fi, dFidxi, prtr, cap, can, suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), &
+                     flmass(i), facint(i), gam, &
+                     fi, dFidxi, prtr, cap, can, suadd )
 
     ! > Off-diagonal elements:
 
@@ -241,8 +255,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxsc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmoc(i), foc(i), gam, &
-     srdoc(i), fi, dfidxi, prtr, al(i), ar(i), suadd, fimin, fimax)
+    call facefluxsc( ijp, ijn, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmoc(i), foc(i), gam, &
+                     srdoc(i), fi, dfidxi, prtr, al(i), ar(i), suadd )
 
     sp(ijp) = sp(ijp) - ar(i)
     sp(ijn) = sp(ijn) - al(i)
@@ -261,8 +277,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     ijp = owner(iface)
     ijb = iInletStart+i
 
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmi(i), &
-     Fi, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmi(i), &
+                     Fi, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -274,8 +292,10 @@ subroutine calcsc(Fi,dFidxi,ifi)
     iface = iOutletFacesStart+i
     ijp = owner(iface)
     ijb = iOutletStart+i
-    call facefluxsc(ijp, ijb, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), fmo(i), &
-     FI, dFidxi, prtr, cap, can, suadd)
+    call facefluxsc( ijp, ijb, &
+                     xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), &
+                     fmo(i), &
+                     FI, dFidxi, prtr, cap, can, suadd )
 
     Sp(ijp) = Sp(ijp)-can
 
@@ -399,6 +419,7 @@ subroutine calcsc(Fi,dFidxi,ifi)
 ! Report range of scalar values and clip if negative
   fimin = minval(fi)
   fimax = maxval(fi)
+
   write(6,'(2x,es11.4,3a,es11.4)') fimin,' <= ',chvar(ifi),' <= ',fimax
 
 ! These field values cannot be negative
@@ -545,7 +566,7 @@ subroutine modify_mu_eff_inlet()
 !
   use types
   use parameters
-  use geometry,only:ninl,iInletStart,iInletFacesStart,arx,ary,arz 
+  use geometry, only:ninl,iInletStart,iInletFacesStart,arx,ary,arz 
   use variables
 
   implicit none

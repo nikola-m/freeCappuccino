@@ -1,11 +1,11 @@
 !***********************************************************************
 !
-subroutine GaussSeidel(fi,ifi)
+subroutine Jacobi(fi,ifi)
 !
 !***********************************************************************
 !
 !    This routine incorporates the  
-!    Gauss-Seidel solver for sparse matrices in CSR sparse matrix format
+!    Jacobi solver for sparse matrices in CSR sparse matrix format
 !
 !    Writen by nikola mirkov, 2016. nmirkov@vinca.rs
 !
@@ -13,7 +13,7 @@ subroutine GaussSeidel(fi,ifi)
 !
   use types 
   use parameters
-  use geometry, only: numCells,numTotal,ijl,ijr
+  use geometry, only: numCells,numTotal,ijl,ijr,noc,npro,iProcFacesStart,iProcStart
   use sparse_matrix
   use title_mod
 
@@ -27,18 +27,15 @@ subroutine GaussSeidel(fi,ifi)
 !
 ! Local variables
 !
-  integer :: i, k, ns, l
-  real(dp) :: rsm, resmax, res0, resl
+  integer :: i, k, ns, l, itr_used, iOtherProc
+  real(dp) :: rsm, resmax, res0, resl, tol
 
 
 ! residual tolerance
+  tol = 1e-13
   resmax = sor(ifi)
 
-!
-! Start iterations
-!
-  ns=nsw(ifi)
-  do l=1,ns
+  itr_used = 0
 
 !
 ! Calculate initial residual vector and the norm
@@ -47,8 +44,7 @@ subroutine GaussSeidel(fi,ifi)
     res(i) = su(i) 
     do k = ioffset(i),ioffset(i+1)-1
       res(i) = res(i) -  a(k) * fi(ja(k)) 
-    enddo
-    fi(i) = fi(i) + res(i)/(a(diag(i))+small)   
+    enddo 
   enddo
 
   do i=1,noc
@@ -56,23 +52,41 @@ subroutine GaussSeidel(fi,ifi)
     res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
   end do
 
-! L^1-norm of residual
-  if(l.eq.1)  then
-    res0=sum(abs(res))
-    ! if( res0.lt.sor(ifi) ) exit
+  do i=1,npro
+    k = owner( iProcFacesStart + i )
+    iOtherProc = iProcStart+i
+    res( k ) = res( k ) - apr( i )*fi( iOtherProc )
+  end do
+
+
+  ! L1-norm of residual
+  res0=sum(abs(res))
+
+  call global_sum(res0)
+
+  if(res0.lt.tol) then
+    if (myid .eq. 0) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  Jacobi:  Solving for ',trim(chvarSolver(ifi)), &
+    ', Initial residual = ',res0,', Final residual = ',res0,', No Iterations ',0
+    return
   endif
 
-!
-! If ltest=true, print the norm 
-!
-  if(ltest.and.l.eq.1) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0 
+  if(ltest) write(6,'(20x,a,1pe10.3)') 'res0 = ',res0 
 
 !
-! Update variable
+! Start iterations
 !
-  ! do i=1,numcells
-  !   fi(i) = fi(i) + res(i)/a(diag(i))
-  ! enddo
+  ns=nsw(ifi)
+
+  do l=1,ns
+
+!
+! Update solution vector
+!
+  do i=1,numCells
+    fi(i) = fi(i) + res(i)/(a(diag(i))+small)   
+  enddo
+
+  call exchange(fi)
 
 !
 ! Update residual vector
@@ -89,11 +103,20 @@ subroutine GaussSeidel(fi,ifi)
     res(ijr(i)) = res(ijr(i)) - al(i)*fi(ijl(i))
   end do
 
- 
+  do i=1,npro
+    k = owner( iProcFacesStart + i )
 
-  ! L^1-norm of residual
+    iOtherProc = iProcStart+i
+    res( k ) = res( k ) - apr( i )*fi( iOtherProc )
+  end do
+
+  ! L1-norm of residual
   resl = sum(abs(res))
 
+  call global_sum( resl )
+
+  itr_used = itr_used + 1
+  
 !
 ! Check convergence
 !
@@ -105,9 +128,11 @@ subroutine GaussSeidel(fi,ifi)
 ! End of iteration loop
 !
   end do
+  
 
 ! Write linear solver report:
-  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  Gauss-Seidel:  Solving for ',trim(chvarSolver(IFI)), &
-  ', Initial residual = ',RES0,', Final residual = ',RESL,', No Iterations ',L  
+  if ( myid.eq.0 ) write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') &
+  '  Jacobi:  Solving for ',trim(chvarSolver(ifi)), &
+  ', Initial residual = ',res0,', Final residual = ',resl,', No Iterations ',itr_used 
 
 end subroutine

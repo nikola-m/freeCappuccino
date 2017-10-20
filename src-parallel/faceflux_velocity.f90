@@ -36,10 +36,12 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 !
 !***********************************************************************
 !
-  implicit none
+! Face fluxes of velocity for inner faces.
 !
 !***********************************************************************
 ! 
+  implicit none
+
 
   integer, intent(in) :: ijp, ijn
   real(dp), intent(in) :: xf,yf,zf
@@ -157,14 +159,14 @@ subroutine facefluxuvw(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lambda, gam
 
   if( flomass .ge. zero ) then 
     ! Flow goes from p to pj - > p is the upwind node
-    ue = face_value(ijp, ijn, xf, yf, zf, fxp, u, dUdxi, umin, umax)
-    ve = face_value(ijp, ijn, xf, yf, zf, fxp, v, dVdxi, vmin, vmax)
-    we = face_value(ijp, ijn, xf, yf, zf, fxp, w, dWdxi, wmin, wmax)
+    ue = face_value(ijp, ijn, xf, yf, zf, fxp, u, dUdxi )
+    ve = face_value(ijp, ijn, xf, yf, zf, fxp, v, dVdxi )
+    we = face_value(ijp, ijn, xf, yf, zf, fxp, w, dWdxi )
   else
     ! Other way, flow goes from pj, to p -> pj is the upwind node.
-    ue = face_value(ijn, ijp, xf, yf, zf, fxn, u, dUdxi, umin, umax)
-    ve = face_value(ijn, ijp, xf, yf, zf, fxn, v, dVdxi, vmin, vmax)
-    we = face_value(ijn, ijp, xf, yf, zf, fxn, w, dWdxi, wmin, wmax)
+    ue = face_value(ijn, ijp, xf, yf, zf, fxn, u, dUdxi )
+    ve = face_value(ijn, ijp, xf, yf, zf, fxn, v, dVdxi )
+    we = face_value(ijn, ijp, xf, yf, zf, fxn, w, dWdxi )
   endif
 
   fuhigh = flomass*ue
@@ -196,9 +198,6 @@ subroutine facefluxuvw_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lamb
 !***********************************************************************
 !
   implicit none
-!
-!***********************************************************************
-! 
 
   integer, intent(in) :: ijp, ijn
   real(dp), intent(in) :: xf,yf,zf
@@ -275,7 +274,7 @@ subroutine facefluxuvw_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lamb
   ! > Explicit diffusion: 
 
   nrelax = 0
-  approach  = 'uncorrected'
+  approach  = 'skewness'
 
   call sngrad(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, &
               u, dudxi, nrelax, approach, duxi, duyi, duzi,  &
@@ -322,14 +321,14 @@ subroutine facefluxuvw_cyclic(ijp, ijn, xf, yf, zf, arx, ary, arz, flomass, lamb
 
   if( flomass .ge. zero ) then 
     ! Flow goes from p to pj - > p is the upwind node
-    ue = face_value(ijp, ijn, xf, yf, zf, fxp, u, dUdxi, umin, umax)
-    ve = face_value(ijp, ijn, xf, yf, zf, fxp, v, dVdxi, vmin, vmax)
-    we = face_value(ijp, ijn, xf, yf, zf, fxp, w, dWdxi, wmin, wmax)
+    ue = face_value(ijp, ijn, xf, yf, zf, fxp, u, dUdxi )
+    ve = face_value(ijp, ijn, xf, yf, zf, fxp, v, dVdxi )
+    we = face_value(ijp, ijn, xf, yf, zf, fxp, w, dWdxi )
   else
     ! Other way, flow goes from pj, to p -> pj is the upwind node.
-    ue = face_value(ijn, ijp, xf, yf, zf, fxn, u, dUdxi, umin, umax)
-    ve = face_value(ijn, ijp, xf, yf, zf, fxn, v, dVdxi, vmin, vmax)
-    we = face_value(ijn, ijp, xf, yf, zf, fxn, w, dWdxi, wmin, wmax)
+    ue = face_value(ijn, ijp, xf, yf, zf, fxn, u, dUdxi )
+    ve = face_value(ijn, ijp, xf, yf, zf, fxn, v, dVdxi )
+    we = face_value(ijn, ijp, xf, yf, zf, fxn, w, dWdxi )
   endif
 
   fuhigh = flomass*ue
@@ -354,17 +353,18 @@ subroutine facefluxuvw_boundary(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
 !
 !***********************************************************************
 !
-  implicit none
+! Facefluxuvw routine used for inlet and outlet boundaries. 
+! Constant gradient is assumed between cell center and boundary face center.
 !
 !***********************************************************************
 ! 
+  implicit none
+
 
   integer, intent(in) :: ijp, ijb
   real(dp), intent(in) :: xf,yf,zf
   real(dp), intent(in) :: arx, ary, arz
   real(dp), intent(in) :: flomass
-  ! real(dp), intent(in) :: lambda
-  ! real(dp), intent(in) :: gam
   real(dp), intent(inout) :: cap, can
   real(dp), intent(inout) :: sup, svp, swp
 
@@ -388,11 +388,7 @@ subroutine facefluxuvw_boundary(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
 
   real(dp) :: de, vole, game
   real(dp) :: fxp,fxn
-  real(dp) :: fuuds,fvuds,fwuds,fuhigh,fvhigh,fwhigh
-  real(dp) :: ue, ve, we
   real(dp) :: fdue,fdve,fdwe,fdui,fdvi,fdwi
-  real(dp) :: r1,r2,r3,r4,r5,r6
-  real(dp) :: psie1,psie2,psie3,psiw1,psiw2,psiw3
 !----------------------------------------------------------------------
 
 
@@ -518,198 +514,25 @@ subroutine facefluxuvw_boundary(ijp, ijb, xf, yf, zf, arx, ary, arz, flomass, ca
   dwzii = dwzi*d1z + arz/vole*( w(ijb)-w(ijp)-dwxi*d2x-dwyi*d2y-dwzi*d2z ) 
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!     we calculate explicit and implicit diffusion fde and fdi,
+!     We calculate explicit and implicit diffusion fde and fdi,
 !     later we put their difference (fde-fdi) to rhs vector
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  ! explicit diffussion 
-  fdue = (duxii+duxii)*arx + (duyii+dvxii)*ary + (duzii+dwxii)*arz
-  fdve = (duyii+dvxii)*arx + (dvyii+dvyii)*ary + (dvzii+dwyii)*arz
-  fdwe = (duzii+dwxii)*arx + (dwyii+dvzii)*ary + (dwzii+dwzii)*arz
+  ! Explicit diffussion 
+  fdue = game*( (duxii+duxii)*arx + (duyii+dvxii)*ary + (duzii+dwxii)*arz )
+  fdve = game*( (duyii+dvxii)*arx + (dvyii+dvyii)*ary + (dvzii+dwyii)*arz )
+  fdwe = game*( (duzii+dwxii)*arx + (dwyii+dvzii)*ary + (dwzii+dwzii)*arz )
 
-  fdue = game*fdue
-  fdve = game*fdve
-  fdwe = game*fdwe
-
-  ! implicit diffussion 
+  ! Implicit diffussion 
   fdui = game*are/dpn*(duxi*xpn+duyi*ypn+duzi*zpn)
   fdvi = game*are/dpn*(dvxi*xpn+dvyi*ypn+dvzi*zpn)
   fdwi = game*are/dpn*(dwxi*xpn+dwyi*ypn+dwzi*zpn)
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-!++++end: velocities at cell face center and explicit diffusion fluxes+++++++
-
-
 
   ! > Explicit convection: 
-
-  ! Explicit convective fluxes for UDS
-  fuuds=max(flomass,zero)*u(ijp)+min(flomass,zero)*u(ijb)
-  fvuds=max(flomass,zero)*v(ijp)+min(flomass,zero)*v(ijb)
-  fwuds=max(flomass,zero)*w(ijp)+min(flomass,zero)*w(ijb)
-
-  fuhigh=0.0_dp
-  fvhigh=0.0_dp
-  fwhigh=0.0_dp
-
-  ! Explicit convective fluxes for CDS
-  if(lcds) then
-
-    !  |________uj'_________|_______________ucorr___________________|
-    ue=u(ijp)*fxp+u(ijb)*fxn+(duxi*(xf-xi)+duyi*(yf-yi)+duzi*(zf-zi))
-
-    !  |________vj'_________|_______________vcorr___________________|
-    ve=v(ijp)*fxp+v(ijb)*fxn+(dvxi*(xf-xi)+dvyi*(yf-yi)+dvzi*(zf-zi))
-    !  |________wj'_________|_______________wcorr___________________|
-    we=w(ijp)*fxp+w(ijb)*fxn+(dwxi*(xf-xi)+dwyi*(yf-yi)+dwzi*(zf-zi))
-    
-    fuhigh=flomass*ue
-    fvhigh=flomass*ve
-    fwhigh=flomass*we
-
-  end if
-!--------------------------------------------------------------------------------------------
-!     BOUNDED HIGH-ORDER CONVECTIVE SCHEMES (Waterson & Deconinck JCP 224 (2007) pp. 182-207)
-!--------------------------------------------------------------------------------------------
-  if(flux_limiter) then
-
-  !.... find r's. this is universal for all schemes.
-  !.....if flow goes from p to e
-  r1 = (2*dUdxi(1,ijp)*xpn + 2*dUdxi(2,ijp)*ypn + 2*dUdxi(3,ijp)*zpn)/(u(ijb)-u(ijp)) - 1.0_dp  
-  r2 = (2*dVdxi(1,ijp)*xpn + 2*dVdxi(2,ijp)*ypn + 2*dVdxi(3,ijp)*zpn)/(v(ijb)-v(ijp)) - 1.0_dp 
-  r3 = (2*dWdxi(1,ijp)*xpn + 2*dWdxi(2,ijp)*ypn + 2*dWdxi(3,ijp)*zpn)/(w(ijb)-w(ijp)) - 1.0_dp 
-  !.....if flow goes from e to p
-  r4 = (2*dUdxi(1,ijb)*xpn + 2*dUdxi(2,ijb)*ypn + 2*dUdxi(3,ijb)*zpn)/(u(ijp)-u(ijb)) - 1.0_dp 
-  r5 = (2*dVdxi(1,ijb)*xpn + 2*dVdxi(2,ijb)*ypn + 2*dVdxi(3,ijb)*zpn)/(v(ijp)-v(ijb)) - 1.0_dp 
-  r6 = (2*dWdxi(1,ijb)*xpn + 2*dWdxi(2,ijb)*ypn + 2*dWdxi(3,ijb)*zpn)/(w(ijp)-w(ijb)) - 1.0_dp  
-
-  !=====smart scheme================================
-  if(lsmart) then
-  !.....psi for smart scheme:
-  !.....if flow goes from p to e
-  psiw1 = max(0., min(2.*r1, 0.75*r1+0.25, 4.))
-  psiw2 = max(0., min(2.*r2, 0.75*r2+0.25, 4.))
-  psiw3 = max(0., min(2.*r3, 0.75*r3+0.25, 4.))
-  !.....if flow goes from e to p
-  psie1 = max(0., min(2.*r4, 0.75*r4+0.25, 4.))
-  psie2 = max(0., min(2.*r5, 0.75*r5+0.25, 4.))
-  psie3 = max(0., min(2.*r6, 0.75*r6+0.25, 4.))
-  !=====end smart scheme=============================
-
+  ! - None -
   
-  !=====avl-smart scheme=============================
-  elseif(lavl) then
-  !.....psi for avl-smart scheme:
-  !.....if flow goes from p to e
-  psiw1 = max(0., min(1.5*r1, 0.75*r1+0.25, 2.5))
-  psiw2 = max(0., min(1.5*r2, 0.75*r2+0.25, 2.5))
-  psiw3 = max(0., min(1.5*r3, 0.75*r3+0.25, 2.5))
-  !.....if flow goes from e to p
-  psie1 = max(0., min(1.5*r4, 0.75*r4+0.25, 2.5))
-  psie2 = max(0., min(1.5*r5, 0.75*r5+0.25, 2.5))
-  psie3 = max(0., min(1.5*r6, 0.75*r6+0.25, 2.5))
-  !=====end avl-smart scheme==========================
-  
-
-  !=====muscl scheme=================================
-  elseif(lmuscl) then
-  !.....psi for muscl scheme:
-  !.....if flow goes from p to e
-  psiw1 = max(0., min(2.*r1, 0.5*r1+0.5, 2.))
-  psiw2 = max(0., min(2.*r2, 0.5*r2+0.5, 2.))
-  psiw3 = max(0., min(2.*r3, 0.5*r3+0.5, 2.))
-  !.....if flow goes from e to p
-  psie1 = max(0., min(2.*r4, 0.5*r4+0.5, 2.))
-  psie2 = max(0., min(2.*r5, 0.5*r5+0.5, 2.))
-  psie3 = max(0., min(2.*r6, 0.5*r6+0.5, 2.))
-  !=====end muscl scheme=============================
- 
-
-  !=====umist scheme=================================
-  elseif(lumist) then
-  !.....psi for umist scheme:
-  !.....if flow goes from p to e
-  psiw1 = max(0., min(2.*r1, 0.75*r1+0.25, 0.25*r1+0.75, 2.))
-  psiw2 = max(0., min(2.*r2, 0.75*r2+0.25, 0.25*r2+0.75, 2.))
-  psiw3 = max(0., min(2.*r3, 0.75*r3+0.25, 0.25*r3+0.75, 2.))
-  !.....if flow goes from e to p
-  psie1 = max(0., min(2.*r4, 0.75*r4+0.25, 0.25*r4+0.75, 2.))
-  psie2 = max(0., min(2.*r5, 0.75*r5+0.25, 0.25*r5+0.75, 2.))
-  psie3 = max(0., min(2.*r6, 0.75*r6+0.25, 0.25*r6+0.75, 2.))
-  !=====end umist scheme=============================
-
-
-  elseif(lkoren) then
-  ! psi for koren scheme:
-  ! if flow goes from p to e
-    psiw1 = max(0., min(2.*r1, twothirds*r1+onethird, 2.))
-    psiw2 = max(0., min(2.*r2, twothirds*r2+onethird, 2.))
-    psiw3 = max(0., min(2.*r3, twothirds*r3+onethird, 2.))
-  ! if flow goes from e to p
-    psie1 = max(0., min(2.*r4, twothirds*r4+onethird, 2.))
-    psie2 = max(0., min(2.*r5, twothirds*r5+onethird, 2.))
-    psie3 = max(0., min(2.*r6, twothirds*r6+onethird, 2.))
-
-  elseif(lcharm) then
-  ! psi for smarter; charm notable; isnas
-  ! if flow goes from p to e
-    psiw1 = (r1+abs(r1))*(3*r1+1.)/(2*(r1+1.)**2)
-    psiw2 = (r2+abs(r2))*(3*r2+1.)/(2*(r2+1.)**2)
-    psiw3 = (r3+abs(r3))*(3*r3+1.)/(2*(r3+1.)**2)
-  ! if flow goes from e to p
-    psie1 = (r4+abs(r4))*(3*r4+1.)/(2*(r4+1.)**2)
-    psie2 = (r5+abs(r5))*(3*r5+1.)/(2*(r5+1.)**2)
-    psie3 = (r6+abs(r6))*(3*r6+1.)/(2*(r6+1.)**2)
-
-  elseif(lospre) then
-  ! psi for ospre
-  ! if flow goes from p to e
-    psiw1 = 1.5*r1*(r1+1.)/(r1**2+r1+1.)
-    psiw2 = 1.5*r2*(r2+1.)/(r2**2+r2+1.)
-    psiw3 = 1.5*r3*(r3+1.)/(r3**2+r3+1.)
-  ! if flow goes from e to p
-    psie1 = 1.5*r4*(r4+1.)/(r4**2+r4+1.)
-    psie2 = 1.5*r5*(r5+1.)/(r5**2+r5+1.)
-    psie3 = 1.5*r6*(r6+1.)/(r6**2+r6+1.)
-
-  !=====luds scheme================================
-  else
-  !.....psi for 2nd order upwind scheme:
-  !.....if flow goes from p to e
-  psiw1 = 1.0_dp
-  psiw2 = 1.0_dp
-  psiw3 = 1.0_dp
-  !.....if flow goes from e to p
-  psie1 = 1.0_dp
-  psie2 = 1.0_dp
-  psie3 = 1.0_dp
-  !=====end luds scheme=============================
-  end if
-
-
-
-!.....EXPLICIT CONVECTIVE FLUXES FOR HIGH ORDER BOUNDED SCHEMES
-!     $Flux_high_order_scheme[N] = mass_flow_rate_in_cell_face_e[kg/s] * Phi_e[m/s]$
-!     Phi_e is found by extrapolation from upwind nodes, see eq. (3.29) in Sasa's Thesis.
-!     Additional multiplication with PSI is application of flux limiters,
-!     see eq. (10) in Waterson&Deconinck paper.
-
-
-!......Darwish-Moukalled TVD schemes for unstructured girds, IJHMT, 2003.
-  fuhigh = min(flomass,zero) * (u(ijb) + fxn*psie1*(u(ijp)-u(ijb)))+ &
-           max(flomass,zero) * (u(ijp) + fxp*psiw1*(u(ijb)-u(ijp)))
-  !       mass flux| bounded interpolation of velocity to face |
-
-  fvhigh = min(flomass,zero) * (v(ijb) + fxn*psie2*(v(ijp)-v(ijb)))+ &
-           max(flomass,zero) * (v(ijp) + fxp*psiw2*(v(ijb)-v(ijp)))
-   
-  fwhigh = min(flomass,zero) * (w(ijb) + fxn*psie3*(w(ijp)-w(ijb)))+ &
-           max(flomass,zero) * (w(ijp) + fxp*psiw3*(w(ijb)-w(ijp)))
-
-!.....END OF BOUNDED HIGH-ORDER SCHEMES
-!--------------------------------------------------------------------------------------------
-  END IF 
-
 
 ! Explicit part of diffusion fluxes and sources due to deffered correction,
 ! for all schemes!

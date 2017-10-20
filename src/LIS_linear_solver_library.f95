@@ -91,9 +91,11 @@ use types
 use geometry
 use sparse_matrix
 
+#include "lisf.h"
+
 implicit none
 
-#include "lisf.h"
+character(len=70) :: options
 
 public
 
@@ -125,11 +127,12 @@ subroutine solve_csr(numCells,nnz,ioffset,ja,aval,su,phi)
   !LIS_INTEGER, allocatable :: ptr(:),index(:)
   !LIS_SCALAR, dimension(:), allocatable :: value
   LIS_SCALAR :: xval
-  LIS_INTEGER :: nsol,iter,iter_double,iter_quad
-  real(dp) :: time,itime,ptime,p_c_time,p_i_time
-  LIS_REAL :: resid
+  ! LIS_INTEGER :: nsol
+  LIS_INTEGER :: iter,iter_double,iter_quad
+  ! real(dp) :: time,itime,ptime,p_c_time,p_i_time
+  LIS_REAL :: resid,res0
   ! character(len=256) :: resname!,solname ! filenames for solution vector and residual vector
-  character(len=20) :: solvername
+  ! character(len=20) :: solvername
   real(dp), parameter :: zero = 0.0d0
   integer, parameter :: numthrd = 2 ! hard coded number of threads
 
@@ -198,15 +201,18 @@ subroutine solve_csr(numCells,nnz,ioffset,ja,aval,su,phi)
 ! > 6. Solver creation and setting solver options
  call lis_solver_create(solver,ierr)
  ! call lis_solver_set_option("-print mem",solver,ierr)
- call lis_solver_set_option("-i gmres -restart [20] -p ilut",solver,ierr)
- ! call lis_solver_set_option("-i cg -p ssor",solver,ierr)
+ call lis_solver_set_option(options,solver,ierr)
+ call lis_solver_set_option("-i cg -p ssor",solver,ierr)
  ! call lis_solver_set_option("-i gs",solver,ierr)
- call lis_solver_set_option("-maxiter 1000",solver,ierr)
+ ! call lis_solver_set_option("-maxiter 1000",solver,ierr)
 
  call lis_solver_set_optionC(solver,ierr)
 
 ! > 7. Solver execution
-  write(6,*) ' '
+  ! write(6,*) ' '
+
+  call lis_solver_get_residualnorm(solver,res0,ierr)
+
   call lis_solve(A,b,x,solver,ierr)
 
   ! write solution 
@@ -226,19 +232,23 @@ subroutine solve_csr(numCells,nnz,ioffset,ja,aval,su,phi)
 
 ! > Output iterative solution summary
       call lis_solver_get_iterex(solver,iter,iter_double,iter_quad,ierr)
-      call lis_solver_get_timeex(solver,time,itime,ptime,p_c_time,p_i_time,ierr)
+      ! call lis_solver_get_timeex(solver,time,itime,ptime,p_c_time,p_i_time,ierr)
       call lis_solver_get_residualnorm(solver,resid,ierr)
-      call lis_solver_get_solver(solver,nsol,ierr)
-      call lis_solver_get_solvername(nsol,solvername,ierr)
+      ! call lis_solver_get_solver(solver,nsol,ierr)
+      ! call lis_solver_get_solvername(nsol,solvername,ierr)
 
-      !if( debug ) then
-        write(6,'(2a,i4)')     solvername(1:5),': number of iterations = ',iter
-        write(6,'(2a,es11.4)') solvername(1:5),': elapsed time         = ',time
-        write(6,'(2a,es11.4)') solvername(1:5),':   preconditioner     = ',ptime
-        write(6,'(2a,es11.4)') solvername(1:5),':     matrix creation  = ',p_c_time
-        write(6,'(2a,es11.4)') solvername(1:5),':   linear solver      = ',itime
-        write(6,'(2a,es11.4)') solvername(1:5),': residual             = ',resid
-      !endif
+      ! if( debug ) then
+        ! write(6,'(2a,i4)')     solvername(1:5),': number of iterations = ',iter
+        ! write(6,'(2a,es11.4)') solvername(1:5),': elapsed time         = ',time
+        ! write(6,'(2a,es11.4)') solvername(1:5),':   preconditioner     = ',ptime
+        ! write(6,'(2a,es11.4)') solvername(1:5),':     matrix creation  = ',p_c_time
+        ! write(6,'(2a,es11.4)') solvername(1:5),':   linear solver      = ',itime
+        ! write(6,'(2a,es11.4)') solvername(1:5),': residual             = ',resid
+      ! endif
+
+  ! Write linear solver report:
+  write(6,'(3a,1PE10.3,a,1PE10.3,a,I0)') '  LIS_LIBRARY:  Solving for ','p', &
+  ', Initial residual = ',res0,', Final residual = ',resid,', No Iterations ',iter
 
 ! > 8. Finalization
 

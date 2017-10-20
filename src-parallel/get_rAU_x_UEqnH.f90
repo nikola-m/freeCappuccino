@@ -276,8 +276,8 @@ subroutine get_rAU_x_UEqnH()
   enddo 
 
   ! Finally U = rAU*UEqnH()
-  u( 1:numCells ) = apu*su
-  v( 1:numCells ) = apv*sv
-  w( 1:numCells ) = apw*sw
+  u( 1:numCells ) = apu( 1:numCells )*su( 1:numCells )
+  v( 1:numCells ) = apv( 1:numCells )*sv( 1:numCells )
+  w( 1:numCells ) = apw( 1:numCells )*sw( 1:numCells )
 
 end subroutine

@@ -6,7 +6,7 @@
  CoNum = 0.0_dp
  meanCoNum = 0.0_dp
 
- su(:) = 0.0_dp
+ su = 0.0_dp
 
   !
   ! Suface sum of magnitude (i.e. absolute value) of mass flux phi, over inner faces only (which includes o- c- faces)
@@ -74,7 +74,7 @@
   meanCoNum = 0.5*meanCoNum/suma*timestep
 
   !// If we keep the value of Courant Number fixed
-  if(CoNumFix) then
+  if( CoNumFix .and. itime.ne.itimes ) then
       dt = timestep
       timestep = CoNumFixValue/CoNum * timestep
 

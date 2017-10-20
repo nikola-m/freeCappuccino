@@ -45,12 +45,16 @@
     res(ijp)=res(ijp)-fmo(i)
   end do
 
+  ! The way it is done in OpenFOAM:
+  sumLocalContErr = timestep*volumeWeightedAverage( abs(res) )
 
-  sumLocalContErr = sum( abs( res ) ) 
+  globalContErr = timestep*volumeWeightedAverage( res )
+
+  ! sumLocalContErr = sum( abs( res ) ) 
+  
+  ! globalContErr = sum( res )
 
   call global_sum( sumLocalContErr )
-
-  globalContErr = sum( res )
 
   call global_sum( globalContErr )
 

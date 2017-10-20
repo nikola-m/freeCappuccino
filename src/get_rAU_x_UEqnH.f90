@@ -44,7 +44,7 @@ subroutine get_rAU_x_UEqnH()
         !........[Boussinesq-ova aproximacija: ]
         !----------------------------------------------
           heat=0.0_dp
-          if(boussinesq.eq.1) then
+          if(boussinesq) then
            heat=beta*densit*(t(inp)-tref)*vol(inp)
           else
             heat=(densit-den(inp))*vol(inp)
@@ -205,8 +205,8 @@ subroutine get_rAU_x_UEqnH()
 
 
   ! Finally U = rAU*UEqnH()
-  u(1:numCells)= apu*su
-  v(1:numCells)= apv*sv
-  w(1:numCells)= apw*sw
+  u(1:numCells) = apu*su
+  v(1:numCells) = apv*sv
+  w(1:numCells) = apw*sw
 
 end subroutine

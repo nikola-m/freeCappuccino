@@ -36,33 +36,33 @@ program cappuccino
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
-  character(len=6) :: timechar
+  character(len=9) :: timechar
 !                                                                       
 !******************************************************************************
 !
 
-  !----------------------------------------------------------------------
-  ! MPI start up
+!----------------------------------------------------------------------
+! MPI start up
 
-    call MPI_INIT(ierr)                   
+  call MPI_INIT(ierr)                   
 
-    call MPI_COMM_SIZE(MPI_COMM_WORLD, & 
-                                 nproc,&  
-                                 ierr  )  
+  call MPI_COMM_SIZE(MPI_COMM_WORLD, & 
+                               nproc,&  
+                               ierr  )  
 
-    call MPI_COMM_RANK(MPI_COMM_WORLD, & 
-                                 myid, &  
-                                 ierr  )  
-    
-    this = myid + 1
+  call MPI_COMM_RANK(MPI_COMM_WORLD, & 
+                               myid, &  
+                               ierr  )  
+  
+  this = myid + 1
 
-    if(nproc .eq. 1) then
-      nproc = 0
-      this = 0
-    endif
+  if(nproc .eq. 1) then
+    nproc = 0
+    this = 0
+  endif
 
-    write(*,'(2(a,i2))') ' np = ', nproc, ' myid = ', myid
-  !----------------------------------------------------------------------
+  ! write(*,'(2(a,i2))') ' np = ', nproc, ' myid = ', myid
+!----------------------------------------------------------------------
 
 
 
@@ -87,6 +87,10 @@ program cappuccino
     ! Print cappuccino logo to log file.
     call show_logo
 
+    write(*,'(a)') ' '
+    write(*,'(a,i2)') ' Parallel run. Number of processes, np = ', nproc
+    write(*,'(a)') ' '
+
   endif
 
   ! Read input file
@@ -94,7 +98,6 @@ program cappuccino
 
   ! Read and process grid files
   call mesh_geometry
-
 
   ! Allocate working arrays
   call allocate_arrays
@@ -106,6 +109,7 @@ program cappuccino
 
   ! Initialisation of fields
   call init
+
 !
 !===============================================
 !     T i m e   l o o p : 
@@ -157,8 +161,6 @@ program cappuccino
     ! Courant number report:
     include 'CourantNo.h'
 
-    call abort_mission ! <----early finish, temporary
-
 ! 
 !===============================================
 !.....ITERATION loop
@@ -189,7 +191,8 @@ program cappuccino
 
       if (myid .eq. 0) then
         call cpu_time(finish)
-        write(6,'(a,f6.3,a)') '  ExecutionTime = ',finish-start,' s'
+        write(timechar,'(f9.3)') finish-start
+        write(6,'(3a)') '  ExecutionTime = ',trim(adjustl(timechar)),' s'
         write(6,*)
       endif
 
@@ -201,7 +204,7 @@ program cappuccino
 
 
       ! Check residual
-      source=max(resor(iu),resor(iv),resor(iw),resor(ip)) 
+      source = max( resor(iu),resor(iv),resor(iw),resor(ip) ) 
 
       ! Now find global maximum
       call global_max( source )
@@ -270,8 +273,7 @@ program cappuccino
 
   call write_restart_files
 
-  !----------------------------------------------------------------------
   ! MPI final call
-    call MPI_Finalize(ierr)
+  call MPI_Finalize(ierr)
       
 end program

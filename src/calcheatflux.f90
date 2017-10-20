@@ -127,7 +127,7 @@ subroutine calcheatflux
         ut5=sksi*vtt(inp)*dudy
         ut6=sksi*wtt(inp)*dudz
         ut7=gravx*eta*vart(inp)*beta
-        if(boussinesq.eq.0) ut7 = gravx*eta*vart(inp)/(t(inp)+273.0d0)
+        if(.not.boussinesq) ut7 = gravx*eta*vart(inp)/(t(inp)+273.0d0)
 
         vt1=uv(inp)*dtdx
         vt2=vv(inp)*dtdy
@@ -136,7 +136,7 @@ subroutine calcheatflux
         vt5=sksi*vtt(inp)*dvdy
         vt6=sksi*wtt(inp)*dvdz
         vt7=gravy*eta*vart(inp)*beta
-        if(boussinesq.eq.0) vt7 = gravy*eta*vart(inp)/(t(inp)+273.0d0)
+        if(.not.boussinesq) vt7 = gravy*eta*vart(inp)/(t(inp)+273.0d0)
 
         wt1=uw(inp)*dtdx
         wt2=vw(inp)*dtdy
@@ -145,7 +145,7 @@ subroutine calcheatflux
         wt5=sksi*vtt(inp)*dwdy
         wt6=sksi*wtt(inp)*dwdz
         wt7=gravz*eta*vart(inp)*beta
-        if(boussinesq.eq.0) wt7 = gravz*eta*vart(inp)/(t(inp)+273.0d0)
+        if(.not.boussinesq) wt7 = gravz*eta*vart(inp)/(t(inp)+273.0d0)
 
         utt(inp) = -phit*tedi*(ut1+ut2+ut3+ut4+ut5+ut6+ut7)
         vtt(inp) = -phit*tedi*(vt1+vt2+vt3+vt4+vt5+vt6+vt7)

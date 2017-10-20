@@ -21,7 +21,7 @@ subroutine init
   use title_mod
   use gradients
   use sparse_matrix, only: su,sv
-  use utils, only: get_unit
+  use utils, only: get_unit,i4_to_s_left
   use LIS_linear_solver_library
 
   implicit none
@@ -30,6 +30,7 @@ subroutine init
   ! Local variables 
   !
   character(80) :: key,field_type,boundary_type
+  character( len = 5) :: nproc_char
   integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, ioc, iface
   integer :: nfaces,startFace,nFacesOffset
   integer :: input_unit,input_status
@@ -43,6 +44,9 @@ subroutine init
 !
 !***********************************************************************
 !
+
+  ! nproc_char <- myid zapisan levo u vidu stringa.
+  call i4_to_s_left ( myid, nproc_char )
 
 !
 ! 1) Various initialisations
@@ -72,7 +76,7 @@ subroutine init
   if ( solveOmega ) chvarSolver(6) = 'Omega  '
 
 
-  ! Reciprocal values of underrelaxation factors
+  ! Reciprocal and complementary to one values of underrelaxation factors.
   do i=1,nphi
     urfr(i)=1.0_dp / urf(i)
     urfm(i)=1.0_dp - urf(i)
@@ -98,11 +102,12 @@ subroutine init
 
   ! 
   ! > Velocity
-
+  !
 
   call get_unit ( input_unit )
-  open ( unit = input_unit, file = '0/U')
-  write(*,'(a)') '  0/U'
+  open ( unit = input_unit, file = 'processor'//trim(nproc_char)//'/0/U')
+
+  if(myid .eq. 0) write(*,'(a)') '  0/U'
   rewind input_unit
 
   do
@@ -113,7 +118,7 @@ subroutine init
 
     if(adjustl(key)=='internalField') then
 
-      write(*,'(2x,a)') 'internalField'
+      if(myid .eq. 0) write(*,'(2x,a)') 'internalField'
 
       read(input_unit,*) field_type
 
@@ -121,7 +126,7 @@ subroutine init
 
           read(input_unit,*) u0,v0,w0
 
-          write(*,'(4x,a,3f10.4)') 'uniform',u0,v0,w0
+          if(myid .eq. 0) write(*,'(4x,a,3f10.4)') 'uniform',u0,v0,w0
 
           do inp = 1,numCells
             u(inp) = u0
@@ -131,7 +136,7 @@ subroutine init
 
       elseif(adjustl(field_type)=='nonuniform') then
 
-          write(*,'(4x,a)') 'nonuniform'
+          if(myid .eq. 0) write(*,'(4x,a)') 'nonuniform'
 
           do inp = 1,numCells
             read(input_unit,*) u(inp),v(inp),w(inp)
@@ -141,7 +146,7 @@ subroutine init
 
     elseif(adjustl(key)=='boundaryField') then
 
-      write(*,'(2x,a)') 'boundaryField'      
+      if(myid .eq. 0) write(*,'(2x,a)') 'boundaryField'      
       
       do 
 
@@ -149,7 +154,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,a)') adjustl(boundary_type)
+      if(myid .eq. 0) write(*,'(4x,a)') adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -159,7 +164,7 @@ subroutine init
 
               read(input_unit,*) u0,v0,w0
 
-              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+              if(myid .eq. 0) write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -171,7 +176,7 @@ subroutine init
 
             else ! 'nonuniform'   
 
-              write(*,'(6x,a)') 'nonuniform'
+              if(myid .eq. 0) write(*,'(6x,a)') 'nonuniform'
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -191,7 +196,7 @@ subroutine init
 
               read(input_unit,*) u0,v0,w0
 
-              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+              if(myid .eq. 0) write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -203,7 +208,7 @@ subroutine init
 
             elseif(adjustl(field_type)=='zeroGradient') then  
 
-              write(*,'(6x,a)')  'zeroGradient'
+              if(myid .eq. 0) write(*,'(6x,a)')  'zeroGradient'
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -227,8 +232,8 @@ subroutine init
               read(input_unit,*) nfaces,startFace
               read(input_unit,*) u0,v0,w0
 
-              write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
-              write(*,'(6x,2(a,i8))') 'nfaces:',nfaces,', startFace:',startFace
+              if(myid .eq. 0) write(*,'(6x,a,3f9.3)') 'uniform',u0,v0,w0
+              if(myid .eq. 0) write(*,'(6x,2(a,i8))') 'nfaces:',nfaces,', startFace:',startFace
 
               nFacesOffset = startFace-iWallFacesStart
 
@@ -242,7 +247,7 @@ subroutine init
 
             elseif(adjustl(field_type)=='noSlip') then
 
-              write(*,'(6x,a)') 'noSlip'
+              if(myid .eq. 0) write(*,'(6x,a)') 'noSlip'
 
               do i = 1,nwal
                 iface = iWallFacesStart+i
@@ -299,27 +304,17 @@ subroutine init
   !   u(ijp) = ...
   ! enddo
 
-
-  ! Initialize minimal and maximal field values for velocity
-  umin = minval(u(1:numCells))
-  umax = maxval(u(1:numCells))
-  vmin = minval(v(1:numCells))
-  vmax = maxval(v(1:numCells))
-  wmin = minval(w(1:numCells))
-  wmax = maxval(w(1:numCells))
-
-
   ! 
   ! > TKE Turbulent kinetic energy
   ! 
 
   if(solveTKE) then
 
-  write(*,'(a)') ' '
+  if(myid .eq. 0) write(*,'(a)') ' '
 
   call get_unit ( input_unit )
-  open ( unit = input_unit, file = '0/k')
-  write(*,'(a)') '  0/k'
+  open ( unit = input_unit, file = 'processor'//trim(nproc_char)//'/0/k')
+  if(myid .eq. 0) write(*,'(a)') '  0/k'
   rewind input_unit
 
 
@@ -331,7 +326,7 @@ subroutine init
 
     if(adjustl(key)=='internalField') then
 
-      write(*,'(2x,a)') 'internalField'
+      if(myid .eq. 0) write(*,'(2x,a)') 'internalField'
 
       read(input_unit,*) field_type
 
@@ -339,7 +334,7 @@ subroutine init
 
           read(input_unit,*) tke0
 
-          write(*,'(4x,a,f9.3)') 'uniform',tke0
+          if(myid .eq. 0) write(*,'(4x,a,f9.3)') 'uniform',tke0
 
           do inp = 1,numCells
             te(inp) = tke0
@@ -347,7 +342,7 @@ subroutine init
 
       elseif(adjustl(field_type)=='nonuniform') then
 
-          write(*,'(4x,a)') 'nonuniform'
+          if(myid .eq. 0) write(*,'(4x,a)') 'nonuniform'
 
           do inp = 1,numCells
             read(input_unit,*) te(inp)
@@ -357,7 +352,7 @@ subroutine init
 
     elseif(adjustl(key)=='boundaryField') then
 
-      write(*,'(2x,a)') 'boundaryField'      
+      if(myid .eq. 0) write(*,'(2x,a)') 'boundaryField'      
       
       do 
 
@@ -365,7 +360,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,a)') adjustl(boundary_type)
+      if(myid .eq. 0) write(*,'(4x,a)') adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -375,7 +370,7 @@ subroutine init
 
               read(input_unit,*) tke0
 
-              write(*,'(6x,a,f9.3)') 'uniform',tke0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',tke0
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -403,7 +398,7 @@ subroutine init
 
               read(input_unit,*) tke0
 
-              write(*,'(6x,a,f9.3)') 'uniform',tke0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',tke0
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -413,7 +408,7 @@ subroutine init
 
             elseif(adjustl(field_type)=='zeroGradient') then  
 
-              write(*,'(6x,a)')  'zeroGradient'
+              if(myid .eq. 0) write(*,'(6x,a)')  'zeroGradient'
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -434,7 +429,7 @@ subroutine init
 
               read(input_unit,*) tke0
 
-              write(*,'(6x,a,f9.3)') 'uniform',tke0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',tke0
 
               do i = 1,nwal
                 iface = iWallFacesStart+i
@@ -492,11 +487,11 @@ subroutine init
 
   if(solveEpsilon) then
 
-  write(*,'(a)') ' '
+  if(myid .eq. 0) write(*,'(a)') ' '
 
   call get_unit ( input_unit )
-  open ( unit = input_unit, file = '0/epsilon')
-  write(*,'(a)') '  0/epsilon'
+  open ( unit = input_unit, file = 'processor'//trim(nproc_char)//'/0/epsilon')
+  if(myid .eq. 0) write(*,'(a)') '  0/epsilon'
   rewind input_unit
 
 
@@ -508,7 +503,7 @@ subroutine init
 
     if(adjustl(key)=='internalField') then
 
-      write(*,'(2x,a)') 'internalField'
+      if(myid .eq. 0) write(*,'(2x,a)') 'internalField'
 
       read(input_unit,*) field_type
 
@@ -516,7 +511,7 @@ subroutine init
 
           read(input_unit,*) ed0
 
-          write(*,'(4x,a,f9.3)') 'uniform',ed0
+          if(myid .eq. 0) write(*,'(4x,a,f9.3)') 'uniform',ed0
 
           do inp = 1,numCells
             ed(inp) = ed0
@@ -524,7 +519,7 @@ subroutine init
 
       elseif(adjustl(field_type)=='nonuniform') then
 
-          write(*,'(4x,a)') 'nonuniform'
+          if(myid .eq. 0) write(*,'(4x,a)') 'nonuniform'
 
           do inp = 1,numCells
             read(input_unit,*) ed(inp)
@@ -534,7 +529,7 @@ subroutine init
 
     elseif(adjustl(key)=='boundaryField') then
 
-      write(*,'(2x,a)') 'boundaryField'      
+      if(myid .eq. 0) write(*,'(2x,a)') 'boundaryField'      
       
       do 
 
@@ -542,7 +537,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,a)') adjustl(boundary_type)
+      if(myid .eq. 0) write(*,'(4x,a)') adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -552,7 +547,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -580,7 +575,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -590,7 +585,7 @@ subroutine init
 
             elseif(adjustl(field_type)=='zeroGradient') then  
 
-              write(*,'(6x,a)')  'zeroGradient'
+              if(myid .eq. 0) write(*,'(6x,a)')  'zeroGradient'
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -611,7 +606,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i = 1,nwal
                 iface = iWallFacesStart+i
@@ -668,11 +663,11 @@ subroutine init
 
   if(solveOmega) then
 
-  write(*,'(a)') ' '
+  if(myid .eq. 0) write(*,'(a)') ' '
 
   call get_unit ( input_unit )
-  open ( unit = input_unit, file = '0/omega')
-  write(*,'(a)') '  0/omega'
+  open ( unit = input_unit, file = 'processor'//trim(nproc_char)//'/0/omega')
+  if(myid .eq. 0) write(*,'(a)') '  0/omega'
   rewind input_unit
 
   do
@@ -683,7 +678,7 @@ subroutine init
 
     if(adjustl(key)=='internalField') then
 
-      write(*,'(2x,a)') 'internalField'
+      if(myid .eq. 0) write(*,'(2x,a)') 'internalField'
 
       read(input_unit,*) field_type
 
@@ -691,7 +686,7 @@ subroutine init
 
           read(input_unit,*) ed0
 
-          write(*,'(4x,a,f9.3)') 'uniform',ed0
+          if(myid .eq. 0) write(*,'(4x,a,f9.3)') 'uniform',ed0
 
           do inp = 1,numCells
             ed(inp) = ed0
@@ -699,7 +694,7 @@ subroutine init
 
       elseif(adjustl(field_type)=='nonuniform') then
 
-          write(*,'(4x,a)') 'nonuniform'
+          if(myid .eq. 0) write(*,'(4x,a)') 'nonuniform'
 
           do inp = 1,numCells
             read(input_unit,*) ed(inp)
@@ -709,7 +704,7 @@ subroutine init
 
     elseif(adjustl(key)=='boundaryField') then
 
-      write(*,'(2x,a)') 'boundaryField'      
+      if(myid .eq. 0) write(*,'(2x,a)') 'boundaryField'      
       
       do 
 
@@ -717,7 +712,7 @@ subroutine init
 
       if(input_status /= 0) exit
 
-      write(*,'(4x,a)') adjustl(boundary_type)
+      if(myid .eq. 0) write(*,'(4x,a)') adjustl(boundary_type)
 
         if(adjustl(boundary_type) == "inlet") then
 
@@ -727,7 +722,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i = 1,ninl
                 iface = iInletFacesStart+i
@@ -755,7 +750,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -765,7 +760,7 @@ subroutine init
 
             elseif(adjustl(field_type)=='zeroGradient') then  
 
-              write(*,'(6x,a)')  'zeroGradient'
+              if(myid .eq. 0) write(*,'(6x,a)')  'zeroGradient'
 
               do i=1,nout
                 iface = iOutletFacesStart + i
@@ -786,7 +781,7 @@ subroutine init
 
               read(input_unit,*) ed0
 
-              write(*,'(6x,a,f9.3)') 'uniform',ed0
+              if(myid .eq. 0) write(*,'(6x,a,f9.3)') 'uniform',ed0
 
               do i = 1,nwal
                 iface = iWallFacesStart+i
@@ -833,7 +828,7 @@ subroutine init
   !   ed(ijp) = ...
   ! enddo
 
-  write(*,'(a)') ' '
+  if(myid .eq. 0) write(*,'(a)') ' '
 
   endif
 
@@ -916,11 +911,31 @@ subroutine init
 
   enddo
 
+  ! Mass flow at boundaries of inner domain and buffer cells
+  call exchange( u )
+  call exchange( v )
+  call exchange( w )
+
+  do i=1,npro
+    iface = iProcFacesStart + i 
+    ijp = owner( iface )
+    ijn = iProcStart + i
+
+    fxn = fpro(i)
+    fxp = 1.0_dp-fpro(i)
+
+    ui = u(ijp)*fxp + u(ijn)*fxn
+    vi = v(ijp)*fxp + v(ijn)*fxn
+    wi = w(ijp)*fxp + w(ijn)*fxn
+
+    fmpro(i) = den(ijp)*(arx(i)*ui+ary(i)*vi+arz(i)*wi)
+
+  enddo
+
 !
 ! 2)  Read Restart File And Set Field Values
 !
   if(lread) call readfiles
-
 
 !
 ! 3)  Initial Gradient Calculation
@@ -937,18 +952,55 @@ subroutine init
     call create_lsq_gradients_matrix(U,dUdxi)
   endif
 
+! !===================================================
+! ! Test gradients:
+! u = 0.0_dp
+! ! Inlet
+! do i=1,ninl
+!   iface = iInletFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iInletStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Outlet
+! do i=1,nout
+!   iface = iOutletFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iOutletStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Symmetry
+! do i=1,nsym
+!   iface = iSymmetryFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iSymmetryStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! ! Wall
+! do i=1,nwal
+!   iface = iWallFacesStart + i
+!   ijp = owner(iface)
+!   ijs = iWallStart + i
+!   u(ijs) = xf(iface)+yf(iface)+zf(iface)
+! enddo
+! u(1:numCells) = xc(1:numCells)+yc(1:numCells)+zc(1:numCells)
+! !===================================================
+
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
- 
 
+! !===================================================
+! ! Test gradients:
 ! print*,'gradijenti:'
-! do i=1,numCells
-!   print*,i,':',dudxi(1,i)
-! enddo
+! ! do i=1,numCells
+! !   print*,i,':',dudxi(3,i)
+! ! enddo
 ! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
 ! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
-! stop
+! print*,'processor'//trim(nproc_char)
+! call abort_mission
+! !===================================================
 
 !
 ! 4) Calculate distance dnw of wall adjecent cells and distance to the nearest wall of all cell centers.
@@ -1027,19 +1079,22 @@ subroutine init
     p(ijp) = 0.0_dp
   enddo
 
-  !  Coefficient array for Laplacian
-  sv = 1.0_dp       
+  !  Coefficient array for Laplacian (we choose apu because it is numPCells long,
+  !  what is required for 'mu' argument in Laplacian)
+  apu = 1.0_dp       
 
   ! Laplacian operator and BCs         
-  call fvm_laplacian(sv,p) 
+  call laplacian(apu,p) 
 
   sor_backup = sor(ip)
   nsw_backup = nsw(ip)
 
-  sor(ip) = 1e-16
-  nsw(ip) = 1000
+  sor(ip) = 1e-10
+  nsw(ip) = 20000
 
   ! Solve system
+  ! call jacobi(p,ip)
+  ! call dpcg(p,ip) 
   call iccg(p,ip) 
   ! call bicgstab(p,ip) 
   ! call solve_csr(numCells,nnz,ioffset,ja,a,su,p)

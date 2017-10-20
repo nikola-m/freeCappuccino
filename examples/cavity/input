@@ -5,20 +5,20 @@ t t t t f f f t f f                      (LCAL(I),I=1,NPHI)
 1e+30 1e-6                               SLARGE,SORMAX
 1.0 0.01                                 DENSIT,VISCOS
 0.71  20.  1.                            PRANL,TREF,BETA
-f 0. -9.81 0. 1                          LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
+f 0. -9.81 0. t                          LBUOY,GRAVX,GRAVY,GRAVZ,BOUSSINESQ
 f 30. 3e-2                               roughWall,EROUGH,ZZERO
-0.2 0.6 0.6 0.5 1. 1.                    PHIT,SKSI,ETA,FACNAP,FACFLX
+1. 1.                                    FACNAP,FACFLX
 f t 0. f                                 LTRANSIENT,BDF,BTIME,CN
-f f f                                    LEVM,LASM,LLES
+f f f f                                  LEVM,LASM,LLES,LDES
 f f f                                    LSGDH,LGGDH,LAFM
 1                                        TurbModel
 0. 0. 0. 0. 0. 0. 0. 0.                  UIN,VIN,WIN,TEIN,EDIN,TIN,VARTIN,CONIN
-muscl-f                                  Convective scheme
-no-limit                                 Gradient limiter      
+muscl-f                                 Convective scheme
+no-limit                        Gradient limiter      
 1. 1. 1. 0. 1. 1. 0. 0. 0. 0.            (GDS(I),I=1,NPHI)
 0.7 0.7 0.7 0.3 0.7 0.7 0.9 0.7 0.9 0.9  (URF(I),I=1,NPHI)
 10*1e-6                                  (SOR(I),I=1,NPHI)
-20 20 20 200 5 5 5 5 5 50                (NSW(I),I=1,NPHI)
+20 20 20 100 5 5 5 5 5 50                (NSW(I),I=1,NPHI)
 1000 1e+20 1000 1                        NUMSTEP,TIMESTEP,NZAPIS,MAXIT
 f f f t                                  lstsq, lstsq_qr, lstsq_dm, gauss
 1 1                                      NPCOR, NIGRAD

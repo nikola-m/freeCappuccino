@@ -5,7 +5,7 @@ module interpolation
 !
   use types
   use parameters
-  use geometry, only: numTotal,numCells,xc,yc,zc
+  use geometry, only: numTotal,numCells,numPCells,xc,yc,zc
 
   implicit none
 
@@ -17,7 +17,7 @@ module interpolation
 
 !***********************************************************************
 !
-function face_value(ijp,ijn,xf,yf,zf,lambda,u,dUdxi,umin,umax) result(ue)
+function face_value(ijp,ijn,xf,yf,zf,lambda,u,dUdxi) result(ue)
 !
 !***********************************************************************
 !
@@ -30,8 +30,7 @@ function face_value(ijp,ijn,xf,yf,zf,lambda,u,dUdxi,umin,umax) result(ue)
   integer :: ijp, ijn
   real(dp) :: xf, yf, zf,lambda
   real(dp), dimension(numTotal) :: u
-  real(dp), dimension(3,numCells) :: dUdxi
-  real(dp) :: umin,umax
+  real(dp), dimension(3,numPCells) :: dUdxi
 
 
   if (lcds) then 
@@ -45,9 +44,6 @@ function face_value(ijp,ijn,xf,yf,zf,lambda,u,dUdxi,umin,umax) result(ue)
 
   elseif (l2nd_flnt) then 
     ue = face_value_2nd_upwind(ijp, xf, yf, zf, u, dUdxi)
-
-  elseif (l2ndlim_flnt) then
-    ue = face_value_2nd_upwind_slope_limited(ijp, xf, yf, zf, u, dUdxi, umin, umax)
 
   elseif (lmuscl_flnt) then
     ue = face_value_muscl(ijp, ijn, xf, yf, zf, u, dUdxi)
@@ -118,7 +114,7 @@ end function
   integer :: ijp, ijn
   real(dp) :: xf, yf, zf, lambda
   real(dp), dimension(numTotal) :: fi
-  real(dp), dimension(3,numCells) :: dfidxi
+  real(dp), dimension(3,numPCells) :: dfidxi
 
   !     Locals
   real(dp) :: fxn,fxp,xi,yi,zi,dfixi,dfiyi,dfizi
@@ -164,7 +160,7 @@ end function
   integer :: inp, inn
   real(dp) :: xf, yf, zf
   real(dp), dimension(numTotal) :: fi
-  real(dp), dimension(3,numCells) :: gradfi
+  real(dp), dimension(3,numPCells) :: gradfi
 
   ! Locals
   real(dp) ::  phi_p, phi_n
@@ -172,7 +168,6 @@ end function
   real(dp) :: xcn,ycn,zcn
   real(dp) :: gradfi_p_x,gradfi_p_y,gradfi_p_z
   real(dp) :: gradfi_n_x,gradfi_n_y,gradfi_n_z
-  real(dp) :: nr
   real(dp) :: gradfidr
 
   ! Values at cell center's of neighbouring cells:
@@ -195,13 +190,11 @@ end function
   gradfi_n_x = gradfi(1,inn)
   gradfi_n_y = gradfi(2,inn)
   gradfi_n_z = gradfi(3,inn)
-
-  nr = 0.5_dp
    
   gradfidr=gradfi_p_x*(xf-xcp)+gradfi_p_y*(yf-ycp)+gradfi_p_z*(zf-zcp) &
           +gradfi_n_x*(xf-xcn)+gradfi_n_y*(yf-ycn)+gradfi_n_z*(zf-zcn)
 
-  face_value = nr*( phi_p + phi_n + gradfidr)
+  face_value = 0.5_dp*( phi_p + phi_n + gradfidr)
 
   end function
 
@@ -229,7 +222,7 @@ end function
   integer :: inp
   real(dp) :: xf, yf, zf
   real(dp), dimension(numTotal) :: fi
-  real(dp), dimension(3,numCells) :: gradfi
+  real(dp), dimension(3,numPCells) :: gradfi
 
   ! Locals
   real(dp) ::  phi_p
@@ -278,7 +271,7 @@ end function
   integer :: inp, inn
   real(dp) :: xf, yf, zf
   real(dp), dimension(numTotal) :: fi
-  real(dp), dimension(3,numCells) :: gradfi
+  real(dp), dimension(3,numPCells) :: gradfi
 
   !     Locals
   real(dp) ::  phi_p, phi_n
@@ -326,84 +319,6 @@ end function
   
   end function
 
-!***********************************************************************
-!
-  function face_value_2nd_upwind_slope_limited(inp, xf, yf, zf, fi, gradfi, fimin, fimax) result(face_value)
-!
-!***********************************************************************
-!
-!     Calculates face value using values of variables and their gradients
-!     at cell-center.
-!     Cell-centered gradient limited using slope limiter:
-!     Wang modified Venkatakrishnan slope limiter
-!     Ref.: Z. J. Wang. "A Fast Nested Multi-grid Viscous Flow Solver for Adaptive Cartesian/Quad Grids",
-!     International Journal for Numerical Methods in Fluids. 33. 657–680. 2000.
-!     The same slope limiter is used in Fluent.
-!
-!***********************************************************************
-!
-  use sparse_matrix, only: ioffset,ja
-
-  implicit none
-
-  !     Result
-  real(dp) :: face_value
-
-  !     Input
-  integer :: inp
-  real(dp) :: xf, yf, zf
-  real(dp),dimension(numTotal) :: fi
-  real(dp),dimension(3,numCells) :: gradfi
-  real(dp) :: fimin, fimax ! NOTE: fimax i fimin, su globalni max i min u polju.
-
-  !     Locals
-  integer :: k
-  real(dp) :: phi_p
-  real(dp) :: gradfiXdr,slopelimit
-  real(dp) :: deltam,deltap,epsi
-  real(dp) :: phi_max,phi_min
-
-  !.....Values at cell center:
-  phi_p = fi(inp)
-
-  !.....gradfixdr = (sum(gradphi_nb(i,:)*r_nb2f(i,:)), i=1,n)
-  gradfiXdr=gradfi(1,inp)*(xf-xc(inp))+gradfi(2,inp)*(yf-yc(inp))+gradfi(3,inp)*(zf-zc(inp)) 
-
-  !.....Find unlimited value:
-  face_value =  phi_p + gradfiXdr 
-
-  !:::::Define slope limiter:
-
-  !.....max and min values over current cell and neighbors
-  phi_max = fi(ja( ioffset(inp) ))
-  phi_min = fi(ja( ioffset(inp) ))
-
-  do k=ioffset(inp)+1, ioffset(inp+1)-1
-    phi_max = max( phi_max, fi(ja(k)) )
-    phi_min = min( phi_max, fi(ja(k)) )      
-  enddo
-
-  deltam = face_value - phi_p
-  if (deltam .gt. 0.0d0) then
-      deltap = phi_max-phi_p
-  else
-      deltap = phi_min-phi_p
-  endif
-
-  ! Original Venkatakrishnan K=[0,?], we take fixed K=0.05
-  ! epsi = (0.05*vol(inp))**3 
-
-  ! Wangs' proposition for epsilon
-  epsi = (0.05*( fimax-fimin ))**2 
-
-  slopelimit = 1./(deltam+small) *((deltap+epsi)*deltam+2*deltam**2*deltap) &
-                                 /(deltap**2+2*deltam**2+deltap*deltam+epsi+small)
-
-
-  face_value =  phi_p + slopelimit*gradfiXdr 
-
-  end function
-
 
 !***********************************************************************
 !
@@ -429,7 +344,7 @@ end function
   integer :: ijn, ijp
   real(dp) :: lambda
   real(dp), dimension(numTotal) :: u
-  real(dp), dimension(3,numCells) :: dUdxi
+  real(dp), dimension(3,numPCells) :: dUdxi
 
   ! Locals
   real(dp) :: r,psi,xpn,ypn,zpn,fxp

@@ -10,7 +10,7 @@ subroutine calcuvw
   use sparse_matrix
   use variables
   use gradients, only: grad
-  use faceflux_velocity, only: facefluxuvw
+  use faceflux_velocity
 
   implicit none
 !
@@ -87,9 +87,9 @@ subroutine calcuvw
       !........[Boussinesq-ova aproximacija: ]
       !-----------------------------------------------------------------------
       heat=0.0_dp
-      if(boussinesq.eq.1) then
+      if(boussinesq) then
         heat = beta*densit*(t(inp)-tref)*vol(inp)
-      else ! if(boussinesq.eq.0)
+      else
         heat = (densit-den(inp))*vol(inp)
       endif
       !-----------------------------------------------------------------------
@@ -377,9 +377,9 @@ subroutine calcuvw
   endif
 
 
-  !
-  !.....Assemble and solve system for U component of velocity
-  !
+!
+!.....Assemble and solve system for U component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if (cn) then
@@ -433,12 +433,9 @@ subroutine calcuvw
   ! Solve fvm equations
   call bicgstab(u,iu)
 
-  umin = minval(u(1:numCells))
-  umax = maxval(u(1:numCells))
-
-  !
-  !.....Assemble and solve system for V component of velocity
-  !
+!
+!.....Assemble and solve system for V component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if(cn) then
@@ -492,13 +489,10 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(v,iv)
-
-  vmin = minval(v(1:numCells))
-  vmax = maxval(v(1:numCells))
  
-  !
-  !.....Assemble and solve system for W component of velocity
-  !
+!
+!.....Assemble and solve system for W component of velocity
+!
 
   ! Crank-Nicolson time stepping source terms
   if(cn) then
@@ -553,8 +547,5 @@ subroutine calcuvw
 
   ! Solve fvm equations
   call bicgstab(w,iw)
-
-  wmin = minval(w(1:numCells))
-  wmax = maxval(w(1:numCells))
 
 end subroutine
