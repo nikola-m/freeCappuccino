@@ -36,7 +36,7 @@
   ! Inlet boundaries (mass fluxes prescribed in routine 'bcin')
   do i=1,ninl
     ijp = owner(iInletFacesStart+i)
-    res(ijp)=res(ijp)+fmi(i)
+    res(ijp)=res(ijp)-fmi(i)
   end do
 
   ! Correct mass flux to satisfy global mass conservation & add to source
@@ -46,13 +46,12 @@
   end do
 
   ! The way it is done in OpenFOAM:
-  sumLocalContErr = timestep*volumeWeightedAverage( abs(res) )
+  ! sumLocalContErr = timestep*volumeWeightedAverage( abs(res) )
+  ! globalContErr = timestep*volumeWeightedAverage( res )
 
-  globalContErr = timestep*volumeWeightedAverage( res )
-
-  ! sumLocalContErr = sum( abs( res ) ) 
+  sumLocalContErr = sum( abs( res ) ) 
   
-  ! globalContErr = sum( res )
+  globalContErr = sum( res )
 
   call global_sum( sumLocalContErr )
 

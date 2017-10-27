@@ -4,6 +4,63 @@ subroutine PISO_multiple_correction
 !
 !***********************************************************************
 !
+! This implementation fo PISO algorithm follows descripton given in
+! Ferziger, Peric - Computational Methods for Fluid Dynamics, 2nd ed.
+! It uses PRESSURE instead of PRESSURE CORRECTION as a variable.
+! The same approach is also used in OpenFOAM library.
+! The algorithm is summarised in following steps, with referenced eqns. 
+! from the book given in braces: 
+!
+!  1) Ansemble and solve momentum eq. with pressure field from previous 
+!     outer iteration or timestep (Eq. 7.30)
+!     Obtained velocity doesn't satisfy continuity eqn.
+!
+!  2) Find "m* with tilde" velocities at each cell center (Eq. 7.31
+!     but without the last term, i.e. the pressure gradient term)
+!     ~ m*    ~ m*    ~ m*
+!     u       v       w
+!      P       P       P
+!     "These are though as velocities from which the contribution of the 
+!     pressure gradient has been removed"-Ferziger,Peric
+!
+!     Relevant code here is get_rAU_x_UEqnH() subroutine.
+!
+!  3) Ansemble pressure equation (Eq. 7.35).
+!     RHS is divergence of 
+!         ~ m*        ~ m*         ~ m*
+!     rho*u   ;   rho*v    ;   rho*w
+!          P           P            P
+!     Which means we interpolate these terms to cell face center, and 
+!     dot them (perform scalar product) with cell face normal, i.e.
+!     the face area vector.
+!     Note, no need for Rhie-Chow interpoaltion here. 
+!     LHS matrix elements are divergence of unknown pressure gradient 
+!     multiplied by rho/Ap, where Ap is diagonal term from momentum eq.
+!     Note, divergence of gradient is Laplace operator, we can discretize
+!     it in a routine that encapsulated implicit FVM calculation of  
+!     Laplacian operator with rho/Ap as a coefficient.
+!
+!  4) Solve the system with tight tolerance (abs error below 1e-6 I guess)
+!     to get new pressure field in cell centers.
+!     Following that calculate new pressure gradients in cell centers.
+!
+!  5) Correct "m* with tilde" velocities to get velocities that satisfy
+!     continuity equation (Eq. 7.34). 
+!      m    ~ m*                             ~ m*      ~ m*
+!     u   = u     - 1 / Apu * ( dp /dx)   ;  v   = ...  w = ...
+!      P     P                                P          P 
+!
+! We can continue with outer iterations in a loop until the convergence
+! is achieved. This is aplicable in three ways: 1) for stationary cases 
+! (under-relaxation required), 2) for nonstationary with very small timestep 
+! as a noniterative time advancement method (under-relaxation not required),
+! or 3) in nonstationary case with few outer iterations and some 
+! under-relaxation.
+! In this way they would look like SIMPLE,PISO and PIMPLE implementations
+! in OpenFOAM respectively.
+!
+!***********************************************************************
+!
   use types
   use parameters
   use geometry
@@ -13,6 +70,7 @@ subroutine PISO_multiple_correction
   use gradients
   use hcoef
   use fieldmanipulation
+  use faceflux_mass, only: facefluxmass_piso,fluxmc
 
   implicit none
 !
@@ -22,7 +80,6 @@ subroutine PISO_multiple_correction
   integer :: i, k, inp, iface, iOtherProc, istage
   integer :: ijp, ijn
   real(dp) :: cap, can
-  ! real(dp) :: sum
 
   ! Before entering the corection loop backup a_nb coefficient arrays:
   h = a  
@@ -30,6 +87,7 @@ subroutine PISO_multiple_correction
   !+++++PISO Corrector loop++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   DO icorr=1,ncorr
 
+    ! This is taken from cfd-online forum post:
     !// From the last solution of velocity, extract the diag. term from the matrix and store the reciprocal
     !// note that the matrix coefficients are functions of U due to the non-linearity of convection.
     !            volScalarField rUA = 1.0/UEqn.A();
@@ -40,7 +98,7 @@ subroutine PISO_multiple_correction
     !   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     ! Posle ovoga imamo novo H(u)/ap, H(v)/ap ,i H(w)/ap A.K.A. "HbyA" smesteno u U,V, i W. To je polje brzina 
     ! bez uticaja gradijenta pritiska!
-    !
+
     call get_rAU_x_UEqnH() 
 
     ! Tentative (!) velocity gradients used for velocity interpolation: 
@@ -144,9 +202,9 @@ subroutine PISO_multiple_correction
     end do
 
 
-    !// adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
-    !// problem where a solution for pressure exists.
-    !     adjustPhi(phi, U, p);
+    !// "adjusts the inlet and outlet fluxes to obey continuity, which is necessary for creating a well-posed
+    !// problem where a solution for pressure exists." - Comment in OF pisoFOAM code.
+
     if(.not.const_mflux) call adjustMassFlow
 
     !!  "If you have a pressure equations with boundaries that do not fix pressure level, you have to fix a reference pressure." H.Jasak cfd-online forum
@@ -162,7 +220,6 @@ subroutine PISO_multiple_correction
     a( diag(pRefCell) ) = 1.0_dp
 
       ! ppref = p(pRefCell)
-
       ! call MPI_BCAST(ppref,1,MPI_DOUBLE_PRECISION,iPrefProcess,MPI_COMM_WORLD,IERR)
 
     ! Reference pressure
@@ -173,12 +230,8 @@ subroutine PISO_multiple_correction
 
     !=====Multiple pressure corrections======================================================.
     DO ipcorr=1,npcor
-     
-      ! Initialize pressure
-      ! pp=0.0_dp 
 
       ! Solve pressure equation system
-      ! call bicgstab(pp,ip)
       call iccg(pp,ip)
 
       !                                                                                  
@@ -219,44 +272,7 @@ subroutine PISO_multiple_correction
 
                                                                                                                                                                                
                                                                                              
-      !// On the last non-orthogonality correction, correct the flux using the most up-to-date pressure
-      !// The .flux method includes contributions from all implicit terms of the pEqn (the Laplacian)
-      !                    phi -= pEqn.flux();                                                 
-                                                                                               
-      ! We have hit the last iteration of nonorthogonality correction:                         
-      if(ipcorr.eq.npcor) THEN 
 
-        !
-        ! Correct mass fluxes at inner cv-faces only (only inner flux)
-        !
-
-        ! Inner faces:
-        do iface=1,numInnerFaces
-
-            ijp = owner(iface)
-            ijn = neighbour(iface)
-
-            ! (icell,jcell) matrix element:
-            k = icell_jcell_csr_value_index(iface)
-
-            flmass(iface) = flmass(iface) + a(k) * ( pp(ijn) - pp(ijp) )
-      
-        enddo
-
-        ! Correct mass fluxes at faces along O-C grid cuts.
-        do i=1,noc
-          fmoc(i) = fmoc(i) + ar(i) * ( pp( ijr(i) ) - pp( ijl(i) ) )
-        end do
-
-        ! Correct mass fluxes at processor boundaries
-        do i=1,npro 
-
-          ijp = owner( iProcFacesStart + i )
-          iOtherProc = iProcStart+i
-
-          fmpro(i) = fmpro(i) + apr(i) * ( pp( iOtherProc ) - pp( ijp ) )
-
-        enddo
 
 
         ! !
@@ -288,15 +304,50 @@ subroutine PISO_multiple_correction
 
         ! end do 
 
-      endif 
 
-      ! Write PISO continuity error report:
-      include 'continuityErrors.h' 
 
     !=====END:Multiple pressure corrections==================================================!
     enddo
 
 
+    !// On the last non-orthogonality correction, correct the flux using the most up-to-date pressure
+    !// The .flux method includes contributions from all implicit terms of the pEqn (the Laplacian)
+    !                    phi -= pEqn.flux();                                                                       
+
+    !
+    ! Correct mass fluxes at inner cv-faces only (only inner flux)
+    !
+
+    ! Inner faces:
+    do iface=1,numInnerFaces
+
+        ijp = owner(iface)
+        ijn = neighbour(iface)
+
+        ! (icell,jcell) matrix element:
+        k = icell_jcell_csr_value_index(iface)
+
+        flmass(iface) = flmass(iface) + a(k) * ( pp(ijn) - pp(ijp) )
+  
+    enddo
+
+    ! Correct mass fluxes at faces along O-C grid cuts.
+    do i=1,noc
+      fmoc(i) = fmoc(i) + ar(i) * ( pp( ijr(i) ) - pp( ijl(i) ) )
+    end do
+
+    ! Correct mass fluxes at processor boundaries
+    do i=1,npro 
+
+      ijp = owner( iProcFacesStart + i )
+      iOtherProc = iProcStart+i
+
+      fmpro(i) = fmpro(i) + apr(i) * ( pp( iOtherProc ) - pp( ijp ) )
+
+    enddo
+
+    ! Write PISO continuity error report:
+    include 'continuityErrors.h' 
 
     !// Add pressure gradient to interior velocity and BC's.  Note that this pressure is not just a small
     !// correction to a previous pressure, but is the entire pressure field.  Contrast this to the use of p'
@@ -318,9 +369,9 @@ subroutine PISO_multiple_correction
     ! Correct velocities
     !      
     do inp=1,numCells
-        u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
-        v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
-        w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
+      u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
+      v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
+      w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
     enddo 
 
     ! Explicit correction of boundary conditions 

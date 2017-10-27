@@ -108,8 +108,7 @@ subroutine calcp
 
 
   ! Test continutity:
-  ! if(ltest) 
-  write(6,'(20x,a,1pe10.3)') 'Initial sum  =',sum(su)
+  ! if(ltest) write(6,'(20x,a,1pe10.3)') 'Initial sum  =',sum(su)
 
 
 
@@ -175,9 +174,9 @@ subroutine calcp
     ! Correct velocities and pressure
     !      
     do inp=1,numCells
-        u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
-        v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
-        w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
+        u(inp) = u(inp) - dPdxi(1,inp) * vol(inp)*apu(inp)
+        v(inp) = v(inp) - dPdxi(2,inp) * vol(inp)*apv(inp)
+        w(inp) = w(inp) - dPdxi(3,inp) * vol(inp)*apw(inp)
         p(inp) = p(inp) + urf(ip)*(pp(inp)-ppref)
     enddo   
 
@@ -221,7 +220,7 @@ subroutine calcp
 
       end do
    
-      write(6,'(27x,a,1pe10.3)') 'sumc  =',sum(su)
+      ! write(6,'(27x,a,1pe10.3)') 'sumc  =',sum(su)
 
     !.......................................................................................................!
     elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
@@ -255,46 +254,10 @@ subroutine calcp
     !.......................................................................................................!
 
 
-
-    ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-
-    ! res = 0.0_dp
-
-    ! ! Internal faces:
-    ! do i = 1,numInnerFaces
-
-    !   ijp = owner(i)
-    !   ijn = neighbour(i)
-
-    !   res(ijp) = res(ijp) - flmass(i)
-    !   res(ijn) = res(ijn) + flmass(i) 
-
-    ! end do
-
-
-    ! ! o- and c-grid cuts
-    ! do i=1,noc
-
-    !   iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
-    !   ijp=ijl(i)
-    !   ijn=ijr(i)
-
-    !   res(ijp) = res(ijp) - fmoc(i)
-    !   res(ijn) = res(ijn) + fmoc(i)
-
-    ! end do
-
-    ! write(6,'(20x,i1,a,/,20x,a,1pe10.3,1x,a,1pe10.3)')  &
-    !                     ipcorr,'. press. correction pass:', &
-    !                                   'sum  =',sum(res(:)),    &
-    !                                   '|sum| =',abs(sum(res(:)))
-
-
-
 !=END: Multiple pressure corrections loop==============================
   enddo
 
-!.....Write continuity error report:
+  ! Write continuity error report:
   include 'continuityErrors.h'
 
 end subroutine

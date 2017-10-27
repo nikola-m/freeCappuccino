@@ -2,13 +2,13 @@
 // As we'll use transfinite algorithm hs can be arbitrary
 // or even omitted from mesh description
 Point(1) = {0, 0, 0, 1.0};
-Point(2) = {1, 0, 0, 1.0};
-Point(3) = {0, 1, 0, 1.0};
-Point(4) = {1, 1, 0, 1.0};
-Point(5) = {1, 1, 1, 1.0};
-Point(6) = {1, 0, 1, 1.0};
-Point(7) = {0, 1, 1, 1.0};
-Point(8) = {0, 0, 1, 1.0};
+Point(2) = {2, 0, 0, 1.0};
+Point(3) = {0, 2, 0, 1.0};
+Point(4) = {2, 2, 0, 1.0};
+Point(5) = {2, 2, 2, 1.0};
+Point(6) = {2, 0, 2, 1.0};
+Point(7) = {0, 1, 2, 1.0};
+Point(8) = {0, 0, 2, 1.0};
 //connect them with lines
 Line(1) = {3, 7};
 Line(2) = {7, 5};
@@ -39,10 +39,10 @@ Surface Loop(25) = {14, 22, 20, 18, 16, 24};
 //and volume
 Volume(26) = {25};
 //And the next lines will convert default generation strategy from tetrahedral meshes to hexagonal
-//Transfinite Line "*" = 101 Using Bump 0.25;
-//Transfinite Surface "*";
-//Recombine Surface "*";
-//Transfinite Volume "*";
+Transfinite Line "*" = 3; //Using Bump 0.25;
+Transfinite Surface "*";
+Recombine Surface "*";
+Transfinite Volume "*";
 //As the lengths of the cube sides are equal, densities of the 1D mesh on every side are equal 
 //(also I've used keyword Bump to grade the mesh near the corners). To use generated mesh in OpenFOAM one has to define physical groups also:
 Physical Surface("top") = {20};

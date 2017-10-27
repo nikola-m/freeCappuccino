@@ -1090,7 +1090,7 @@ subroutine init
   nsw_backup = nsw(ip)
 
   sor(ip) = 1e-10
-  nsw(ip) = 20000
+  nsw(ip) = 500
 
   ! Solve system
   ! call jacobi(p,ip)

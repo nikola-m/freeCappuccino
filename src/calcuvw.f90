@@ -413,14 +413,14 @@ subroutine calcuvw
     ! Sum all coefs in a row of a sparse matrix, but since we also included diagonal element 
     ! we substract it from the sum, to eliminate it from the sum.
     ! We could also write sum( a(ioffset(inp)) : a(ioffset(inp+1)-1) ) because all diagonal terms are zero.
-    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
-    ! a(diag(inp)) = spu(inp) - sum_off_diagonal_terms
+    sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    a(diag(inp)) = spu(inp) - sum_off_diagonal_terms
 
-    a(diag(inp)) = spu(inp) 
-    do k = ioffset(inp),ioffset(inp+1)-1
-      if (k.eq.diag(inp)) cycle
-      a(diag(inp)) = a(diag(inp)) -  a(k)
-    enddo
+    ! a(diag(inp)) = spu(inp) 
+    ! do k = ioffset(inp),ioffset(inp+1)-1
+    !   if (k.eq.diag(inp)) cycle
+    !   a(diag(inp)) = a(diag(inp)) -  a(k)
+    ! enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs
@@ -471,14 +471,14 @@ subroutine calcuvw
   do inp = 1,numCells
 
     ! Main diagonal term assembly:
-    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp))
-    ! a(diag(inp)) = spv(inp) - sum_off_diagonal_terms
+    sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp))
+    a(diag(inp)) = spv(inp) - sum_off_diagonal_terms
 
-    a(diag(inp)) = spv(inp) 
-    do k = ioffset(inp),ioffset(inp+1)-1
-      if (k.eq.diag(inp)) cycle
-      a(diag(inp)) = a(diag(inp)) -  a(k)
-    enddo
+    ! a(diag(inp)) = spv(inp) 
+    ! do k = ioffset(inp),ioffset(inp+1)-1
+    !   if (k.eq.diag(inp)) cycle
+    !   a(diag(inp)) = a(diag(inp)) -  a(k)
+    ! enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs
@@ -528,14 +528,14 @@ subroutine calcuvw
   do inp = 1,numCells
 
     ! Main diagonal term assembly:
-    ! sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
-    ! a(diag(inp)) = sp(inp) - sum_off_diagonal_terms
+    sum_off_diagonal_terms  = sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp)) 
+    a(diag(inp)) = sp(inp) - sum_off_diagonal_terms
 
-    a(diag(inp)) = sp(inp) 
-    do k = ioffset(inp),ioffset(inp+1)-1
-      if (k.eq.diag(inp)) cycle
-      a(diag(inp)) = a(diag(inp)) -  a(k)
-    enddo
+    ! a(diag(inp)) = sp(inp) 
+    ! do k = ioffset(inp),ioffset(inp+1)-1
+    !   if (k.eq.diag(inp)) cycle
+    !   a(diag(inp)) = a(diag(inp)) -  a(k)
+    ! enddo
 
     ! Underelaxation:
     a(diag(inp)) = a(diag(inp))*urfrs

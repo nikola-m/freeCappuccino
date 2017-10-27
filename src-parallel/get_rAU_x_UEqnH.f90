@@ -80,10 +80,6 @@ subroutine get_rAU_x_UEqnH()
               sv(inp) = sv(inp) + svt
               sw(inp) = sw(inp) + swt
 
-              ! spu(inp) = spu(inp) + apotime*(1+0.5*btime)
-              ! spv(inp) = spv(inp) + apotime*(1+0.5*btime)
-              ! sp(inp)  = sp(inp)  + apotime*(1+0.5*btime)
-
         endif
 
   end do
@@ -127,16 +123,16 @@ subroutine get_rAU_x_UEqnH()
 
   endif
 
-  ! Assemble H(U) = sum_j {a_j*U_pj}, j - runs trough neighbour indices
+  ! Assemble H(U) = - sum_j {a_j*U_pj}, j - runs trough neighbour indices
   do i = 1,numInnerFaces
       ijp = owner(i)
       ijn = neighbour(i)
 
       k = icell_jcell_csr_value_index(i)
-      su(ijp) = su(ijp) + h(k)*u(ijn)
+      su(ijp) = su(ijp) - h(k)*u(ijn)
 
       k = jcell_icell_csr_value_index(i)
-      su(ijn) = su(ijn) + h(k)*u(ijp)
+      su(ijn) = su(ijn) - h(k)*u(ijp)
 
   enddo
 
@@ -146,7 +142,7 @@ subroutine get_rAU_x_UEqnH()
       ijp = owner( iface )
       ijn = iProcStart + i
 
-      su(ijp) = su(ijp) + apr(i)*u(ijn)
+      su(ijp) = su(ijp) - apr(i)*u(ijn)
 
   enddo 
 
@@ -190,16 +186,16 @@ subroutine get_rAU_x_UEqnH()
 
   endif
 
-  ! Assemble H(V) = sum_j {a_j*V_pj}, j - runs trough neighbour indices
+  ! Assemble H(V) = - sum_j {a_j*V_pj}, j - runs trough neighbour indices
   do i = 1,numInnerFaces
       ijp = owner(i)
       ijn = neighbour(i)
 
       k = icell_jcell_csr_value_index(i)
-      sv(ijp) = sv(ijp) + h(k)*v(ijn)
+      sv(ijp) = sv(ijp) - h(k)*v(ijn)
 
       k = jcell_icell_csr_value_index(i)
-      sv(ijn) = sv(ijn) + h(k)*v(ijp)
+      sv(ijn) = sv(ijn) - h(k)*v(ijp)
 
   enddo
 
@@ -209,7 +205,7 @@ subroutine get_rAU_x_UEqnH()
       ijp = owner( iface )
       ijn = iProcStart + i
 
-      su(ijp) = su(ijp) + apr(i)*v(ijn)
+      su(ijp) = su(ijp) - apr(i)*v(ijn)
 
   enddo 
 
@@ -252,16 +248,16 @@ subroutine get_rAU_x_UEqnH()
 
   endif
 
-  ! Assemble H(W) = sum_j {a_j*W_pj}, j - runs trough neighbour indices
+  ! Assemble H(W) = - sum_j {a_j*W_pj}, j - runs trough neighbour indices
   do i = 1,numInnerFaces
       ijp = owner(i)
       ijn = neighbour(i)
 
       k = icell_jcell_csr_value_index(i)
-      sw(ijp) = sw(ijp) + h(k)*w(ijn)
+      sw(ijp) = sw(ijp) - h(k)*w(ijn)
 
       k = jcell_icell_csr_value_index(i)
-      sw(ijn) = sw(ijn) + h(k)*w(ijp)
+      sw(ijn) = sw(ijn) - h(k)*w(ijp)
 
   enddo
 
@@ -271,7 +267,7 @@ subroutine get_rAU_x_UEqnH()
       ijp = owner( iface )
       ijn = iProcStart + i
 
-      su(ijp) = su(ijp) + apr(i)*w(ijn)
+      su(ijp) = su(ijp) - apr(i)*w(ijn)
 
   enddo 
 

@@ -1,1 +1,0 @@
-gmsh <input file> -1 -o <output file>.msh

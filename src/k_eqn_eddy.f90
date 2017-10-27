@@ -382,11 +382,12 @@ subroutine calcsc(Fi,dFidxi,ifi)
   do inp = 1,numCells
 
         ! Main diagonal term assembly:
-        a(diag(inp)) = sp(inp) 
-        do k = ioffset(inp),ioffset(inp+1)-1
-          if (k.eq.diag(inp)) cycle
-          a(diag(inp)) = a(diag(inp)) -  a(k)
-        enddo
+    a(diag(inp)) = sp(inp) - sum( a(ioffset(inp) : ioffset(inp+1)-1) ) - a(diag(inp))
+        ! a(diag(inp)) = sp(inp) 
+        ! do k = ioffset(inp),ioffset(inp+1)-1
+        !   if (k.eq.diag(inp)) cycle
+        !   a(diag(inp)) = a(diag(inp)) -  a(k)
+        ! enddo
 
         ! Underelaxation:
         a(diag(inp)) = a(diag(inp))*urfrs
@@ -589,13 +590,13 @@ subroutine modify_mu_eff_inlet()
 
   enddo
 
-  if(ninl.gt.0) then ! If case hase inlet boundaries. 
-    write(*,'(4x,a)') 'mu_sgs/mu: '
-    do i = 1,ninl
-      ini = iInletStart+i 
-      write(*,'(8x,e11.4)') vis(ini)/viscos
-    enddo
-  endif
+  ! if(ninl.gt.0) then ! If case hase inlet boundaries. 
+  !   write(*,'(4x,a)') 'mu_sgs/mu: '
+  !   do i = 1,ninl
+  !     ini = iInletStart+i 
+  !     write(*,'(8x,e11.4)') vis(ini)/viscos
+  !   enddo
+  ! endif
 
 end subroutine
 

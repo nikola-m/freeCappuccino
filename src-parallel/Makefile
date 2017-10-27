@@ -61,7 +61,6 @@ CAFFA_FILES=\
     fieldManipulation.f90 \
     faceflux_velocity.f90 \
     facefluxmass.f90 \
-    facefluxmass_piso.f90 \
     calcheatflux.f90 \
     calcp-multiple_correction_SIMPLE.f90 \
     calcstress.f90 \

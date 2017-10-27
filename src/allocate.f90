@@ -34,7 +34,7 @@ subroutine allocate_arrays
   allocate(wo(numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: wo" 
 
-  if( bdf .and. btime.gt.0.99 ) then
+  if( bdf ) then
     allocate(uoo(numTotal),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: uoo" 
     allocate(voo(numTotal),stat=ierr) 
@@ -82,7 +82,7 @@ subroutine allocate_arrays
   allocate(edo(numTotal),stat=ierr) 
     if(ierr /= 0)write(*,*)"allocation error: edo" 
 
-  if( bdf .and. btime.gt.0.99 ) then
+  if( bdf ) then
     allocate(teoo(numTotal),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: teoo" 
     allocate(edoo(numTotal),stat=ierr) 
@@ -115,7 +115,7 @@ subroutine allocate_arrays
     allocate(to(numTotal),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: to"
 
-    if( bdf .and. btime.gt.0.99 ) then
+    if( bdf ) then
       allocate(too(numTotal),stat=ierr) 
         if(ierr /= 0)write(*,*)"allocation error: too" 
     endif
@@ -139,7 +139,7 @@ subroutine allocate_arrays
     allocate(cono(numTotal),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: cono"
 
-    if( bdf .and. btime.gt.0.99 ) then
+    if( bdf ) then
       allocate(conoo(numTotal),stat=ierr) 
         if(ierr /= 0)write(*,*)"allocation error: conoo" 
     endif
@@ -158,7 +158,7 @@ subroutine allocate_arrays
     allocate(varto(numTotal),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: varto" 
 
-    if( bdf .and. btime.gt.0.99 ) then
+    if( bdf ) then
       allocate(vartoo(numTotal),stat=ierr) 
         if(ierr /= 0)write(*,*)"allocation error: vartoo" 
     endif

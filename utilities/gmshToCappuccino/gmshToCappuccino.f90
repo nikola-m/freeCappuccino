@@ -2,8 +2,7 @@
 !
 ! Description:
 !
-! Converts Gmsh .msh files to one for use in Cappuccino solver, and creates 
-! IA, JA, arrays - for sparse triplet format of writing the system matrix Amat.
+! Converts Gmsh .msh files to one for use in Cappuccino solver.
 !
 ! Author:
 !   Nikola Mirkov
@@ -38,8 +37,6 @@
  integer :: iface, jface
  integer :: nel    ! no. of elements in mesh
  integer :: ndim   ! dimension of the problem. 3 for 3D.
- integer :: nnz    ! number of non zeros in matrix
- integer :: inz    ! an index of the non-zero element, this is a position in IA, and JA matrices
  integer :: nonome ! no. of nodes in mesh
  integer :: numhex ! No. of Hex elements 
  integer :: numpri ! No. of Prism elements
@@ -48,7 +45,6 @@
  integer :: nofalast ! No. of faces in the last element in the list
  integer :: njump
  integer :: nbc
- integer :: istart, iend
  integer :: nInnerFaces
  integer :: nBndryFaces
  integer :: lenPN
@@ -74,10 +70,6 @@
  integer, dimension(:,:), allocatable :: faceVerticesUnsorted
  integer, dimension(:,:), allocatable :: bFaceVertices
  integer, dimension(:,:), allocatable :: bFaceVerticesUnsorted
- integer, dimension(:), allocatable :: ia,ja   ! COO format arrays, sparsity pattern size[nnz]; Amat je size[nnz] isto, alocira se u flow programu. Tamo nadji nnz=length(ia).
- integer, dimension(:), allocatable :: iia,jja
- integer, dimension(:), allocatable :: diag    ! position (index of IA,AJ arrays) of the main diagonal element, positions in Amat, where IA=JA, size[nel]
- integer, dimension(:), allocatable :: ioffset ! position (index of IA,AJ arrays) of the first element in the row, size[nel+1]
  integer, dimension(:), allocatable :: owner
  integer, dimension(:), allocatable :: neighbour
 
@@ -578,8 +570,9 @@ end do element_loop
   bc_loop: &
   do jface = 1,nbc
 
-  write(*,'(11a,f5.1,a)',advance='no') char(8),char(8),char(8),char(8),char(8),char(8),char(8),&
-  char(8),char(8),char(8),char(8),float(jface)/float(nbc)*100,'% done'
+  ! Progress status:
+  ! write(*,'(11a,f5.1,a)',advance='no') char(8),char(8),char(8),char(8),char(8),char(8),char(8),&
+  ! char(8),char(8),char(8),char(8),float(jface)/float(nbc)*100,'% done'
  
   do iel = 1,nel
 
@@ -619,6 +612,7 @@ end do element_loop
 
   enddo bc_loop
 !1=============================================================================1!
+  write ( *, '(a)' ) ' Done.'
   write ( *, '(a)' ) ' '
 
 ! We don't need this anymore...
@@ -687,22 +681,8 @@ end do element_loop
   write ( *, '(a)' ) ' '
   write ( *, '(a)' ) ' Find cells with common inner face:'
   
-  nnz=7*nel ! < promeniti posle - izracunati adjecencies
-  allocate ( IIA(nnz) )
-  allocate ( JJA(nnz) )
-
-  iia = largeInt
-  jja = largeInt
 
 !2=============================================================================2!
- inz = 1
- 
- do iel = 1,nel-1
-   ! Zabelezicemo element na glavnoj dijagonali
-   IIA(inz) = iel
-   JJA(inz) = iel  
-   inz = inz + 1
- enddo
 
   iel = 1 
   nInnerFaces = 0
@@ -710,8 +690,9 @@ end do element_loop
   indxEnd = size(faceVertices,2)-1
   iface_loop: do iface=1,indxEnd
 
-    write(*,'(11a,f5.1,a)',advance='no') char(8),char(8),char(8),char(8),char(8),char(8),char(8),&
-    char(8),char(8),char(8),char(8),float(iface)/float(indxEnd)*100,'% done'
+    ! Progres status:
+    ! write(*,'(11a,f5.1,a)',advance='no') char(8),char(8),char(8),char(8),char(8),char(8),char(8),&
+    ! char(8),char(8),char(8),char(8),float(iface)/float(indxEnd)*100,'% done'
 
     if ( faceVertices(2,iface) == 0 ) cycle iface_loop
 
@@ -726,22 +707,13 @@ end do element_loop
       ! znaci dele zajednicki vertex - interesantno idemo dalje...
 
         if ( faceVertices(3,iface) .eq. faceVertices(3,jface) ) then
-        ! znaci dele zajednicku stranicu, jos bolje! Idemo dalje...
+        ! znaci dele zajednicku ivicu, jos bolje! Idemo dalje...
 
           if ( faceVertices(4,iface) .eq. faceVertices(4,jface) ) then
           ! E to je to, imaju tri zajednica vertexa znaci da su susedi zapisujemo to
 
             iel = faceVertices(5,iface)
             jel = faceVertices(5,jface)
-
-              ! Upisi u sparsity nizove
-              IIA(inz) = iel
-              JJA(inz) = jel
-              inz=inz+1 
-              !...and
-              IIA(inz) = jel
-              JJA(inz) = iel
-              inz=inz+1 
 
               ! write face into the face file:
               write(9,'(4i8)') faceVerticesUnsorted(1:nonofa-ivrtx+1,iface)
@@ -768,10 +740,6 @@ end do element_loop
     enddo
   enddo iface_loop
 
- ! Napokon i zadnji element na glavnoj dijagonali
- IIA(inz) = nel
- JJA(inz) = nel 
-
  ! We don't need this anymore...
  deallocate ( faceVertices )
  deallocate ( faceVerticesUnsorted )
@@ -779,12 +747,9 @@ end do element_loop
 
 !2=============================================================================2!
  
-! > Find actual value of nnz
-  nnz = inz 
+  write ( *, '(a)' ) ' Done.'
   write ( *, '(a)' ) ' '
-  write ( *, '(a)' ) ' '
-  write ( *, '(a,i8)' ) '  Number of Inner faces = ', nInnerFaces
-  write ( *, '(a,i8)' ) '  Number of nonzero coefficients NNZ = ', nnz
+  write ( *, '(a,i8)' ) ' Number of Inner faces = ', nInnerFaces
 
 !
 !  > Rewind polyMesh format file: 'faces', 'owner', 'neighbour'.
@@ -925,9 +890,7 @@ end do element_loop
 !
   rewind 8
 
-  write(8,'(a)') '# bctype nFaces startFace'
-  call i4_to_s_left ( lenPN, numChar )
-  write(8,'(a)') numChar
+  write(8,'(a)') '#bctype nFaces startFace'
 
   l = nInnerFaces 
   do i=1,lenPN
@@ -945,69 +908,6 @@ end do element_loop
   close (9)
   close (10)
   close (11)
-
-!
-!  > Administrative tasks.
-!
-
-  allocate ( IA(nnz) )
-  allocate ( JA(nnz) )
-
-  IA(:) = IIA(1:nnz)
-  JA(:) = JJA(1:nnz)
-
-
-  deallocate ( IIA )
-  deallocate ( JJA )
-
-!
-!  > Lexically sort the IA, JA values.
-!
-  call i4vec2_sort_a ( nnz, ia, ja )
-
-  call i4vec_print2 ( 10, ia, ja, '  First 20 lines of Sorted IA and JA arrays:' )
-
-
-!
-! > Find positions of diagonal elements in COO matrix format
-!
- allocate ( diag(nel) )
-
- call find_main_diag_element_positions(ia,ja,nnz,diag,nel)
-
- call i4vec_print ( 10, diag, '  First 10 lines of Diagonal adjacency vector:' )
-
-!
-! > Find positions of row starting in COO matrix format
-!
- allocate ( ioffset(nel+1) )
-
-istart=1
-iend=1
- do iel = 1,nel
-!   call find_pos(iel, ia, nnz, ioffset(iel))
-   call find_index_position(iel, istart, iend, ia,  nnz, ioffset(iel))
-   istart = ioffset(iel)+1
-   iend = istart + 6 
- enddo
- ioffset(nel+1) = nnz+1 ! poslednji element
-
- call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
-
-! NOTE: At the end since we have ia,ja,Amat,diag .AND. ioffset,ja,Amat we have matrix writen in both COO and CSR format!
-! It uses more storage OK, but we can seamlessly switch between linear solvers written for different matrix formats
-
-
-
-!
-! Deallocate arrays
-!
-  ! deallocate ( x )
-
-  deallocate ( diag )
-  deallocate ( ioffset )
-  deallocate ( ia )
-  deallocate ( ja )
 
 
 !

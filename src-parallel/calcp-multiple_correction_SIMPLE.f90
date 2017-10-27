@@ -143,9 +143,6 @@ subroutine calcp
 !=====Multiple pressure corrections=====================================
   do ipcorr=1,npcor
 
-    ! Initialize pressure correction
-    ! pp=0.0d0
-
     ! Solving pressure correction equation
     ! call bicgstab(pp,ip) 
     call iccg(pp,ip)
@@ -213,9 +210,9 @@ subroutine calcp
     !      
     do inp=1,numCells
 
-        u(inp) = u(inp) - apu(inp)*dPdxi(1,inp)*vol(inp)
-        v(inp) = v(inp) - apv(inp)*dPdxi(2,inp)*vol(inp)
-        w(inp) = w(inp) - apw(inp)*dPdxi(3,inp)*vol(inp)
+        u(inp) = u(inp) - dPdxi(1,inp) * vol(inp)*apu(inp)
+        v(inp) = v(inp) - dPdxi(2,inp) * vol(inp)*apv(inp)
+        w(inp) = w(inp) - dPdxi(3,inp) * vol(inp)*apw(inp)
 
         p(inp) = p(inp) + urf(ip)*(pp(inp)-ppref)
 
@@ -275,13 +272,6 @@ subroutine calcp
         su(ijp) = su(ijp) - fmcor
 
       end do
-
-    
-      ! ! Test continuity sum=0. The 'sum' should drop trough successive ipcorr corrections.
-      ! if (myid .eq. 0) write(6,'(20x,i1,a,/,a,1pe10.3,1x,a,1pe10.3)')  &
-      !                     ipcorr,'. nonorthogonal pass:', &
-      !                                   ' sum  =',sum(su),    &
-      !                                   '|sum| =',abs(sum(su))
                                                                                                  
     !.......................................................................................................!
     elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
@@ -335,7 +325,7 @@ subroutine calcp
   call exchange( w )
   call exchange( p )
 
-!.....Write continuity error report:
+  ! Write continuity error report:
   include 'continuityErrors.h'
 
 end subroutine
