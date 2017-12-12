@@ -146,6 +146,7 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
+  character( len = 5) :: nproc_char
 
   integer :: i,k
   integer :: icell
@@ -155,6 +156,9 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   integer, dimension(8) :: node
 
+  ! nproc_char <- myid zapisan levo u vidu stringa.
+  call i4_to_s_left ( myid, nproc_char )
+
 !
 ! > Header
 !
@@ -163,7 +167,7 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
   call i4_to_s_left ( numCells, cells_num_string )
 
   call get_unit( cells_file )
-  open( unit = cells_file, file='polyMesh/cells' )
+  open( unit = cells_file, file='processor'//trim(nproc_char)//'constants/polyMesh/cells' )
   rewind cells_file
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
@@ -223,7 +227,7 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="connectivity" Format="ascii">'
     do icell=1,numCells
-      read( cells_file, '(i1,1x,4i8:(4i8:))' ) ntype,(node(k), k=1,noel(ntype))
+      read( cells_file, * ) ntype,(node(k), k=1,noel(ntype))
       ! Note, Paraview starts counting from 0, we in Fortran start with 1, therefore: node(k)-1
       write( output_unit, '(10x,4i8:(4i8:))') (node(k)-1, k=1,noel(ntype)) 
     enddo
@@ -277,6 +281,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
+  character( len = 5) :: nproc_char
 
   integer :: i,k
   integer :: icell
@@ -286,6 +291,9 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   integer, dimension(8) :: node
 
+  ! nproc_char <- myid zapisan levo u vidu stringa.
+  call i4_to_s_left ( myid, nproc_char )
+
 !
 ! > Header
 !
@@ -294,7 +302,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
   call i4_to_s_left ( numCells, cells_num_string )
 
   call get_unit( cells_file )
-  open( unit = cells_file, file='cells' )
+  open( unit = cells_file, file='processor'//trim(nproc_char)//'constants/polyMesh/cells' )
   rewind cells_file
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
@@ -340,7 +348,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="connectivity" Format="ascii">'
     do icell=1,numCells
-      read( cells_file, '(i1,1x,4i8:(4i8:))' ) ntype,(node(k), k=1,noel(ntype))
+      read( cells_file, * ) ntype,(node(k), k=1,noel(ntype))
       ! Note, Paraview starts counting from 0, we in Fortran start with 1, therefore: node(k)-1
       write( output_unit, '(10x,4i8:(4i8:))') (node(k)-1, k=1,noel(ntype)) 
     enddo

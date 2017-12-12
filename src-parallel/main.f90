@@ -36,7 +36,6 @@ program cappuccino
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
-  character(len=9) :: timechar
 !                                                                       
 !******************************************************************************
 !
@@ -229,7 +228,10 @@ program cappuccino
               include 'constant_mass_flow_forcing.f90'
             endif
 
-            if(mod(itime,nzapis).eq.0) call writefiles
+            if( mod(itime,nzapis).eq.0 .and. itime.ne.numstep ) then
+              call write_restart_files
+              call writefiles
+            endif
             call writehistory !<- write monitoring points
             call calc_statistics 
 
@@ -251,9 +253,9 @@ program cappuccino
 !.....Write field values after nzapis iterations 
 !===============================================
     if(.not.ltransient) then
-      if(mod(itime,nzapis).eq.0.and.itime.ne.numstep) then
-        call writefiles
+      if( mod(itime,nzapis).eq.0 .and. itime.ne.numstep ) then
         call write_restart_files
+        call writefiles
       endif
     endif
 

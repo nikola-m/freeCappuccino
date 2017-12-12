@@ -79,7 +79,7 @@ module parameters
   logical :: CoNumFix         ! Is Courant no. fixed during time-stepping
   real(dp) :: CoNumFixValue   ! Fixed value for Courant number - set in modinp for now - may be read in input
   real(dp) :: CoNum,meanCoNum ! Courant number.  
-
+  character(len=9) :: timechar! A char string to write current timestep
 
   ! Choosing discretization scheme cds, luds, smart,muscl, gamma, etc.
   ! logical :: lcds,lluds,lsmart,lavl,lmuscl,lumist...,lcds_flnt,l2nd_flnt,l2ndlim_flnt,lmuscl_flnt

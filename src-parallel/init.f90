@@ -993,9 +993,9 @@ subroutine init
 ! !===================================================
 ! ! Test gradients:
 ! print*,'gradijenti:'
-! ! do i=1,numCells
-! !   print*,i,':',dudxi(3,i)
-! ! enddo
+! do i=1,numCells
+!   print*,i,':',dudxi(1,i)
+! enddo
 ! print*,'L0 error norm: ',maxval(abs(1.0d0-dudxi(1,:)))
 ! print*,'L1 error norm: ',sum(abs(1.0d0-dudxi(1,:)))
 ! print*,'processor'//trim(nproc_char)

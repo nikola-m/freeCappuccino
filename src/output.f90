@@ -1,7 +1,7 @@
 module output
 use types, only: dp
 use parameters
-use geometry,only: numCells,numFaces,numNodes,nomax,native_mesh_files,x,y,z,arx,ary,arz, &
+use geometry,only: numCells,numInnerFaces,numBoundaryFaces,numFaces,numNodes,nomax,native_mesh_files,x,y,z,arx,ary,arz, &
                    read_line_faces_file_polyMesh
 use tensor_fields
 use utils, only: get_unit, i4_to_s_left
@@ -17,6 +17,29 @@ end interface
 public 
 
 contains
+
+
+ pure integer function paraview_cell_type(nnodes)
+!
+! Element type in Paraview corresponding to number of nodes.
+!
+ implicit none
+ integer, intent(in) :: nnodes
+ 
+
+  if(nnodes.eq.1) then 
+   paraview_cell_type = 1
+  elseif(nnodes.eq.2) then 
+   paraview_cell_type =  3
+  elseif(nnodes.eq.3) then 
+   paraview_cell_type = 5
+  elseif(nnodes.eq.4) then 
+   paraview_cell_type = 9
+  else
+   paraview_cell_type = 0
+  endif
+
+ end function
 
 
  pure integer function paraview_ntype(NTYPE)
@@ -146,14 +169,18 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
+  ! character ( len = 1 ) ch
 
   integer :: i,k
   integer :: icell
+  ! integer :: iface
   integer :: ntype
   integer :: offset
   integer :: cells_file
-
+  ! integer :: faces_file
+  ! integer :: nnodes
   integer, dimension(8) :: node
+  ! integer, dimension(numBoundaryFaces) :: num_nodes
 
 !
 ! > Header
@@ -161,10 +188,24 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   call i4_to_s_left ( numNodes, node_num_string )
   call i4_to_s_left ( numCells, cells_num_string )
+  ! call i4_to_s_left ( numCells+numBoundaryFaces, cells_num_string )
 
   call get_unit( cells_file )
   open( unit = cells_file, file='polyMesh/cells' )
   rewind cells_file
+
+  ! call get_unit( faces_file )
+  ! open( unit = faces_file, file='polyMesh/faces' )
+  ! rewind faces_file
+  ! ! Fast forward to place where boundary faces start
+  !   ! First polyMesh header
+  !   do i=1,18
+  !     read(faces_file,*) ch
+  !   end do
+  !   ! Then over Inner faces
+  !   do i=1,numInnerFaces
+  !     read(faces_file,*) ch
+  !   end do
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
   write ( output_unit, '(2x,a)' ) '<UnstructuredGrid>'
@@ -196,6 +237,10 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
     do icell=1,numCells
       write( output_unit, '(10x,es11.4)') scalar_field(icell) 
     enddo
+    ! do iface = 1,numBoundaryFaces
+    !   i = numCells+iface
+    !   write( output_unit, '(10x,es11.4)') scalar_field(i)
+    ! enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
   write ( output_unit, '(6x,a)' ) '</CellData>'
@@ -223,16 +268,34 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
 
   write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="connectivity" Format="ascii">'
     do icell=1,numCells
-      read( cells_file, '(i1,1x,4i8:(4i8:))' ) ntype,(node(k), k=1,noel(ntype))
+      read( cells_file, * ) ntype,(node(k), k=1,noel(ntype))
       ! Note, Paraview starts counting from 0, we in Fortran start with 1, therefore: node(k)-1
       write( output_unit, '(10x,4i8:(4i8:))') (node(k)-1, k=1,noel(ntype)) 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   ! Read line in 'faces' file
+    !   if (native_mesh_files) then
+    !     read( faces_file, * ) nnodes, (node(k), k=1,nnodes)
+    !   else ! OpenFOAM polyMesh
+    !     call read_line_faces_file_polyMesh(faces_file,nnodes,node,nomax)
+    !   endif
+    !   ! Note, Paraview starts counting from 0, so does native polyMesh, but in 
+    !   ! Cappuccino we have to substract 1 as above for cells.
+    !   if (native_mesh_files) then
+    !     write( output_unit, '(10x,4i8:(4i8:))') ( node(k)-1, k=1,nnodes ) 
+    !   else
+    !     write( output_unit, '(10x,4i8:(4i8:))') ( node(k), k=1,nnodes ) 
+    !   endif
+    !   num_nodes(iface) = nnodes
+    ! enddo
+
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
 !
 ! > Mesh data > Offsets
 !
   rewind cells_file
+
   offset = 0
 
   write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="offsets" Format="ascii">'
@@ -241,6 +304,10 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
       offset = offset+noel(ntype)
       write( output_unit, '(i12)') offset 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   offset = offset+num_nodes(iface)
+    !   write( output_unit, '(i12)') offset 
+    ! enddo
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
   rewind cells_file
@@ -252,6 +319,9 @@ subroutine vtu_write ( output_unit, scalar_name, scalar_field )
       read( cells_file, '(i1)' ) ntype
       write( output_unit, '(i12)') paraview_ntype(ntype) 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   write( output_unit, '(i12)') paraview_cell_type( num_nodes(iface) ) 
+    ! enddo
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
   write ( output_unit, '(6x,a)' ) '</Cells>'
@@ -270,6 +340,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 !
 ! Writes scalar field data to Paraview XML, unstructured, ".vtu" file.
 !
+
   implicit none
   integer, intent(in) :: output_unit
   character ( len = * ), intent(in) :: field_name
@@ -277,14 +348,18 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   character ( len = 20 ) node_num_string
   character ( len = 20 ) cells_num_string
+  ! character ( len = 1 ) ch
 
   integer :: i,k
   integer :: icell
+  ! integer :: iface
   integer :: ntype
   integer :: offset
   integer :: cells_file
-
+  ! integer :: faces_file
+  ! integer :: nnodes
   integer, dimension(8) :: node
+  ! integer, dimension(numBoundaryFaces) :: num_nodes
 
 !
 ! > Header
@@ -292,10 +367,24 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   call i4_to_s_left ( numNodes, node_num_string )
   call i4_to_s_left ( numCells, cells_num_string )
+  ! call i4_to_s_left ( numCells+numBoundaryFaces, cells_num_string )
 
   call get_unit( cells_file )
   open( unit = cells_file, file='polyMesh/cells' )
   rewind cells_file
+
+  ! call get_unit( faces_file )
+  ! open( unit = faces_file, file='polyMesh/faces' )
+  ! rewind faces_file
+  ! ! Fast forward to place where boundary faces start
+  !   ! First polyMesh header
+  !   do i=1,18
+  !     read(faces_file,*) ch
+  !   end do
+  !   ! Then over Inner faces
+  !   do i=1,numInnerFaces
+  !     read(faces_file,*) ch
+  !   end do
 
   write ( output_unit, '(a)' )    '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="BigEndian">'
   write ( output_unit, '(2x,a)' ) '<UnstructuredGrid>'
@@ -311,8 +400,12 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 ! > Scalars in cell-centers > write scalar data
 !
     do icell=1,numCells
-      write( output_unit, '(9x,3(1x,es11.4))') u(icell), v(icell), w(icell)
+      write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
     enddo
+    ! do iface = 1,numBoundaryFaces
+    !   i = numCells+iface
+    !   write( output_unit, '(10x,3(1x,es11.4))') u(i), v(i), w(i)
+    ! enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
   write ( output_unit, '(6x,a)' ) '</CellData>'
@@ -340,10 +433,27 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 
   write ( output_unit, '(8x,a)' ) '<DataArray type="Int32" Name="connectivity" Format="ascii">'
     do icell=1,numCells
-      read( cells_file, '(i1,1x,4i8:(4i8:))' ) ntype,(node(k), k=1,noel(ntype))
+      read( cells_file, * ) ntype,(node(k), k=1,noel(ntype))
       ! Note, Paraview starts counting from 0, we in Fortran start with 1, therefore: node(k)-1
       write( output_unit, '(10x,4i8:(4i8:))') (node(k)-1, k=1,noel(ntype)) 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   ! Read line in 'faces' file
+    !   if (native_mesh_files) then
+    !     read( faces_file, * ) nnodes, (node(k), k=1,nnodes)
+    !   else ! OpenFOAM polyMesh
+    !     call read_line_faces_file_polyMesh(faces_file,nnodes,node,nomax)
+    !   endif
+    !   ! Note, Paraview starts counting from 0, so does native polyMesh, but in 
+    !   ! Cappuccino we have to substract 1 as above for cells.
+    !   if (native_mesh_files) then
+    !     write( output_unit, '(10x,4i8:(4i8:))') ( node(k)-1, k=1,nnodes ) 
+    !   else
+    !     write( output_unit, '(10x,4i8:(4i8:))') (node(k), k=1,nnodes ) 
+    !   endif
+    !   num_nodes(iface) = nnodes
+    ! enddo
+
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
 !
@@ -358,6 +468,10 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
       offset = offset+noel(ntype)
       write( output_unit, '(i12)') offset 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   offset = offset+num_nodes(iface)
+    !   write( output_unit, '(i12)') offset 
+    ! enddo
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
   rewind cells_file
@@ -369,6 +483,9 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
       read( cells_file, '(i1)' ) ntype
       write( output_unit, '(i12)') paraview_ntype(ntype) 
     enddo
+    ! do iface=1,numBoundaryFaces
+    !   write( output_unit, '(i12)') paraview_cell_type( num_nodes(iface) ) 
+    ! enddo
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 
   write ( output_unit, '(6x,a)' ) '</Cells>'

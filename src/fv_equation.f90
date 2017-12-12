@@ -80,6 +80,7 @@ function new_csrMatrix( )
     implicit none
     integer :: i
     type(csrMatrix) :: new_csrMatrix
+    
     allocate(new_csrMatrix%ioffset ( numCells+1 ))
     allocate(new_csrMatrix%ja ( nnz ))
     allocate(new_csrMatrix%coef ( nnz ))

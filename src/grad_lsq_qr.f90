@@ -73,8 +73,8 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
   if(istage.eq.1) then
   ! Coefficient matrix - should be calculated only once 
 !**************************************************************************************************
-    Dtmp(:,:) = 0.0d0
-    neighbour_index(:) = 0
+    Dtmp = 0.0d0
+    neighbour_index = 0
 
   ! Inner faces:                                             
   do i=1,numInnerFaces                                                       
@@ -233,7 +233,7 @@ subroutine grad_lsq_qr(fi,dfidxi,istage,d)
 
 !--------------------------------------------------------------------------------------------------
   ! RHS vector
-  b(:,:)=0.0d0
+  b=0.0d0
 
   neighbour_index(:) = 0
 

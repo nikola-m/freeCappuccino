@@ -11,6 +11,7 @@ subroutine calcuvw
   use variables
   use gradients, only: grad
   use faceflux_velocity, only: facefluxuvw
+  use fieldManipulation, only: calcPressDiv
 
   implicit none
 !
@@ -19,7 +20,8 @@ subroutine calcuvw
 !
 ! Local variables
 !
-  integer :: i, k, inp, ijp, ijn, iface, istage
+  integer :: i, k, inp, ijp, ijn, iface
+  ! integer :: istage
   real(dp) :: urfrs, urfms, apotime, heat
   real(dp) :: sut, svt, swt 
   real(dp) :: sup, svp, swp
@@ -44,37 +46,43 @@ subroutine calcuvw
   
   ScndOrderWallBC_Model = .false.
 
+  ! Initialize sources
+  su = 0.0_dp
+  sv = 0.0_dp
+  sw = 0.0_dp
+
+  ! For u  sp => spu; for v  sp => spv; for w  sp => sp 
+  spu = 0.0_dp
+  spv = 0.0_dp
+  sp  = 0.0_dp
+
   ! Velocity gradients: 
   call grad(U,dUdxi)
   call grad(V,dVdxi)
   call grad(W,dWdxi)
-
   ! It can also be called with components of vector field
   ! call grad(U,V,W,dUdxi,dVdxi,dWdxi)
 
-  ! Pressure gradient
-  do istage=1,nipgrad
-    ! Pressure at boundaries (for correct calculation of press. gradient)
-    call bpres(p,istage)
-    ! Calculate pressure gradient.
-    call grad(p,dPdxi)
-  end do
+  ! ! Pressure gradient
+  ! do istage=1,nipgrad
+  !   ! Pressure at boundaries (for correct calculation of press. gradient)
+  !   call bpres(p,istage)
+  !   ! Calculate pressure gradient.
+  !   call grad(p,dPdxi)
+  ! end do
 
+  ! Pressure divergence contribution to source
+  call calcPressDiv
 
   ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME
   do inp=1,numCells
 
-    ! For u  sp => spu; for v  sp => spv; for w  sp => sp 
-    spu(inp) = 0.0_dp
-    spv(inp) = 0.0_dp
-    sp(inp)  = 0.0_dp
-
     !=======================================================================
-    ! Pressure source terms
+    ! Pressure source terms <- instead of this we used explicit divergence above
     !=======================================================================
-    su(inp) = -dPdxi(1,inp)*vol(inp)
-    sv(inp) = -dPdxi(2,inp)*vol(inp)
-    sw(inp) = -dPdxi(3,inp)*vol(inp)
+    ! su(inp) = -dPdxi(1,inp)*vol(inp)
+    ! sv(inp) = -dPdxi(2,inp)*vol(inp)
+    ! sw(inp) = -dPdxi(3,inp)*vol(inp)
 
     ! Constant mass flow forcing - used only on U velocity component
     !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -88,7 +96,6 @@ subroutine calcuvw
       !-----------------------------------------------------------------------
       !........[Boussinesq-ova aproximacija: ]
       !-----------------------------------------------------------------------
-      heat=0.0_dp
       if(boussinesq) then
         heat = beta*densit*(t(inp)-tref)*vol(inp)
       else ! if(.not.boussinesq)

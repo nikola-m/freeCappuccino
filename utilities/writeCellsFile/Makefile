@@ -1,5 +1,5 @@
 #
-# Makefile for read_boundary_file program
+# Makefile for writeCellsPolyMesh program
 #         
 
 F90FLAGS = -O2 -Wall
@@ -8,8 +8,9 @@ F90FLAGS = -O2 -Wall
 F90 = gfortran
 
 F90FILES=\
-      boundary_module.f90 \
-      read_boundary_file.f90 
+      qsort_c_module.f90 \
+      cells_module.f90 \
+      writeCellsPolyMesh.f90
 
 
 
@@ -19,11 +20,15 @@ F90OBJS = ${F90FILES:.f90=.o}
 # Targets for make.
 ##################################################################
 
-read_boundary_file: ${F90OBJS}
+all: writeCellsPolyMesh
+
+writeCellsPolyMesh: ${F90OBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${F90OBJS} -o ../../bin/read_boundary_file
+	${F90} ${F90OBJS} -o ../../bin/writeCellsPolyMesh
+
+.PHONY: clean
 clean:
-	@rm  *.o *.mod ../../bin/read_boundary_file
+	@rm  *.o *.mod ../../bin/writeCellsPolyMesh
 
 ##################################################################
 # Generic rules

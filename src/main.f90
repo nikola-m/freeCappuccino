@@ -34,23 +34,24 @@ program cappuccino
   real(dp):: source
   real(dp):: suma,dt
   real :: start, finish
-  character(len=9) :: timechar
 !                                                                       
 !******************************************************************************
 !
 
 !  Check command line arguments
   narg=command_argument_count()
-  if (narg==0.or.narg<4) write(*,'(a)') 'Usage: '&
-  &'./caffa3d <input_file> <monitor_file> <restart_file> <out_folder_path>'
+
+  if (narg==0.or.narg<4) write(*,'(a)') &
+  & 'Usage: ./caffa3d <input_file> <monitor_file> <restart_file> <out_folder_path>'
+
   call get_command_argument(1,input_file)
   call get_command_argument(2,monitor_file)
   call get_command_argument(3,restart_file)
   call get_command_argument(4,out_folder_path)
 
-!-----------------------------------------------
-!  Initialization, grid definition 
-!-----------------------------------------------
+!-----------------------------------------------------------
+!  Initialization, mesh definition, sparse matrix allocation
+!-----------------------------------------------------------
 
   call openfiles
 
@@ -176,14 +177,17 @@ program cappuccino
               include 'constant_mass_flow_forcing.f90'
             endif
 
-            if(mod(itime,nzapis).eq.0) call writefiles
-            call writehistory !<- write monitoring points
+            if(mod(itime,nzapis).eq.0 .and. itime.ne.numstep ) then
+              call write_restart_files
+              call writefiles
+            endif
+            call writehistory
             call calc_statistics 
 
             ! Create and save a frame for animation
-            if(mod(itime,nzapis).eq.1000) then 
-               include 'create_and_save_frame.f90'
-            endif
+            ! if(mod(itime,nzapis).eq.1000) then 
+            !    include 'create_and_save_frame.f90'
+            ! endif
 
             cycle time_loop
          
@@ -198,9 +202,9 @@ program cappuccino
 !.....Write field values after nzapis iterations 
 !===============================================
     if(.not.ltransient) then
-      if(mod(itime,nzapis).eq.0.and.itime.ne.numstep) then
-        call writefiles
+      if( mod(itime,nzapis).eq.0 .and. itime.ne.numstep ) then
         call write_restart_files
+        call writefiles
       endif
     endif
 
@@ -213,7 +217,7 @@ program cappuccino
 !.....Write field values for the next run 
 !===============================================
   itime = itime-1
-  call writefiles
   call write_restart_files
+  call writefiles
       
 end program

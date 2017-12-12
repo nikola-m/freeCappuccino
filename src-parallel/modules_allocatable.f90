@@ -86,6 +86,7 @@ module parameters
   logical :: CoNumFix         ! Is Courant no. fixed during time-stepping
   real(dp) :: CoNumFixValue   ! Fixed value for Courant number - set in modinp for now - may be read in input
   real(dp) :: CoNum,meanCoNum ! Courant number.  
+  character(len=9) :: timechar! A char string to write current timestep
 
 
   ! Choosing discretization scheme cds, luds, smart,muscl, gamma, etc.
@@ -254,9 +255,9 @@ module my_mpi_module
     ! MPI related 
     integer :: lenbuf ! Buffer size, total no of faces that divide this and other domains
     integer :: numConnections ! broj konektovanih domena na ovaj trenutni
-    integer, dimension(:), allocatable :: neighbProcNo      ! [1,num_connections]
-    integer, dimension(:), allocatable :: neighbProcOffset  ! [1,num_connections+1]
-    integer, dimension(:), allocatable :: bufind            ! [1,len_buffer] indeksi granicnih celija
-    real(dp), dimension(:), allocatable :: buffer           ! [1,len_buffer]
+    integer, dimension(:), allocatable :: neighbProcNo       ! size[1,num_connections]; Value: self descriptive.
+    integer, dimension(:), allocatable :: neighbProcOffset   ! size[1,num_connections+1]; Value: Where, in arrays of size lenbuf, do the faces of certain conection start.
+    integer, dimension(:), allocatable :: bufind             ! size[1,len_buffer]; Represents indexes of cell at process boudary.
+    real(dp), dimension(:), allocatable :: buffer            ! size[1,len_buffer]; Stores buffer values of type real.
 
 end module

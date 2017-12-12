@@ -14,13 +14,14 @@ logical :: lstsq, lstsq_qr, lstsq_dm, gauss        ! Gradient discretization app
 character(len=20) :: limiter                       ! Gradient limiter. Options: none, Barth-Jespersen, Venkatakrishnan, mVenkatakrishnan
 character(len=12) :: sngrad_corr                   ! Surface normal gradient correction scheme. Options: Skewness, Offset, Uncorrected.
 
-real(dp),dimension(:,:), allocatable ::  dmat      !  d(6,nxyz) - when using bn, or dm version of the subroutine
+real(dp),dimension(:,:), allocatable, save ::  dmat      !  d(9,nxyz)
 real(dp),dimension(:,:,:), allocatable ::  dmatqr  !  when using qr version of the subroutine size(3,6,nxyz)!
 
 
 interface grad
   module procedure grad_scalar_field
   module procedure grad_vector_field
+  module procedure grad_scalar_field_w_option
 end interface
 
 interface sngrad
@@ -50,7 +51,7 @@ implicit none
   integer :: ierr
 
   if( lstsq .or. lstsq_dm ) then
-    allocate(dmat(6,numCells),stat=ierr) 
+    allocate(dmat(9,numCells),stat=ierr) 
       if(ierr /= 0)write(*,*)"allocation error: dmat"
   elseif( lstsq_qr ) then
     allocate(dmatqr(3,6,numCells),stat=ierr) 
@@ -111,13 +112,28 @@ implicit none
   dPhidxi = 0.0_dp
 
   if (lstsq) then 
+
     call grad_lsq(phi,dPhidxi,2,dmat)
+
   elseif (lstsq_qr) then 
+
     call grad_lsq_qr(phi,dPhidxi,2,dmatqr)
+
   elseif (lstsq_dm) then 
+
     call grad_lsq_dm(phi,dPhidxi,2,dmat)
-  else
+
+  elseif ( (lstsq_qr .and. gauss) .or. (lstsq .and. gauss) ) then
+
+    ! Using the lstsq or lstsq_qr switch the Least-squares gradients are already calculated above
+    ! Using these we perform more precise interpolation of our variable to faces and get 
+    ! conservative gradients using Gauss rule.
+    call grad_gauss_corrected(phi,dPhidxi(1,:),dPhidxi(2,:),dPhidxi(3,:)) 
+
+  else 
+
     call grad_gauss(phi,dPhidxi(1,:),dPhidxi(2,:),dPhidxi(3,:))
+
   endif 
 
   ! Gradient limiter:
@@ -181,6 +197,10 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
     call grad_lsq_dm(U,dUdxi,2,dmat)
     call grad_lsq_dm(V,dVdxi,2,dmat)
     call grad_lsq_dm(W,dWdxi,2,dmat)
+  elseif ( (lstsq_qr .and. gauss) .or. (lstsq .and. gauss) ) then
+    call grad_gauss_corrected(U,dUdxi(1,:),dUdxi(2,:),dUdxi(3,:))
+    call grad_gauss_corrected(V,dVdxi(1,:),dVdxi(2,:),dVdxi(3,:))
+    call grad_gauss_corrected(W,dWdxi(1,:),dWdxi(2,:),dWdxi(3,:))
   else
     call grad_gauss(U,dUdxi(1,:),dUdxi(2,:),dUdxi(3,:))
     call grad_gauss(V,dVdxi(1,:),dVdxi(2,:),dVdxi(3,:))
@@ -200,6 +220,83 @@ subroutine grad_vector_field(U,V,W,dUdxi,dVdxi,dWdxi)
   call exchange_short( dWdxi(1,:) )
   call exchange_short( dWdxi(2,:) )
   call exchange_short( dWdxi(3,:) )
+
+end subroutine
+
+
+!***********************************************************************
+!
+subroutine grad_scalar_field_w_option(phi,dPhidxi,option)
+!
+!***********************************************************************
+!
+! The main reason why we write this subroutine is to correct velocities
+! in SIMPLE algorithm with conservative gradients, which is possible
+! with Gauss rule. 
+! We noticed it is better for calculation precission.
+! But calling gradients with option may be nice anyhow.
+!
+!***********************************************************************
+!
+
+implicit none
+
+  real(dp), dimension(numTotal), intent(in) :: phi
+  real(dp), dimension(3,numPCells), intent(inout) :: dPhidxi
+  character( len=* ), intent(in) :: option
+
+  ! Before the calculation of the gradients we exchange the information
+  ! between processes to make sure that the freshest field values are in the buffer.
+  ! MPI exchange:
+  call exchange(phi)
+
+  dPhidxi = 0.0_dp
+  
+  if ( option == 'lsq' ) then 
+
+    call grad_lsq(phi,dPhidxi,2,dmat)
+
+  elseif ( option == 'lsq_qr' ) then 
+
+    call grad_lsq_qr(phi,dPhidxi,2,dmatqr)
+
+  elseif ( option == 'weighted_lsq' ) then 
+
+    call grad_lsq_dm(phi,dPhidxi,2,dmat)
+
+  elseif ( option == 'gauss_corrected' ) then
+
+    call grad_gauss_corrected(phi,dPhidxi(1,:),dPhidxi(2,:),dPhidxi(3,:)) 
+
+  elseif ( option == 'gauss' ) then
+
+    call grad_gauss(phi,dPhidxi(1,:),dPhidxi(2,:),dPhidxi(3,:))
+
+  endif 
+
+  !
+  ! Gradient limiter:
+  !
+  if(adjustl(limiter) == 'Barth-Jespersen') then
+
+    call slope_limiter_Barth_Jespersen(phi, dPhidxi)
+
+  elseif(adjustl(limiter) == 'Venkatakrishnan') then
+
+    call slope_limiter_Venkatakrishnan(phi, dPhidxi)
+
+  elseif(adjustl(limiter) == 'mVenkatakrishnan') then
+
+    call slope_limiter_modified_Venkatakrishnan(phi, dPhidxi)
+
+  else
+    ! no-limit
+  endif
+
+  ! MPI exchange:
+  call exchange( dPhidxi(1,:) )
+  call exchange( dPhidxi(2,:) )
+  call exchange( dPhidxi(3,:) )
 
 end subroutine
 
@@ -563,6 +660,11 @@ include 'grad_lsq_dm.f90'
 
 ! Gauss gradients
 include 'grad_gauss.f90'
+
+
+! Corrected Gauss gradients
+include 'grad_gauss_corrected.f90'
+
 
 
 !******************************************************************************

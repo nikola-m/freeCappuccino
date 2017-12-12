@@ -249,29 +249,6 @@ subroutine PIMPLE_multiple_correction
       !                              ' sum  =',sum(su(:)),    &
       !                              '|sum| =',abs(sum(su(:)))
 
-
-      ! !
-      ! ! We have hit the last iteration of nonorthogonality correction,
-      ! ! correct mass fluxes at inner cv-faces with second correction.
-      ! !
-      ! elseif(ipcorr.eq.npcor.and.npcor.gt.1) then
-
-      !   do i=1,numInnerFaces                                                      
-      !     ijp = owner(i)
-      !     ijn = neighbour(i)
-      !     call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-      !     flmass(i) = flmass(i)+fmcor                                                                                             
-      !   enddo                                                              
-
-      !   ! Faces along O-C grid cuts
-      !   do i=1,noc
-      !     iface = iOCFacesStart + i
-      !     ijp = ijl(i)
-      !     ijn = ijr(i)
-      !     call fluxmc(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-      !     fmoc(i)=fmoc(i)+fmcor
-      !   end do  
-
       ! endif                                                        
 
 

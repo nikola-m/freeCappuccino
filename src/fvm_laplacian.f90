@@ -64,7 +64,6 @@ subroutine laplacian(mu,phi)
 
   end do
 
-
   ! o- and c-grid cuts
   do i=1,noc
 
@@ -154,11 +153,11 @@ subroutine laplacian(mu,phi)
     
   end do
 
-  ! Contribution from pressure outlet boundaries
-  do i=1,npru
-    ijp = owner(iPressOutletFacesStart+i)
-    ijb = iPressOutletStart+i
-  end do
+  ! ! Contribution from pressure outlet boundaries
+  ! do i=1,npru
+  !   ijp = owner(iPressOutletFacesStart+i)
+  !   ijb = iPressOutletStart+i
+  ! end do
 
 
 end subroutine
@@ -187,8 +186,9 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
 
   ! Local variables
   real(dp) :: fxn, fxp
-  real(dp) :: are
-  real(dp) :: xpn,ypn,zpn,dpn,smdpn
+  ! real(dp) :: are
+  ! real(dp) :: dpn
+  real(dp) :: xpn,ypn,zpn,smdpn
   ! real(dp) :: nxx,nyy,nzz
 
   ! Face interpolation factor
@@ -201,18 +201,18 @@ subroutine facefluxlaplacian(ijp, ijn, arx, ary, arz, lambda, mu, cap, can)
   zpn=zc(ijn)-zc(ijp)
 
   ! distance from p to p_j
-  dpn = sqrt(xpn**2+ypn**2+zpn**2)
+  ! dpn = sqrt(xpn**2+ypn**2+zpn**2)
 
   ! cell face area
-  are=sqrt(arx**2+ary**2+arz**2)
+  ! are=sqrt(arx**2+ary**2+arz**2)
 
   ! Unit vectors of the normal
   ! nxx=arx/are
   ! nyy=ary/are
   ! nzz=arz/are
 
-  ! smdpn = (arx*arx+ary*ary+arz*arz)/(arx*xpn*nxx+ary*ypn*nyy+arz*zpn*nzz)
-  smdpn = are/dpn
+  smdpn = (arx*arx+ary*ary+arz*arz)/(arx*xpn+ary*ypn+arz*zpn)
+  ! smdpn = are/dpn
 
   ! Coefficients of discretized Laplace equation
   cap = (fxp*mu(ijp)+fxn*mu(ijn))*smdpn

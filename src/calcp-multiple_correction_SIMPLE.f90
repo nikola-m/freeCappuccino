@@ -47,7 +47,7 @@ subroutine calcp
     ijp = owner(i)
     ijn = neighbour(i)
 
-    call facefluxmass2(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
+    call facefluxmass(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), cap, can, flmass(i))
 
     ! > Off-diagonal elements:
 
@@ -84,7 +84,7 @@ subroutine calcp
     ijp=ijl(i)
     ijn=ijr(i)
 
-    call facefluxmass2(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
+    call facefluxmass(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), al(i), ar(i), fmoc(i))
     
     ! > Elements on main diagonal:
 
@@ -107,16 +107,12 @@ subroutine calcp
   if(.not.const_mflux) call adjustMassFlow
 
 
-  ! Test continutity:
-  ! if(ltest) write(6,'(20x,a,1pe10.3)') 'Initial sum  =',sum(su)
 
-
-
-!=====Multiple pressure corrections=====================================
+!*Multiple pressure corrections loop *******************************************************************
   do ipcorr=1,npcor
 
     ! Initialize pressure correction
-    ! pp=0.0d0
+    pp=0.0d0
 
     ! Solving pressure correction equation
     ! call dpcg(pp,ip)
@@ -139,8 +135,11 @@ subroutine calcp
 
       ! Calculate pressure-correction gradient and store it in pressure gradient field.
       call grad(pp,dPdxi)
-  
+
     end do
+
+    ! If simulation uses least-squares gradinets call this to get conservative pressure correction gradients.
+    if ( lstsq_qr .or. lstsq_dm .or. lstsq_qr ) call grad(pp,dPdxi,'gauss_corrected')
 
     ! Reference pressure correction - p'
     ppref = pp(pRefCell)
@@ -219,45 +218,16 @@ subroutine calcp
         su(ijn)=su(ijn)+fmcor
 
       end do
-   
-      ! write(6,'(27x,a,1pe10.3)') 'sumc  =',sum(su)
-
-    !.......................................................................................................!
-    elseif(ipcorr.eq.npcor.and.npcor.gt.1) then 
-    !
-    ! Non-orthogonal mass flux corrector if we reached the end of non-orthogonal correction loop.
-    ! Why not!
-    !
-
-      ! Correct mass fluxes at inner cv-faces with second corr.                                                      
-      do i=1,numInnerFaces                                                      
-        ijp = owner(i)
-        ijn = neighbour(i)
-
-        call fluxmc(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), fmcor)
-
-        flmass(i) = flmass(i) + fmcor  
-
-      enddo                                                             
-                                                            
-      ! Faces along O-C grid cuts
-      do i=1,noc
-        iface = iOCFacesStart+i
-
-        call fluxmc(ijl(i), ijr(i), xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), fmcor)
-
-        fmoc(i) = fmoc(i) + fmcor
-        
-      end do
 
     endif                                                             
     !.......................................................................................................!
 
 
-!=END: Multiple pressure corrections loop==============================
+!*END: Multiple pressure corrections loop *******************************************************************
   enddo
 
   ! Write continuity error report:
   include 'continuityErrors.h'
 
-end subroutine
+return
+end

@@ -19,7 +19,6 @@ subroutine writefiles
 !
   integer :: i
   integer :: output_unit
-  character(len=6) :: timechar
 
   ! Write in a char variable current timestep number and create a folder with this name
   write(timechar,'(i6)') itime
@@ -42,7 +41,7 @@ subroutine writefiles
 
 
   ! Write output files in Paraview .vtu format
-!+-----------------------------------------------------------------------------+
+  !+-----------------------------------------------------------------------------+
   call get_unit( output_unit )
 
   open(unit = output_unit, file = trim(out_folder_path)//'/'//trim(adjustl(timechar))//'/velocity_field.vtu')

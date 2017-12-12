@@ -31,18 +31,18 @@ subroutine Additional_algebraic_heatflux_terms
 
 !-------------------------------------------------------
 !
-!     TERM1 is interpolated to faces, then a x-direction
+!     TERM1 is interpolated to faces, then an x-direction
 !     gradient is sought for.
 !     TERM1 is \rho*utt + dTdx*prtr*\mu_t
 !     where: 
 !       \mu_t = \mu_eff - \mu_molecular,
 !       utt - heat flux
 !
-!     TERM2 is interpolated to faces, then a y-direction
+!     TERM2 is interpolated to faces, then an y-direction
 !     gradient is sought for.
 !     TERM2 is \rho*vtt + dTdy*prtr*\mu_t
 !
-!     TERM3 is interpolated to faces, then a z-direction
+!     TERM3 is interpolated to faces, then an z-direction
 !     gradient is sought for.
 !     TERM3 is \rho*wtt + dTdz*prtr*\mu_t
 !

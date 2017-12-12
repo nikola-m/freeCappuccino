@@ -53,6 +53,7 @@ integer :: iOCFacesStart
 integer :: iCycFacesStart                     
 
 integer, parameter :: nomax = 24              ! Max no. of nodes in face - determines size of some arrays, just change this if necessary.
+real(dp), parameter :: tiny = 1e-30
 
 ! Logical defining are we reading native Cappuccino file format or OpenFOAM polymesh format.
 logical :: native_mesh_files
@@ -264,7 +265,7 @@ subroutine find_intersection_point( &
 ! zj = z4 +(z5-z4)*t
 !
 !
-! Nikola Mirkov @2016
+! Nikola Mirkov 2016.
 !
 ! example usage: 
 ! call find_intersection_point( &
@@ -299,7 +300,7 @@ subroutine find_intersection_point( &
      (y1*z2-y2*z1)-x3*(y1*z2-y2*z1)) &
     /(x2*(y3*(z5-z4)-(y5-y4)*z3)-x1*(y3*(z5-z4)-(y5-y4)*z3)-x3*(y2*(z5-z4)-(y5-y4)*z2)+x1* &
      (y2*(z5-z4)-(y5-y4)*z2)+x3*(y1*(z5-z4)-(y5-y4)*z1)-x2*(y1*(z5-z4)-(y5-y4)*z1)+(x5-x4)* &
-     (y2*z3-y3*z2)-(x5-x4)*(y1*z3-y3*z1)+(x5-x4)*(y1*z2-y2*z1))
+     (y2*z3-y3*z2)-(x5-x4)*(y1*z3-y3*z1)+(x5-x4)*(y1*z2-y2*z1) + tiny)
 
   xjp = x4 +(x5-x4)*t
   yjp = y4 +(y5-y4)*t
@@ -318,7 +319,7 @@ subroutine read_line_faces_file_polyMesh(faces_file,nn,nod,nmax)
   character(len=15) :: char_string,char_string2
 
     nn = 0
-    nod(:) = 0
+    nod = 0
 
     ! Read how many nodes in face
     read(faces_file,'(a)') char_string
@@ -956,9 +957,9 @@ if (native_mesh_files)  then
 
     ! ! > Cell-face centroid components - final
     !  if(iface.le.numInnerFaces) then
-    !     xf(iface) = xf(iface) / (ax+1e-30)
-    !     yf(iface) = yf(iface) / (ay+1e-30)
-    !     zf(iface) = zf(iface) / (az+1e-30)
+    !     xf(iface) = xf(iface) / (ax+tiny)
+    !     yf(iface) = yf(iface) / (ay+tiny)
+    !     zf(iface) = zf(iface) / (az+tiny)
     ! else   
         ! > Because I could have not resolve the problem, these lines are inserted 
         !   where face centroid is calculated by arithmetic average.  
@@ -1081,7 +1082,7 @@ if (native_mesh_files)  then
     ypn = yc(inn)-yc(inp)
     zpn = zc(inn)-zc(inp)
 
-    dpn = sqrt( xpn**2 + ypn**2 + zpn**2 )
+    dpn = sqrt( xpn**2 + ypn**2 + zpn**2 ) 
 
     ! > > Intersection point j' of line connecting centers with cell face, we are taking only three points assuming that other are co-planar
     call find_intersection_point( &
@@ -1102,7 +1103,7 @@ if (native_mesh_files)  then
     djn = sqrt( xpn**2 + ypn**2 + zpn**2 )
 
     ! Interpolation factor |P Pj'|/|P Pj| where P is cell center, Pj neighbour cell center and j' intersection point.
-    facint(iface) = djn/dpn
+    facint(iface) = djn / dpn 
     
   enddo
 

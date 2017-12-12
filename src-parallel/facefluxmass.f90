@@ -55,6 +55,7 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   real(dp) :: dpe
   real(dp) :: dpex,dpey,dpez
   real(dp) :: dpxi,dpyi,dpzi
+  real(dp) :: Dpu,Dpv,Dpw,dpecorr
 
 
   ! > Geometry:
@@ -79,16 +80,20 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   nyy = ary/are
   nzz = arz/are
 
+  !  ______
+  ! (Vol/Ap)_f
+  Dpu = (fxn*Vol(ijn)*Apu(ijn)+fxp*Vol(ijp)*Apu(ijp))
+  Dpv = (fxn*Vol(ijn)*Apv(ijn)+fxp*Vol(ijp)*Apv(ijp))
+  Dpw = (fxn*Vol(ijn)*Apw(ijn)+fxp*Vol(ijp)*Apw(ijp))
 
-  ! density at the cell face
+  ! Density at the cell face
   dene = den(ijp)*fxp+den(ijn)*fxn
 
   ! COEFFICIENTS OF PRESSURE-CORRECTION EQUATION
   sfdpnr = 1./(arx*xpn*nxx+ary*ypn*nyy+arz*zpn*nzz)
   smdpn = (arx*arx+ary*ary+arz*arz)*sfdpnr
-  cap = -(fxp*vol(ijp)*apu(ijp)+fxn*vol(ijn)*apu(ijn))*dene*smdpn
+  cap = -dene*Dpu*smdpn
   can = cap
-
 
 !
 ! CELL FACE PRESSURE GRADIENTS AND VELOCITIES
@@ -135,9 +140,9 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
 
   ! DPDXI-> (dPdx*Vol*(1/ap))f -> second order interpolation at cell face
   !+Interpolate pressure gradients to cell face center++++++++++++++++++
-  dpxi = (fxn*Vol(ijn)*Apu(ijn)*dPdxi(1,ijn)+fxp*Vol(ijp)*Apu(ijp)*dPdxi(1,ijp))*xpn*nxx
-  dpyi = (fxn*Vol(ijn)*Apv(ijn)*dPdxi(2,ijn)+fxp*Vol(ijp)*Apv(ijp)*dPdxi(2,ijp))*ypn*nyy
-  dpzi = (fxn*Vol(ijn)*Apw(ijn)*dPdxi(3,ijn)+fxp*Vol(ijp)*Apw(ijp)*dPdxi(3,ijp))*zpn*nzz
+  dpxi = Dpu*(fxn*dPdxi(1,ijn)+fxp*dPdxi(1,ijp))*xpn*nxx
+  dpyi = Dpv*(fxn*dPdxi(2,ijn)+fxp*dPdxi(2,ijp))*ypn*nyy
+  dpzi = Dpw*(fxn*dPdxi(3,ijn)+fxp*dPdxi(3,ijp))*zpn*nzz
   !+END: Interpolate pressure gradients to cell face center+++++++++++++
 
 
@@ -159,13 +164,14 @@ subroutine facefluxmass(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, f
   yep = yep-yc(ijn)
   zep = zep-zc(ijn)
 
-  dpe = (p(ijn)-p(ijp)) + &
-  ( dPdxi(1,ijn)*xep+dPdxi(2,ijn)*yep+dPdxi(3,ijn)*zep - & !<<--Correction
-    dPdxi(1,ijp)*xpp+dPdxi(2,ijp)*ypp+dPdxi(3,ijp)*zpp  )  !<<|
+  dpe = (p(ijn)-p(ijp))
+  dpecorr = ( dPdxi(1,ijn)*xep+dPdxi(2,ijn)*yep+dPdxi(3,ijn)*zep - & !<<--Correction
+              dPdxi(1,ijp)*xpp+dPdxi(2,ijp)*ypp+dPdxi(3,ijp)*zpp  )  !<<|
+  dpe = dpe+dpecorr
 
-  dpex = (fxn*Vol(ijn)*Apu(ijn)+fxp*Vol(ijp)*Apu(ijp))*(arx*sfdpnr)*dpe
-  dpey = (fxn*Vol(ijn)*Apv(ijn)+fxp*Vol(ijp)*Apv(ijp))*(ary*sfdpnr)*dpe
-  dpez = (fxn*Vol(ijn)*Apw(ijn)+fxp*Vol(ijp)*Apw(ijp))*(arz*sfdpnr)*dpe
+  dpex = Dpu * dpe*sfdpnr * arx
+  dpey = Dpv * dpe*sfdpnr * ary
+  dpez = Dpw * dpe*sfdpnr * arz
   !+END: Pressure deriv. along normal++++++++++++++++++++++++++++++++++++
 
   ! Rhie-Chow Interpolation 
@@ -198,7 +204,6 @@ subroutine facefluxmass2(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, 
   real(dp) :: fxn, fxp
   real(dp) :: are,dpn
   real(dp) :: xpn,ypn,zpn,dene
-  real(dp) :: nxx,nyy,nzz
   real(dp) :: ui,vi,wi
   real(dp) :: dpxi,dpyi,dpzi
   real(dp) :: Kj ! notation from Muzaferija&Gosman JCP paper
@@ -220,11 +225,6 @@ subroutine facefluxmass2(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, cap, can, 
 
   ! cell face area
   are = sqrt(arx**2+ary**2+arz**2)
-
-  ! Unit vectors of the normal
-  nxx = arx/are
-  nyy = ary/are
-  nzz = arz/are
 
 
   ! density at the cell face
@@ -511,7 +511,9 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
 !
 !   This routine calculates mass flux correction in the
 !   second pressure-correction step which accounts for the
-!   effects of non-orthogonality
+!   effects of non-orthogonality.
+!            ___________                             ->       ->         ->      ->
+!   FMCOR = (rho*Vol/Apu)f * |Sf| / |d_{P'N'}| * [ grad(p)_N.r_{NN'} - grad(p)_P.r_{PP'} ]
 !
 !***********************************************************************
 !
@@ -588,8 +590,7 @@ subroutine fluxmc(ijp, ijn, xf, yf, zf, arx, ary, arz, lambda, fmcor)
   ! Mass flux correction for the second p'-equation (source term)
   fmcor = rapr*are*((dPdxi(1,ijn)*xep-dPdxi(1,ijp)*xpp)   & 
                    +(dPdxi(2,ijn)*yep-dPdxi(2,ijp)*ypp)   &
-                   +(dPdxi(3,ijn)*zep-dPdxi(3,ijp)*zpp))  &
-                   *dppnnr 
+                   +(dPdxi(3,ijn)*zep-dPdxi(3,ijp)*zpp))*dppnnr 
 
 end subroutine
 

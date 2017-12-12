@@ -140,6 +140,8 @@ subroutine pmgmres_ilu ( n, nz_num, ia, ja, a, ua, x, iu, rhs, itr_max, mr, &
   endif
 
   itr_used = 0
+  rho_tol = 0. ! To eliminate 'uninitialized' warning.
+  k_copy = 0   ! To eliminate 'uninitialized' warning.
 
   ! NOTE: In our case the elements are already aranged
   ! call rearrange_cr ( n, nz_num, ia, ja, a )

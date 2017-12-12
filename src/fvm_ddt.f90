@@ -13,9 +13,13 @@ subroutine fvm_ddt_vector_field
   use types
   use parameters
   use geometry
+  use variables
   use sparse_matrix
 
   implicit none
+
+  integer :: inp
+  real(dp) :: apotime, sut, svt, swt
 
 !
 ! > Shift in time
@@ -31,8 +35,7 @@ subroutine fvm_ddt_vector_field
   ! CALCULATE SOURCE TERMS INTEGRATED OVER VOLUME
   do inp=1,numCells
 
-    !.....for u  sp => spu; for v  sp => spv; for w  sp => sp
-    !.....sum source terms
+    ! For u  sp => spu; for v  sp => spv; for w  sp => sp
     spu(inp) = 0.0_dp
     spv(inp) = 0.0_dp
     sp(inp)  = 0.0_dp
@@ -89,9 +92,13 @@ subroutine fvm_ddt_scalar_field
   use types
   use parameters
   use geometry
+  use variabeles
   use sparse_matrix
 
   implicit none
+
+  integer :: inp
+  real(dp) :: apotime, sut
 
 !
 ! > Shift in time
