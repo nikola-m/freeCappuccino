@@ -63,7 +63,8 @@ The code is written in modern fortran, so you will need fortran compiler (e.g. g
 Getting started
 -----------------
 Clone the git repository or download the zip archive of the most recent source, compile and build the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
-![alt tag](https://github.com/nikola-m/caffa3d-uns/blob/master/examples/cavity/cavity-t0.5.png)
+![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/cavity/cavity-t0.5.png)
+![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/pitzDaily/004.png)
 
 License
 ------------------
