@@ -1,5 +1,7 @@
-# caffa3d-uns
-A three-dimensional unstructured finite volume code for Computational Fluid Dynamics.
+# freeCappuccino
+freeCappuccino is a three-dimensional fully unstructured finite volume code for Computational Fluid Dynamics which comes in serial and parallel version.
+Moreover, freeCappuccino is a fortran library for manipulation of discrete tensor fields, defined over polyhedral meshes.
+freeCappuccino is free both as a free coffee and as a free speech.
 
              MM          MMM
             NMN.           MM
