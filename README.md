@@ -63,6 +63,56 @@ The code is written in modern fortran, so you will need fortran compiler (e.g. g
 Getting started
 -----------------
 Clone the git repository or download the zip archive of the most recent source, compile and build the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
+
+###Basic sequence of commands to get started:
+
+Compile:
+```
+cd src
+make
+```
+
+Update PATH environment variable to point to point to bin/ subfolder:
+```
+cd ~
+gedit .bashrc
+```
+
+Add following line at the end of .bashrc file
+```
+export PATH=/where/is/it/freeCappuccino/bin/:$PATH
+```
+
+Move to example case folder
+```
+cd ../examples/cavity/
+```
+
+Unpack the archive with mesh and initial conditions.
+```
+tar -zxvf cavity-setup.tar.gz
+```
+
+Check input file using text editor, and make changes if needed:
+```
+gedit input
+```
+
+Run simulation script
+```
+./run
+```
+
+During and after run, you can plot residuals:
+```
+gnuplot plotResiduals
+```
+
+Open results files in Paraview. Results are in VTK-<date>-<time> folder:
+```
+paraview
+```
+
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/cavity/cavity-t0.5.png)
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/pitzDaily/004.png)
 
