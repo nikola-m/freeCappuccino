@@ -5,6 +5,7 @@ module geometry
 
 use types
 use utils, only: get_unit, file_row_count, r8vec_print_some, i4vec_print2
+use title_mod
 
 implicit none
 
@@ -100,42 +101,6 @@ integer, dimension(:), allocatable :: ijlFace, ijrFace  ! left and right cell fa
 public 
 
 contains
-
-
-pure integer function noel(NTYPE)
-!
-! Number of nodes in element of NTYPE type of element
-!
- implicit none
- integer, intent(in) :: NTYPE
- integer, parameter :: noel_NTYPE1 = 2 ! no. of nodes in element-here Line
- integer, parameter :: noel_NTYPE2 = 3 ! no. of nodes in element-here Tri
- integer, parameter :: noel_NTYPE3 = 4 ! no. of nodes in element-here Quad
- integer, parameter :: noel_NTYPE4 = 4 ! no. of nodes in element-here Tet
- integer, parameter :: noel_NTYPE5 = 8 ! no. of nodes in element-here Hex
- integer, parameter :: noel_NTYPE6 = 6 ! no. of nodes in element-here Prism
- integer, parameter :: noel_NTYPE7 = 5 ! no. of nodes in element-here Pyramid
- 
-
- if(NTYPE.eq.1) then ! -> Cappuccino line
-   noel = noel_NTYPE1 
- elseif(NTYPE.eq.2) then ! -> Cappuccino Tri
-   noel = noel_NTYPE2 
- elseif(NTYPE.eq.3) then ! -> Cappuccino Quad
-   noel = noel_NTYPE3 
- elseif(NTYPE.eq.4) then ! -> Cappuccino Tet
-   noel = noel_NTYPE4 
- elseif(NTYPE.eq.5) then ! -> Cappuccino Hex
-   noel = noel_NTYPE5 
- elseif(NTYPE.eq.6) then ! -> Cappuccino Prism
-   noel = noel_NTYPE6 
- elseif(NTYPE.eq.7) then ! -> Cappuccino Pyramid
-   noel = noel_NTYPE7 
- else
-   noel = 0
- endif
-
-end function
 
 
 subroutine triangular_face_area_components_polymesh(px,py,pz,qx,qy,qz,nx,ny,nz)
@@ -377,7 +342,7 @@ subroutine mesh_geometry
   integer :: ifaceFriend, startFaceFriend
 
   real(dp), parameter :: half = 0.5_dp
-  real(dp), parameter :: one_third = 1._dp/3._dp
+  real(dp), parameter :: one_third = 1./3._dp
 
   real(dp) :: px,py,pz, qx,qy,qz, ax,ay,az, nx,ny,nz, cx,cy,cz
   real(dp) :: xpn,ypn,zpn
@@ -1234,7 +1199,6 @@ if (native_mesh_files)  then
 
   call r8vec_print_some ( numInnerFaces, facint, 1, 10, &
       '  First 10 elements of interpolation factor (facint) array:' )
-
 
 !
 !  > CLOSE polyMesh format file: 'points', 'faces', 'owner', 'neighbour', 'boundary'.

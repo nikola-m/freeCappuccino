@@ -203,6 +203,7 @@ module title_mod
 !%%%%%%%%%%%%
 
   character(len=70) :: title
+  character(19) :: datetime   ! A date-tiem character to identify unique postprocessing folder
   character(len=4), dimension(10) ::  chvar = (/'  U ', '  V ', '  W ', '  P ', ' TE ', ' ED ', '  T ', ' VIS', 'VART', ' CON' /)
   character(len=7), dimension(10) ::  chvarSolver = &
   (/'U      ', 'V      ', 'W      ', 'p      ', 'k      ', 'epsilon', 'Temp   ', 'Visc   ', 'VarTemp', 'Conc   ' /)

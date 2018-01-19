@@ -17,7 +17,7 @@ muscl-f                                 Convective scheme
 no-limit                        Gradient limiter      
 1. 1. 1. 0. 1. 1. 0. 0. 0. 0.            (GDS(I),I=1,NPHI)
 0.7 0.7 0.7 0.3 0.7 0.7 0.9 0.7 0.9 0.9  (URF(I),I=1,NPHI)
-10*1e-6                                  (SOR(I),I=1,NPHI)
+10*1e-2                                  (SOR(I),I=1,NPHI)
 20 20 20 100 5 5 5 5 5 50                (NSW(I),I=1,NPHI)
 1000 1e+20 1000 1                        NUMSTEP,TIMESTEP,NZAPIS,MAXIT
 f f f t                                  lstsq, lstsq_qr, lstsq_dm, gauss

@@ -17,9 +17,9 @@ linear-f                                 Convective scheme
 mVenkatakrishnan                         Gradient limiter 
 1. 1. 1. 0. 1. 1. 0. 0. 0. 0.            (GDS(I),I=1,NPHI)
 0.7 0.7 0.7 0.3 0.7 0.7 0.3 0.7 0.6 0.9  (URF(I),I=1,NPHI)
-1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6 1e-6    (SOR(I),I=1,NPHI)
+1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2 1e-2    (SOR(I),I=1,NPHI)
 20 20 20 200 10 10 5 5 5 5               (NSW(I),I=1,NPHI)
-100 1e-3 20 30                           NUMSTEP,TIMESTEP,NZAPIS,MAXIT
+1000 1e-3 20 30                           NUMSTEP,TIMESTEP,NZAPIS,MAXIT
 f t f f                                  lstsq, lstsq_qr, lstsq_dm, gauss
 1 1                                      NPCOR, NIGRAD
 t f f 1                                  SIMPLE,PISO,PIMPLE,ncorr
