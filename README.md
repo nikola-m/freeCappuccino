@@ -66,24 +66,24 @@ Clone the git repository or download the zip archive of the most recent source, 
 
 Basic sequence of commands to get started:
 
-Compile:
+Compile.
 ```
 cd src
 make
 ```
 
-Update PATH environment variable to point to point to bin/ subfolder:
+Update PATH environment variable to point to point to bin/ subfolder.
 ```
 cd ~
 gedit .bashrc
 ```
 
-Add following line at the end of .bashrc file
+Add following line at the end of .bashrc file.
 ```
 export PATH=/where/is/it/freeCappuccino/bin/:$PATH
 ```
 
-Move to example case folder
+Move to example case folder.
 ```
 cd ../examples/cavity/
 ```
@@ -93,22 +93,22 @@ Unpack the archive with mesh and initial conditions.
 tar -zxvf cavity-setup.tar.gz
 ```
 
-Check input file using text editor, and make changes if needed:
+Check input file using text editor, and make changes if needed.
 ```
 gedit input
 ```
 
-Run simulation script
+Run simulation script.
 ```
 ./run
 ```
 
-During and after run, you can plot residuals:
+During and after run, you can plot residuals.
 ```
 gnuplot plotResiduals
 ```
 
-Open results files in Paraview. Results are in VTK-<date>-<time> folder:
+Open results files in Paraview. Results are in VTK-date-time folder.
 ```
 paraview
 ```
@@ -122,12 +122,13 @@ cd utilities
 make
 ```
 
-Before you run the simulation, run cellConnectivity:
+Before you run the simulation, run `cellConnectivity`.
 ```
 cd /location/of/case/folder
 cellConnectivity
 ```
 
+Have fun!
 
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/cavity/cavity-t0.5.png)
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/pitzDaily/004.png)
