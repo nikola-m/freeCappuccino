@@ -64,7 +64,7 @@ Getting started
 -----------------
 Clone the git repository or download the zip archive of the most recent source, compile and build the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come.
 
-###Basic sequence of commands to get started:
+Basic sequence of commands to get started:
 
 Compile:
 ```
@@ -112,6 +112,22 @@ Open results files in Paraview. Results are in VTK-<date>-<time> folder:
 ```
 paraview
 ```
+
+
+You can skip this for provided examples but in general when working with meshes in polyMesh format you need to create cell conectivity. Cell connectvity data is found in polyMesh/cells file, which is needed to write `.vtu` files during the run. 
+
+Compile `cellConnectivity` utility program.
+```
+cd utilities
+make
+```
+
+Before you run the simulation, run cellConnectivity:
+```
+cd /location/of/case/folder
+cellConnectivity
+```
+
 
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/cavity/cavity-t0.5.png)
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/examples/pitzDaily/004.png)
