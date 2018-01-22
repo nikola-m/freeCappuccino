@@ -1,7 +1,12 @@
 # freeCappuccino
-freeCappuccino is a three-dimensional fully unstructured finite volume code for Computational Fluid Dynamics which comes in serial and parallel version.
+
+The freeCappuccino is a three-dimensional fully unstructured finite volume code for Computational Fluid Dynamics which comes in serial and parallel version.
+
 Moreover, freeCappuccino is a fortran library for manipulation of discrete tensor fields, defined over polyhedral meshes.
-freeCappuccino is free both as a free coffee and as a free speech.
+
+## Name 'Cappuccino' encapsulates the idea that it is CAFFA (Computer Aided Fluid Flow Analysis) with some FOAM (Field Operation and Manipulation).
+
+freeCappuccino is free both as a free coffee and as free speech.
 
              MM          MMM
             NMN.           MM
@@ -136,3 +141,16 @@ Have fun!
 License
 ------------------
 The code is published under GNU General Public License v3.0.
+
+
+Tribute section
+------------------
+
+This section tributes some open source CFD developers
+
+![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/doc/cluster.jpg)
+Andrei Chernousov and his cluster circa 2001.
+
+![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/doc/henry and papers.jpg)
+Henry Weller and writing papers.
+
