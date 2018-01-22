@@ -4,7 +4,7 @@ The freeCappuccino is a three-dimensional fully unstructured finite volume code 
 
 Moreover, freeCappuccino is a fortran library for manipulation of discrete tensor fields, defined over polyhedral meshes.
 
-## Name 'Cappuccino' encapsulates the idea that it is CAFFA (Computer Aided Fluid Flow Analysis) with some FOAM (Field Operation and Manipulation).
+### Name 'Cappuccino' encapsulates the idea that it is CAFFA (Computer Aided Fluid Flow Analysis) with some FOAM (Field Operation and Manipulation).
 
 freeCappuccino is free both as a free coffee and as free speech.
 
