@@ -149,8 +149,10 @@ Tribute section
 This section tributes some open source CFD developers
 
 ![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/doc/cluster.jpg)
+
 Andrei Chernousov and his cluster circa 2001.
 
-![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/doc/henry and papers.jpg)
+![alt tag](https://github.com/nikola-m/freeCappuccino/blob/master/doc/henry%20and%20papers.png)
+
 Henry Weller and writing papers.
 
