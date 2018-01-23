@@ -261,21 +261,7 @@ end function
  implicit none
  integer, intent(in) :: NTYPE
 
- if(NTYPE.eq.1) then ! -> Cappuccino line
-   noel = 2 
- elseif(NTYPE.eq.2) then ! -> Cappuccino Tri
-   noel = 3 
- elseif(NTYPE.eq.3) then ! -> Cappuccino Quad
-   noel = 4 
- elseif(NTYPE.eq.4) then ! -> Cappuccino Tet
-   noel = 4 
- elseif(NTYPE.eq.5) then ! -> Cappuccino Hex
-   noel = 8 
- elseif(NTYPE.eq.6) then ! -> Cappuccino Prism
-   noel = 6 
- elseif(NTYPE.eq.7) then ! -> Cappuccino Pyramid
-   noel = 5
- elseif(NTYPE.eq.12) then ! -> Paraview Hex
+ if(NTYPE.eq.12) then ! -> Paraview Hex
    noel = 8  
  elseif(NTYPE.eq.13) then ! -> Paraview Prism
    noel = 6 
