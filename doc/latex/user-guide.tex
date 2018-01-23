@@ -1,0 +1,159 @@
+\documentclass[11pt,a4paper]{report}
+%\usepackage[utf8]{inputenc}
+\usepackage{fontspec}
+\setmainfont{Liberation Sans}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{graphicx}
+
+%Coffee stains
+\usepackage{coffee2}
+
+% Listing kodova
+\usepackage{listings}
+\lstset{
+language = Fortran,
+basicstyle = \footnotesize \sffamily,
+numbers = left,
+numberstyle = \tiny,
+frame = tb,
+columns = fullflexible,
+showstringspaces = false
+}
+
+\lstdefinestyle{BashInputStyle}{
+  language=bash,
+  basicstyle=\small\sffamily,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=3pt,
+  frame=tb,
+  columns=fullflexible,
+  backgroundcolor=\color{blue!5},
+  linewidth=0.9\linewidth,
+  xleftmargin=0.1\linewidth
+}
+
+% PSeudojodovi-algoritmi
+%\usepackage{algpseudocode}
+%\usepackage{algorithm}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\author{Nikola Mirkov}
+\title{{\Huge freeCappuccino} \\ User's Guide}
+
+\begin{document}
+
+\maketitle
+
+\chapter{Introduction}
+
+The freeCappuccino is a three-dimensional fully unstructured finite volume code for Computational Fluid Dynamics which comes in serial and parallel version.
+
+Moreover, freeCappuccino is a fortran library for manipulation of discrete tensor fields, defined over polyhedral meshes.
+
+Name 'Cappuccino' encapsulates the idea that it is CAFFA (Computer Aided Fluid Flow Analysis) with some FOAM (Field Operation and Manipulation).
+
+freeCappuccino is free both as a free coffee and as free speech.
+
+
+The purpose of the code is to enable experimentation in discretizations and mathematical models. Therefore we have included many discretization options and we are in the process of implementation of many turbulence models and scalar equations for different variables.
+
+The code is based on the reference:
+
+N Mirkov, B Rašuo, S Kenjereš, On the improved finite volume procedure for simulation of turbulent flows over real complex terrains, Journal of Computational Physics, Vol. 297 (2015), pp.18-45.
+
+The code allows meshes in OpenFOAM\textsuperscript{®} polyMesh format. Only slight changes are necessary in the 'boundary' file.
+
+Discretized equations are written in CSR (Compressed Sparse Row) format, which allows easy interface with many linear solver libraries, such as LIS. Also, one can use linear solvers provided in the code such as, Incomplete Cholesky Conjugate Gradient (ICCG), ILU(0) preconditioned Bi-Conjugate Gradient Stabilised method for non-symmetric systems, etc.
+
+\subsection{Requirements}
+
+The code is written in modern fortran, so you will need fortran compiler (e.g. gfortran). Code may be built to use external library for solution of sparse linear systems LIS or be used without it, just using built in linear solvers.
+
+\subsection{Getting started}
+
+Clone the git repository or download the zip archive of the most recent source, compile and build the code, and checkout the examples such as the lid-driven cavity, Pitz-Daily backward facing step, channel, and many more to come. In following we describe the sequence of commands to get started.
+
+Compile the code.
+
+\begin{lstlisting}[style=BashInputStyle]
+    cd src
+    make
+\end{lstlisting}
+
+Update PATH environment variable to point to point to bin/ subfolder.
+
+\begin{lstlisting}[style=BashInputStyle]
+    cd \~
+    gedit .bashrc
+\end{lstlisting}
+
+Add following line at the end of .bashrc file.
+
+\begin{lstlisting}[style=BashInputStyle]
+    export PATH=/where/is/it/freeCappuccino/bin/:$PATH
+\end{lstlisting}
+
+Move to example case folder.
+
+\begin{lstlisting}[style=BashInputStyle]
+    cd ../examples/cavity/
+\end{lstlisting}
+
+Unpack the archive with mesh and initial conditions.
+
+\begin{lstlisting}[style=BashInputStyle]
+    tar -zxvf cavity-setup.tar.gz
+\end{lstlisting}
+
+Check input file using text editor, and make changes if needed.
+
+\begin{lstlisting}[style=BashInputStyle]
+    gedit input
+\end{lstlisting}
+
+Run simulation script.
+
+\begin{lstlisting}[style=BashInputStyle]
+    ./run
+\end{lstlisting}
+
+During and after run, you can plot residuals.
+
+\begin{lstlisting}[style=BashInputStyle]
+    gnuplot plotResiduals
+\end{lstlisting}
+
+Open results files in Paraview. Results are in VTK-date-time folder.
+
+\begin{lstlisting}[style=BashInputStyle]
+    paraview
+\end{lstlisting}
+
+You can skip this for provided examples but in general when working with meshes in polyMesh format you need to create cell conectivity. Cell connectvity data is found in polyMesh/cells file, which is needed to write .vtu files during the run.
+
+Compile cellConnectivity utility program.
+
+\begin{lstlisting}[style=BashInputStyle]
+    cd utilities
+    make
+\end{lstlisting}
+
+Before you run the simulation, run cellConnectivity.
+
+\begin{lstlisting}[style=BashInputStyle]
+    cd /location/of/case/folder
+    cellConnectivity
+\end{lstlisting}
+
+\coffee{1}
+
+%\lstinputlisting[language=Fortran, caption= Bi-CGSTAB(SIP).]{codes/cgstab_sip.f90}
+
+%\lstinputlisting[language=Fortran, caption=PCG(SIP).]{codes/pcg_sip.f90}
+
+\end{document}
