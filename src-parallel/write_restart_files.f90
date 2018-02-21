@@ -21,16 +21,12 @@ subroutine write_restart_files
 !***********************************************************************
 !
 
-
-! Writing restart file
-
   ! NOTE: nproc_char <- this (=myid + 1) written as left aligned string.
-  call i4_to_s_left ( this, nproc_char )
+  call i4_to_s_left ( myid, nproc_char )
 
   call get_unit ( restart_unit )
 
   open ( unit = restart_unit,file=adjustl(trim(restart_file))//'-'//trim(nproc_char),form='unformatted')
-  write(*,'(a,i4)') '  Writing restart file at: ',myid
   rewind restart_unit
 
   write(restart_unit) itime,time
@@ -90,6 +86,6 @@ subroutine write_restart_files
 
   endif
 
-  if( myid.eq.0 ) write(6,*)'=*=*= Simulation restart files have been written! =*=*='
+  if( myid.eq.0 ) write(6,*)'=*=*= Simulation restart files have been written. =*=*='
 
 end subroutine

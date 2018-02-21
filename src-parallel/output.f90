@@ -174,7 +174,7 @@ subroutine vtu_write_XML_header ( output_unit )
   & '<DataArray type="Int32" Name="cellID" format="ascii" RangeMin="0" RangeMax="'//trim( cells_num_string )//'">'
 
     do icell=1,numCells+numBoundaryFaces
-      write( output_unit, '(10x,i8)') icell
+      write( output_unit, '(10x,i8)') icell-1
     enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
@@ -295,6 +295,8 @@ subroutine vtu_write_XML_scalar_field ( output_unit, scalar_name, scalar_field )
   integer :: startFace
   integer :: boundary_file
   integer :: numBoundaries
+  integer :: neighbProcNo
+  integer :: process_file
   integer :: numinl 
   integer :: numout
   integer :: numsym
@@ -379,7 +381,6 @@ subroutine vtu_write_XML_scalar_field ( output_unit, scalar_name, scalar_field )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          print*, icell, iWallStart, numwal, i
           write( output_unit, '(10x,es11.4)') scalar_field(icell)
         enddo
 
@@ -431,6 +432,31 @@ subroutine vtu_write_XML_scalar_field ( output_unit, scalar_name, scalar_field )
 
   close ( boundary_file )
 
+
+  ! Process file
+  call get_unit( process_file )
+  open( unit = process_file, file='processor'//trim(nproc_char)//'/constant/polyMesh/process' )
+  rewind process_file
+
+  ! Number of rows in the file excluding #comment in header
+  call file_row_count ( process_file, numBoundaries )
+
+  read(process_file,'(a)') line_string
+
+  do k=1,numBoundaries
+    read(process_file,*) neighbProcNo,nfaces,startFace
+
+    do i=1,nfaces
+      icell = iProcStart + i
+      write( output_unit, '(10x,es11.4)') scalar_field(icell)
+    enddo
+
+  enddo
+
+  close ( process_file )
+
+
+
   write ( output_unit, '(8x,a)' ) '</DataArray>'
 ! </Scalars in cell-centers>
 
@@ -454,6 +480,8 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
   integer :: startFace
   integer :: boundary_file
   integer :: numBoundaries
+  integer ::  neighbProcNo
+  integer :: process_file
   integer :: numinl 
   integer :: numout
   integer :: numsym
@@ -510,7 +538,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iInletStart + numinl + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numinl = numinl + nfaces
@@ -519,7 +547,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iOutletStart + numout + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numout = numout + nfaces
@@ -528,7 +556,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iSymmetryStart + numsym + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numsym = numsym + nfaces
@@ -537,7 +565,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numwal = numwal + nfaces
@@ -546,7 +574,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numwal = numwal + nfaces
@@ -555,7 +583,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numwal = numwal + nfaces
@@ -564,7 +592,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numwal = numwal + nfaces
@@ -573,7 +601,7 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
 
         do i=1,nfaces
           icell = iPressOutletStart + numpru + i
-          write( output_unit, '(10x,es11.4)') u(icell), v(icell), w(icell)
+          write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
         enddo
 
         numpru = numpru + nfaces
@@ -587,6 +615,29 @@ subroutine vtu_write_XML_vector_field ( output_unit, field_name, u, v, w )
   enddo
 
   close ( boundary_file )
+
+
+  ! Process file
+  call get_unit( process_file )
+  open( unit = process_file, file='processor'//trim(nproc_char)//'/constant/polyMesh/process' )
+  rewind process_file
+
+  ! Number of rows in the file excluding #comment in header
+  call file_row_count ( process_file, numBoundaries )
+
+  read(process_file,'(a)') line_string
+
+  do k=1,numBoundaries
+    read(process_file,*) neighbProcNo,nfaces,startFace
+
+    do i=1,nfaces
+      icell = iProcStart + i
+      write( output_unit, '(10x,3(1x,es11.4))') u(icell), v(icell), w(icell)
+    enddo
+
+  enddo
+
+  close ( process_file )
 
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
@@ -661,7 +712,7 @@ subroutine vtu_write_scalar_field ( output_unit, scalar_name, scalar_field )
 ! > Mesh data > Nodal coordinates
 !
   do i=1,numNodes
-    write ( output_unit, '(10x,3es11.4)' ) x(i),y(i),z(i)
+    write ( output_unit, '(10x,3(1x,es11.4))' ) x(i),y(i),z(i)
   enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
@@ -786,7 +837,7 @@ subroutine vtu_write_vector_field ( output_unit, field_name, u, v, w )
 ! > Mesh data > Nodal coordinates
 !
   do i=1,numNodes
-    write ( output_unit, '(10x,3es11.4)' ) x(i),y(i),z(i)
+    write ( output_unit, '(10x,3(1x,es11.4))' ) x(i),y(i),z(i)
   enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
@@ -892,7 +943,7 @@ subroutine vtu_write_mesh ( output_unit )
 ! > Mesh data > Nodal coordinates
 !
   do i=1,numNodes
-    write ( output_unit, '(10x,3es11.4)' ) x(i),y(i),z(i)
+    write ( output_unit, '(10x,3(1x,es11.4))' ) x(i),y(i),z(i)
   enddo
 
   write ( output_unit, '(8x,a)' ) '</DataArray>'
