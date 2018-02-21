@@ -28,7 +28,7 @@ subroutine writefiles
 
   call get_unit( output_unit )
 
-  open(unit=output_unit,file='VTK_'//datetime//'/innerField-'//trim(adjustl(timechar))//'.vtu')
+  open(unit=output_unit,file='VTK/innerField-'//trim(adjustl(timechar))//'.vtu')
 
 
   ! Header
