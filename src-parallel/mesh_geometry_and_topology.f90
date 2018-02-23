@@ -340,7 +340,7 @@ subroutine mesh_geometry
   integer :: input_status
 
   character(len=1) :: ch
-  character(len=15) :: char_string,char_string2
+  character(len=20) :: char_string,char_string2
   character(len=80) :: line_string
   character(len=10) :: bctype
   character( len = 5) :: nproc_char
@@ -852,7 +852,6 @@ endif
     ! 'points' file
     do i=1,numNodes
       read(points_file,*) char_string,y(i),char_string2
-
       ! Char to double conversion:
       read(char_string(2:),*) x(i)
       read(char_string2(1:len_trim(char_string2)-1),*) z(i)  

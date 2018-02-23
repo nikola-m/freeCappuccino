@@ -146,8 +146,8 @@ subroutine calcp
     pp = 0.0_dp
 
     ! Solving pressure correction equation
-    ! call bicgstab(pp,ip) 
-    call iccg(pp,ip)
+    call bicgstab(pp,ip) 
+    ! call iccg(pp,ip)
     ! call dpcg(pp,ip)
     ! call jacobi(pp,ip)
        

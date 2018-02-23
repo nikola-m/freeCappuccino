@@ -371,7 +371,7 @@ subroutine vtu_write_XML_scalar_field ( output_unit, scalar_name, scalar_field )
 
         do i=1,nfaces
           icell = iWallStart + numwal + i
-          print*, icell, iWallStart, numwal, i
+          ! print*, icell, iWallStart, numwal, i
           write( output_unit, '(10x,es11.4)') scalar_field(icell)
         enddo
 

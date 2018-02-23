@@ -115,9 +115,10 @@ subroutine calcp
     pp=0.0d0
 
     ! Solving pressure correction equation
-    ! call dpcg(pp,ip)
-    call iccg(pp,ip)
+    call dpcg(pp,ip)
+    ! call iccg(pp,ip)
     ! call bicgstab(pp,ip) 
+    
     ! write(maxno,'(i5)') nsw(ip)
     ! write(tol,'(es9.2)') sor(ip)
     ! write(options,'(a)') "-i cg -p ilu -ilu_fill 1 -maxiter "//adjustl(maxno)//"-tol "//adjustl(tol)

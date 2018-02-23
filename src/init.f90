@@ -23,6 +23,7 @@ subroutine init
   use sparse_matrix
   use utils, only: get_unit
   use LIS_linear_solver_library
+  use output
 
   implicit none
 
@@ -34,7 +35,7 @@ subroutine init
   ! character(10) :: tol
   integer :: i, ijp, ijn, inp, ini, inw, ijo, ijs, ijb, ioc, iface
   integer :: nfaces,startFace,nFacesOffset
-  integer :: input_unit,input_status
+  integer :: input_unit,input_status!,output_unit
   integer :: nsw_backup
   real(dp) :: fxp, fxn, ui, vi, wi
   real(dp) :: nxf, nyf, nzf
@@ -1120,10 +1121,22 @@ subroutine init
   p = 0.0_dp
   dPdxi = 0.0_dp
 
-  ! write(*,'(a)') ' '
-  ! do i=1,numCells
-  !   write(6,'(es11.4)') wallDistance(i)
-  ! enddo   
-  ! stop
+
+  ! Write wall distance field.
+  !+-----------------------------------------------------------------------------+
+  ! call get_unit( output_unit )
+
+  ! open(unit=output_unit,file='VTK/wallDistance.vtu')
+
+  ! ! Header
+  ! call vtu_write_XML_header ( output_unit )
+  ! ! Scalar field
+  ! call vtu_write_XML_scalar_field ( output_unit, 'wallDistance', wallDistance )
+  ! ! Mesh data
+  ! call vtu_write_XML_meshdata ( output_unit )
+
+  ! close( output_unit )
+  !+-----------------------------------------------------------------------------+
+
 
 end subroutine

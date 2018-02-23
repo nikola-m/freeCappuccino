@@ -96,7 +96,7 @@ subroutine iccg(fi,ifi)
     do k = ioffset(i), diag(i)-1
       d(i) = d(i) - a( k ) * d( ja( k )) * a( k )
     end do
-    d(i) =  1.0_dp / d(i)
+    d(i) =  1.0_dp / (d(i) + small)
   enddo
 
 

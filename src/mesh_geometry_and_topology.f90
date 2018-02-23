@@ -330,7 +330,7 @@ subroutine mesh_geometry
   integer :: input_status
 
   character(len=1) :: ch
-  character(len=15) :: char_string,char_string2
+  character(len=20) :: char_string,char_string2
   character(len=80) :: line_string
   character(len=10) :: bctype
 

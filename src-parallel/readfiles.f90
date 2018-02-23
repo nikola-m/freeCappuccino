@@ -21,13 +21,15 @@ subroutine readfiles
 !***********************************************************************
 !
 
+  if( myid.eq.0 ) write(6,*)'=*=*= Reading simulation restart files. =*=*='
+
   ! NOTE: nproc_char <- this (=myid + 1) written as left aligned string.
-  call i4_to_s_left ( this, nproc_char )
+  call i4_to_s_left ( myid, nproc_char )
 
   call get_unit ( restart_unit )
 
   open ( unit = restart_unit,file=adjustl(trim(restart_file))//'-'//trim(nproc_char),form='unformatted')
-  write(*,'(a,i4)') '  Reading restart file at: ',myid
+
   rewind restart_unit
 
   read(restart_unit) itime,time
