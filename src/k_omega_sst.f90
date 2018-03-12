@@ -70,7 +70,10 @@ subroutine correct_turbulence_k_omega_sst()
   use gradients
   implicit none
 
-  if(.not.allocated(fsst)) allocate(fsst(numTotal))
+  if(.not.allocated(fsst)) then
+    allocate(fsst(numTotal))
+    write(*,'(a)') "  **Allocated SST blending function."
+  endif
 
   call calcsc(TE,dTEdxi,ite) ! Assemble and solve turbulence kinetic energy eq.
   call calcsc(ED,dEDdxi,ied) ! Assemble and solve specific dissipation rate (omega [1/s]) of tke eq.

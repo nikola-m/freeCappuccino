@@ -76,7 +76,8 @@ subroutine create_CSR_matrix_from_mesh_data
 !
   call i4vec2_sort_a ( nnz, ia, ja )
 
-  call i4vec_print2 ( 10, ia, ja, '  First 10 lines of Sorted IA and JA arrays:' )
+  ! call i4vec_print2 ( 10, ia, ja, '  First 10 lines of Sorted IA and JA arrays:' )
+
 
 !
 ! > Find positions of diagonal elements in COO matrix format
@@ -85,7 +86,8 @@ subroutine create_CSR_matrix_from_mesh_data
 
  call find_main_diag_element_positions ( ia,ja,nnz,diag,numCells )
 
- call i4vec_print ( 10, diag, '  First 20 lines of Diagonal adjacency vector:' )
+ ! call i4vec_print ( 10, diag, '  First 20 lines of Diagonal adjacency vector:' )
+
 
 !
 ! > Find positions of row starting in COO matrix format
@@ -101,7 +103,8 @@ subroutine create_CSR_matrix_from_mesh_data
  enddo
  ioffset(numCells+1) = nnz+1 ! poslednji element
 
- call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
+ ! call i4vec_print ( 10, ioffset, '  First 10 lines of ioffset vector:' )
+
 
 !
 ! > Do not need row indices - information on rows is in ioffset (CSR format)

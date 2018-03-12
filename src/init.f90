@@ -22,7 +22,7 @@ subroutine init
   use gradients
   use sparse_matrix
   use utils, only: get_unit
-  use LIS_linear_solver_library
+  ! use LIS_linear_solver_library
   use output
 
   implicit none

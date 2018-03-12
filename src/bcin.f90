@@ -8,6 +8,7 @@ subroutine bcin
   implicit none
 
   integer :: i,ini,ino,iface
+  ! integer :: input_unit
   real(dp) :: uav,outare
   real(dp) :: flowen, flowte, flowed
   real(dp) :: are
@@ -19,6 +20,13 @@ subroutine bcin
   flowte = 0.0_dp
   flowed = 0.0_dp
 
+
+  ! ! In the case we want to read recirculated profiles
+  ! call get_unit ( input_unit )
+  ! open ( unit = input_unit, file = 'inlet')
+  ! rewind input_unit
+
+
   if(ninl.gt.0) then
 
     ! Loop over inlet boundaries
@@ -29,6 +37,9 @@ subroutine bcin
       ! Example of generating inflow profile for one case (Ishihara hill)
       ! The numbers are then copied to 0/U file, under inlet \ nonuniform \ <list of values>
       ! write(6,'(f9.6,1x,f3.1,1x,f3.1)') 5.5d0*(zf(iface)/0.2d0)**0.135,zero,zero  
+
+      ! Example reading recirculated input
+      ! read(input_unit,*) u(ini), v(ini), w(ini), te(ini), ed(ini) 
 
       vis(ini) = viscos
 
@@ -48,6 +59,8 @@ subroutine bcin
       flowed = flowed + abs(fmi(i)*ed(ini))
 
     enddo
+
+    ! close(input_unit)
 
     ! Loop over outlet boundaries
 

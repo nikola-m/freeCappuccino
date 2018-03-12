@@ -350,9 +350,9 @@ subroutine mesh_geometry
   real(dp) :: dpn,djn,are
  
 
-!
+!******************************************************************************
 ! > OPEN polyMesh format files: 'points', 'faces', 'owner', 'neighbour'.
-!
+!..............................................................................
 
   call get_unit( points_file )
   open( unit = points_file,file = 'polyMesh/points' )
@@ -381,6 +381,7 @@ subroutine mesh_geometry
   read(points_file,'(a)') ch
   backspace(points_file)
   if(ch == '/')  native_mesh_files = .false.
+
 
 !
 ! > Find out number of faces belonging to a specific boundary condition.
@@ -469,9 +470,9 @@ subroutine mesh_geometry
   enddo  
 
 
-!
+!******************************************************************************
 ! > Find out numNodes, numFaces, numInnerFaces, etc.
-! 
+!..............................................................................
 
 if (native_mesh_files)  then
 
@@ -689,9 +690,10 @@ if (native_mesh_files)  then
     write ( *, '(a,i8)' ) '  Number of cyclic faces  = ', ncyc
   endif
 
-!
+
+!******************************************************************************
 ! > Allocate arrays for Mesh description
-!
+!..............................................................................
 
   allocate ( x(numNodes) )
   allocate ( y(numNodes) )
@@ -733,9 +735,9 @@ if (native_mesh_files)  then
   allocate ( foc(noc+ncyc) )                               
 
 
-!
+!******************************************************************************
 ! > Read and process Mesh files 
-!
+!..............................................................................
 
   if (native_mesh_files) then
     
@@ -850,9 +852,9 @@ if (native_mesh_files)  then
 
   endif
 
-  !
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ! > Cell volumes, cell face centers
-  !
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   do iface=1,numFaces
 
@@ -891,26 +893,26 @@ if (native_mesh_files)  then
       arx(iface) = arx(iface) + half*nx
       ary(iface) = ary(iface) + half*ny
       arz(iface) = arz(iface) + half*nz
- 
+
+      cx = one_third*( x(node(i+2)) + x(node(i+1)) + x(node(1)) )
+      cy = one_third*( y(node(i+2)) + y(node(i+1)) + y(node(1)) )
+      cz = one_third*( z(node(i+2)) + z(node(i+1)) + z(node(1)) ) 
+
       !
       ! > Cell-face centroid components - accumulation stage
       !
-      
-      cx = one_third*( x(node(i+2)) + x(node(i+1)) + x(node(1)) )
-      cy = one_third*( y(node(i+2)) + y(node(i+1)) + y(node(1)) )
-      cz = one_third*( z(node(i+2)) + z(node(i+1)) + z(node(1)) )
 
-      xf(iface) = xf(iface) + abs(nx*cx)
-      yf(iface) = yf(iface) + abs(ny*cy)
-      zf(iface) = zf(iface) + abs(nz*cz)
+      ! xf(iface) = xf(iface) + abs(nx*cx)
+      ! yf(iface) = yf(iface) + abs(ny*cy)
+      ! zf(iface) = zf(iface) + abs(nz*cz)
 
-      ax = ax + abs(nx)
-      ay = ay + abs(ny)
-      az = az + abs(nz)
+      ! ax = ax + abs(nx)
+      ! ay = ay + abs(ny)
+      ! az = az + abs(nz)
 
-      !
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       ! > Compute cell volumes 
-      !
+      !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
       vol(inp) = vol(inp) + cell_volume_part_polymesh( cx, cy, cz, nx, ny, nz ) 
       if ( iface <= numInnerFaces ) then 
@@ -920,7 +922,10 @@ if (native_mesh_files)  then
 
     enddo
 
-    ! ! > Cell-face centroid components - final
+    !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ! > Cell-face centroid components - final
+    !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     !  if(iface.le.numInnerFaces) then
     !     xf(iface) = xf(iface) / (ax+tiny)
     !     yf(iface) = yf(iface) / (ay+tiny)
@@ -962,9 +967,9 @@ if (native_mesh_files)  then
     ! end do 
   endif 
 
-  !
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ! > Cell centers
-  !
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   do iface=1,numFaces
 
@@ -1009,7 +1014,6 @@ if (native_mesh_files)  then
 
 
 
-
   ! Rewind 'faces' file for one more sweep
   rewind( faces_file )
 
@@ -1024,6 +1028,10 @@ if (native_mesh_files)  then
 !       endif
 !     end do 
   endif
+
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ! > Interpolation factor
+  !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   !
   ! > Interpolation factor > inner faces
@@ -1155,50 +1163,51 @@ if (native_mesh_files)  then
   noc = noc + ncyc
 
 
-!
-! > Report on geometrical quantities
-!
 
-  write ( *, '(a)' ) ' '
-  write ( *, '(a)' ) '  Cell data: '
+!******************************************************************************
+! > Report on geometrical quantities > I will leave this for debug purposes.
+!..............................................................................
 
-  call r8vec_print_some ( numCells, vol, 1, 10, &
-      '  First 10 elements of cell volumes array:' )
+  ! write ( *, '(a)' ) ' '
+  ! write ( *, '(a)' ) '  Cell data: '
 
-  call r8vec_print_some ( numCells, xc, 1, 10, &
-      '  First 10 elements of cell x-centers array:' )
+  ! call r8vec_print_some ( numCells, vol, 1, 10, &
+  !     '  First 10 elements of cell volumes array:' )
 
-  call r8vec_print_some ( numCells, yc, 1, 10, &
-      '  First 10 elements of cell y-centers array:' )
+  ! call r8vec_print_some ( numCells, xc, 1, 10, &
+  !     '  First 10 elements of cell x-centers array:' )
 
-  call r8vec_print_some ( numCells, zc, 1, 10, &
-      '  First 10 elements of cell z-centers array:' )
+  ! call r8vec_print_some ( numCells, yc, 1, 10, &
+  !     '  First 10 elements of cell y-centers array:' )
 
-  write ( *, '(a)' ) ' '
-  write ( *, '(a)' ) '  Face data: '
+  ! call r8vec_print_some ( numCells, zc, 1, 10, &
+  !     '  First 10 elements of cell z-centers array:' )
 
-  call i4vec_print2 ( 10, owner, neighbour, '  First 10 lines of owner and neighbour arrays:' )
+  ! write ( *, '(a)' ) ' '
+  ! write ( *, '(a)' ) '  Face data: '
 
-  call r8vec_print_some ( numFaces, arx, 1, 10, &
-      '  First 10 elements of Arx array:' )
+  ! call i4vec_print2 ( 10, owner, neighbour, '  First 10 lines of owner and neighbour arrays:' )
 
-  call r8vec_print_some ( numFaces, ary, 1, 10, &
-      '  First 10 elements of Ary array:' )
+  ! call r8vec_print_some ( numFaces, arx, 1, 10, &
+  !     '  First 10 elements of Arx array:' )
 
-  call r8vec_print_some ( numFaces, arz, 1, 10, &
-      '  First 10 elements of Arz array:' )
+  ! call r8vec_print_some ( numFaces, ary, 1, 10, &
+  !     '  First 10 elements of Ary array:' )
 
-    call r8vec_print_some ( numFaces, xf, 1, 10, &
-      '  First 10 elements of xf array:' )
+  ! call r8vec_print_some ( numFaces, arz, 1, 10, &
+  !     '  First 10 elements of Arz array:' )
 
-  call r8vec_print_some ( numFaces, yf, 1, 10, &
-      '  First 10 elements of yf array:' )
+  !   call r8vec_print_some ( numFaces, xf, 1, 10, &
+  !     '  First 10 elements of xf array:' )
 
-  call r8vec_print_some ( numFaces, zf, 1, 10, &
-      '  First 10 elements of zf array:' )
+  ! call r8vec_print_some ( numFaces, yf, 1, 10, &
+  !     '  First 10 elements of yf array:' )
 
-  call r8vec_print_some ( numInnerFaces, facint, 1, 10, &
-      '  First 10 elements of interpolation factor (facint) array:' )
+  ! call r8vec_print_some ( numFaces, zf, 1, 10, &
+  !     '  First 10 elements of zf array:' )
+
+  ! call r8vec_print_some ( numInnerFaces, facint, 1, 10, &
+  !     '  First 10 elements of interpolation factor (facint) array:' )
 
 !
 !  > CLOSE polyMesh format file: 'points', 'faces', 'owner', 'neighbour', 'boundary'.

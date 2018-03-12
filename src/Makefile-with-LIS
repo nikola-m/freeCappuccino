@@ -21,6 +21,7 @@ MOD_FILES=\
     mesh_geometry_and_topology.f90 \
     tensor_fields.f90 \
     sparse_matrix.f90 \
+    LIS_linear_solver_library.f90 \
     gradients.f90 \
     output.f90 \
     interpolation.f90 \
@@ -122,7 +123,10 @@ clean:
 # Generic rules
 ##################################################################
 
-.SUFFIXES : .f90
+.SUFFIXES : .f90 .f95
 
 .f90.o:
 	${F90} ${F90FLAGS} -c ${INCS}  ${@:.o=.f90}
+
+.f95.o:
+	${F90} ${F95FLAGS} -I${LIS_DIR} -c ${INCS}  ${@:.o=.f95}

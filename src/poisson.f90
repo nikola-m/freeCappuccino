@@ -14,7 +14,7 @@ program poisson
   use geometry
   use sparse_matrix, only: create_CSR_matrix_from_mesh_data,su,sv
   use utils, only: show_logo
-  use LIS_linear_solver_library
+  ! use LIS_linear_solver_library
 
   implicit none
 !

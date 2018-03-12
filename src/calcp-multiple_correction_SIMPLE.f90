@@ -17,7 +17,7 @@ subroutine calcp
   use gradients
   use fieldManipulation
   use faceflux_mass
-  use LIS_linear_solver_library
+  ! use LIS_linear_solver_library
 
 
   implicit none
@@ -115,8 +115,8 @@ subroutine calcp
     pp=0.0d0
 
     ! Solving pressure correction equation
-    call dpcg(pp,ip)
-    ! call iccg(pp,ip)
+    ! call dpcg(pp,ip)
+    call iccg(pp,ip)
     ! call bicgstab(pp,ip) 
     
     ! write(maxno,'(i5)') nsw(ip)

@@ -20,6 +20,7 @@ subroutine writefiles
 !***********************************************************************
 !
   integer :: output_unit
+  ! integer :: i,ijb
 
   ! Write in a char variable current timestep number and create a folder with this name
   write(timechar,'(i6)') itime
@@ -77,6 +78,19 @@ subroutine writefiles
   call vtu_write_XML_meshdata ( output_unit )
 
   close( output_unit )
+
+
+  ! ! Recirculate output
+  ! call get_unit( output_unit )
+  ! open(unit=output_unit,file='inlet')
+  ! rewind output_unit
+
+  ! do i=1,nout
+  !   ijb = iOutletStart+i
+  !   write(output_unit,'(5(1x,es11.4))') u(ijb), v(ijb), w(ijb), te(ijb), ed(ijb)
+  ! end do
+
+  ! close( output_unit )
 
 
 end subroutine
