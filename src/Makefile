@@ -6,11 +6,6 @@
 LFLAGS = -llapack
 F90FLAGS = -Wall -O2
 
-L95FLAGS = -fopenmp -llis -llapack
-F95FLAGS = -Wall -O2 -cpp
-
-LIS_DIR = /usr/local/include 
-
 # Compiler:
 F90 = gfortran
 
@@ -104,7 +99,7 @@ all: caffa3d poisson #rk4ProjectionCaffa
 
 caffa3d: ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${CAFFAOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${CAFFAOBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${L95FLAGS} ${INCS} -o ../bin/caffa3d 
+	${F90} ${CAFFAOBJS} ${MODS} ${TURBULENCE} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o ../bin/caffa3d 
 
 rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 	@echo  "Linking" $@ "... "
@@ -112,7 +107,7 @@ rk4ProjectionCaffa: ${CAFFAOBJS} ${RK4OBJS} ${LINEAR_SOLVERS}
 
 poisson: ${MODS} ${LINEAR_SOLVERS} ${POISSONOBJS}
 	@echo  "Linking" $@ "... "
-	${F90} ${POISSONOBJS} ${MODS} ${LINEAR_SOLVERS} ${L95FLAGS} ${INCS} -o ../bin/poisson 
+	${F90} ${POISSONOBJS} ${MODS} ${LINEAR_SOLVERS} ${LFLAGS} ${INCS} -o ../bin/poisson 
 
 .PHONY: clean
 clean:
