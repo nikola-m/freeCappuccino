@@ -8,6 +8,12 @@
 
   implicit none
 
+
+  interface explDiv
+    module procedure explDiv
+    module procedure explDivMdot
+  end interface
+
   public
 
   contains
@@ -52,7 +58,7 @@
 !
 !***********************************************************************
 !  
-!  -fvc:Div(p)                                       
+!  Calculates -Div(p)                                      
 !  ExplDiv(u) = sum_{i=1}^{i=nf} (u)_f*sf or
 !  Interpolation to cell face centers done by cds corrected scheme.
 !
@@ -90,7 +96,7 @@
                         p, dPdxi,dfxe,dfye,dfze)
 
       ! Accumulate contribution at cell center and neighbour.
-      ! Note, we calculate negative Dievrgence, therefore opposite sign...
+      ! ***NOTE, we calculate negative Divergence, therefore opposite sign (minus in front of e.g. dfxe, etc.) 
       su(ijp) = su(ijp)-dfxe
       sv(ijp) = sv(ijp)-dfye
       sw(ijp) = sw(ijp)-dfze
@@ -126,35 +132,35 @@
       iface = iInletFacesStart+i
       ijp = owner(iface)
       ijb = iInletStart + i
-      call negFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
+      call presFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
     enddo
 
     do i = 1,nout
       iface = iOutletFacesStart+i
       ijp = owner(iface)
       ijb = iOutletStart + i
-      call negFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
+      call presFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
     enddo
 
     do i = 1,nsym
       iface = iSymmetryFacesStart+i
       ijp = owner(iface)
       ijb = iSymmetryStart+i
-      call negFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
+      call presFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
     enddo   
 
     do i = 1,nwal
       iface = iWallFacesStart+i
       ijp = owner(iface)
       ijb = iWallStart+i
-      call negFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
+      call presFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
     enddo
 
     do i=1,npru
       iface = iPressOutletFacesStart + i
       ijp = owner(iface)
       ijb = iPressOutletStart + i
-      call negFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
+      call presFaceDivBoundary(arx(iface), ary(iface), arz(iface), p(ijb), su(ijp), sv(ijp), sw(ijp))
     enddo
 
   return
@@ -167,8 +173,8 @@
 !
 !***********************************************************************
 !  
-!  -fvc:Div(p)                                       
-!  ExplDiv(u) = sum_{i=1}^{i=nf} (u)_f*sf or
+!  Calculates explicit divergence of scalar field phi - Div(phi)                                       
+!  explDiv(u) = sum_{i=1}^{i=nf} (u)_f*sf or
 !  Interpolation to cell face centers done by cds corrected scheme.
 !
 !***********************************************************************
@@ -230,35 +236,152 @@
       iface = iInletFacesStart+i
       ijp = owner(iface)
       ijb = iInletStart + i
-      call FaceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), div(ijp))
+      call FaceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), dfxe)
+      div(ijp) = div(ijp) + dfxe
     enddo
 
     do i = 1,nout
       iface = iOutletFacesStart+i
       ijp = owner(iface)
       ijb = iOutletStart + i
-      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), div(ijp))
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + dfxe
     enddo
 
     do i = 1,nsym
       iface = iSymmetryFacesStart+i
       ijp = owner(iface)
       ijb = iSymmetryStart+i
-      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), div(ijp))
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + dfxe
     enddo   
 
     do i = 1,nwal
       iface = iWallFacesStart+i
       ijp = owner(iface)
       ijb = iWallStart+i
-      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), div(ijp))
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + dfxe
     enddo
 
     do i=1,npru
       iface = iPressOutletFacesStart + i
       ijp = owner(iface)
       ijb = iPressOutletStart + i
-      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), div(ijp))
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + dfxe
+    enddo
+
+  return
+  end
+
+
+
+!***********************************************************************
+!
+  function explDivMdot(flmass,u) result(div)
+!
+!***********************************************************************
+!  
+!  Calculates explicit divergence of scalar field mdot*phi - Div(mdot,phi)                                       
+!  explDiv(u) = sum_{i=1}^{i=nf} mdot*(u)_f*sf or
+!  Interpolation to cell face centers done by cds corrected scheme.
+!  flmass - is surface field, no need for intepolation.
+!
+!***********************************************************************
+!
+  use geometry
+
+  implicit none
+!
+!***********************************************************************
+!
+
+!...Output
+    real(dp), dimension(numCells) :: div
+
+!...Input
+    real(dp), dimension(numTotal) :: flmass
+    real(dp), dimension(numTotal) :: u
+
+!...Local
+    integer :: i,ijp,ijn,ijb,iface
+    real(dp) :: dfxe
+    real(dp), dimension(3,numCells) :: dUdxi
+
+    ! Calculate cell-centered gradient
+    call grad(u,dUdxi)
+
+    ! Calculate terms integrated over surfaces
+
+    ! Inner face
+    do i=1,numInnerFaces
+      ijp = owner(i)
+      ijn = neighbour(i)
+      call faceDivInner(ijp, ijn, xf(i), yf(i), zf(i), arx(i), ary(i), arz(i), facint(i), &
+                        u, dUdxi,dfxe)
+
+      ! Accumulate contribution at cell center and neighbour.
+      div(ijp) = div(ijp) + flmass(i) * dfxe
+
+      div(ijn) = div(ijn) - flmass(i) * dfxe
+
+    enddo
+
+    ! Contribution from O- and C-grid cuts
+    do i=1,noc
+      iface= ijlFace(i) ! In the future implement Weiler-Atherton cliping algorithm to compute area vector components for non matching boundaries.
+      ijp = ijl(i)
+      ijn = ijr(i)
+      call faceDivInner(ijp, ijn, xf(iface), yf(iface), zf(iface), arx(iface), ary(iface), arz(iface), foc(i), &
+                        u, dUdxi,dfxe)
+
+      ! Accumulate contribution at cell center and neighbour.
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
+       
+      div(ijn) = div(ijn) - flmass(iface) * dfxe
+
+    end do
+
+    ! Contribution from boundaries
+    do i = 1,ninl
+      iface = iInletFacesStart+i
+      ijp = owner(iface)
+      ijb = iInletStart + i
+      call FaceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb), dfxe)
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
+    enddo
+
+    do i = 1,nout
+      iface = iOutletFacesStart+i
+      ijp = owner(iface)
+      ijb = iOutletStart + i
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
+    enddo
+
+    do i = 1,nsym
+      iface = iSymmetryFacesStart+i
+      ijp = owner(iface)
+      ijb = iSymmetryStart+i
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
+    enddo   
+
+    do i = 1,nwal
+      iface = iWallFacesStart+i
+      ijp = owner(iface)
+      ijb = iWallStart+i
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
+    enddo
+
+    do i=1,npru
+      iface = iPressOutletFacesStart + i
+      ijp = owner(iface)
+      ijb = iPressOutletStart + i
+      call faceDivBoundary(arx(iface), ary(iface), arz(iface), u(ijb),  dfxe)
+      div(ijp) = div(ijp) + flmass(iface) * dfxe
     enddo
 
   return
@@ -396,17 +519,17 @@
 
     real(dp), intent(in) :: sx,sy,sz
     real(dp), intent(in) :: fi
-    real(dp), intent(inout)  :: dfx
+    real(dp), intent(out)  :: dfx
 !
 !***********************************************************************
 !
-    dfx = dfx + fi*sqrt(sx**2+sy**2+sz**2)
+    dfx = fi*sqrt(sx**2+sy**2+sz**2)
 
   end subroutine
 
 !***********************************************************************
 !
-  subroutine negFaceDivBoundary(sx,sy,sz,fi,dfx,dfy,dfz)
+  subroutine presFaceDivBoundary(sx,sy,sz,fi,dfx,dfy,dfz)
 !
 !***********************************************************************
 !

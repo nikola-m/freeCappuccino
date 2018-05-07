@@ -11,7 +11,7 @@ module temperature
   implicit none
 
   ! Constants
-  real(dp), parameter :: sigt = 0.9_dp
+  real(dp), parameter :: sigt = 0.85_dp
 
 
   private 
