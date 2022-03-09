@@ -1,5 +1,7 @@
 # freeCappuccino
 
+# NOTE: This repo is not maintained for a while: for up to date code version look at https://github.com/nikola-m/freeCappuccino-dev
+
 The freeCappuccino is a three-dimensional fully unstructured finite volume code for Computational Fluid Dynamics which comes in serial and parallel version.
 
 Moreover, freeCappuccino is a fortran library for manipulation of discrete tensor fields, defined over polyhedral meshes.
